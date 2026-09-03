@@ -1,26 +1,169 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #ffffff;
+  --ink: #1a1014;
+  --muted: #6d5560;
+  --line: #eadfe6;
+  --accent: #8e1c42;
+  --accent-mid: #772964;
+  --accent-ember: #ce3828;
+  --accent-dark: #641433;
+  --card: #ffffff;
+  --blush: #fbf5f8;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-mid: var(--accent-mid);
+  --color-accent-ember: var(--accent-ember);
+  --color-accent-dark: var(--accent-dark);
+  --color-card: var(--card);
+  --color-blush: var(--blush);
+  --font-sans: var(--font-sans);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+a {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.font-heading {
+  font-family: var(--font-sans);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.brand-gradient {
+  background-image: linear-gradient(
+    90deg,
+    var(--accent),
+    var(--accent-mid) 50%,
+    var(--accent-ember)
+  );
+}
+
+.brand-gradient-text {
+  background-image: linear-gradient(180deg, var(--accent) 10%, var(--accent-ember) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding: 0.12em 0.06em 0.4em;
+  line-height: 1.45;
+  overflow: visible;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.field label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: white;
+  border-radius: 0.4rem;
+  padding: 0.55rem 0.75rem;
+  color: var(--ink);
+}
+
+.field textarea {
+  min-height: 6rem;
+  resize: vertical;
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent) 30%, white);
+  border-color: var(--accent);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 0.4rem;
+  padding: 0.6rem 1.05rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-image: linear-gradient(
+    90deg,
+    var(--accent),
+    var(--accent-mid) 50%,
+    var(--accent-ember)
+  );
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--blush);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.notice {
+  border-radius: 0.4rem;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.875rem;
+}
+
+.notice-error {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.notice-ok {
+  background: #ecfdf3;
+  color: #166534;
 }

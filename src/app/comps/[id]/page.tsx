@@ -1,0 +1,66 @@
+import { PageShell } from "@/components/PageShell";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { isCompetitionOpen } from "@/lib/judging";
+import { formatDateTime } from "@/lib/utils";
+
+export default async function CompPublicPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const session = await auth();
+  const comp = await prisma.competitionProfile.findUnique({ where: { id } });
+  if (!comp) notFound();
+
+  const open = isCompetitionOpen(comp);
+  const fields = [
+    ["Dates", comp.dates],
+    ["Location", comp.location],
+    ["Venue", comp.venue],
+    ["Stage", comp.stageSize],
+    ["Lighting", comp.lighting],
+    ["Production", comp.productionNotes],
+    [
+      "Application deadline",
+      comp.applicationDeadline
+        ? formatDateTime(comp.applicationDeadline)
+        : "No clock deadline",
+    ],
+  ];
+
+  return (
+    <PageShell>
+    <article className="space-y-6">
+      <div>
+        <p className="text-xs uppercase tracking-wide text-muted">Competition</p>
+        <h1 className="font-heading text-4xl">{comp.name}</h1>
+        <p className="mt-2 text-sm">
+          {open ? (
+            <span className="font-medium text-accent">Accepting applications</span>
+          ) : (
+            <span className="text-muted">Not accepting applications</span>
+          )}
+        </p>
+      </div>
+      {comp.description ? <p className="max-w-2xl text-muted">{comp.description}</p> : null}
+      <dl className="grid gap-4 rounded-xl border border-line bg-card p-6 sm:grid-cols-2">
+        {fields.map(([label, value]) => (
+          <div key={label}>
+            <dt className="text-xs uppercase tracking-wide text-muted">{label}</dt>
+            <dd className="mt-1 whitespace-pre-wrap">{value || "TBA"}</dd>
+          </div>
+        ))}
+      </dl>
+      {session?.user.role === "TEAM" && open ? (
+        <Link href="/team/apply" className="btn btn-primary">
+          Apply from your profile
+        </Link>
+      ) : null}
+    </article>
+    </PageShell>
+  );
+}

@@ -1,0 +1,177 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  TEAM
+  COMP
+  JUDGE
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  WAITLISTED
+  DECLINED
+}
+
+enum JudgeRequestStatus {
+  PENDING
+  APPROVED
+  DENIED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         Role
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  team        TeamProfile?
+  competition CompetitionProfile?
+  judge       JudgeProfile?
+}
+
+model TeamProfile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name             String
+  photoUrl         String   @default("")
+  blurb            String   @default("")
+  wikiUrl          String   @default("")
+  avDriveUrl       String   @default("")
+  captains         String   @default("")
+  yearsEstablished Int?
+  rosterSize       Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  dancers      Dancer[]
+  applications Application[]
+}
+
+model Dancer {
+  id                  String      @id @default(cuid())
+  teamId              String
+  team                TeamProfile @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  name                String
+  dietaryRestrictions String      @default("")
+  tshirtSize          String      @default("")
+  inAV                Boolean     @default(false)
+}
+
+model CompetitionProfile {
+  id                   String    @id @default(cuid())
+  userId               String?   @unique
+  user                 User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  slug                 String    @unique
+  claimCode            String    @unique
+  claimedAt            DateTime?
+  name                 String
+  acceptingApps        Boolean   @default(true)
+  applicationDeadline  DateTime?
+  requiredJudgeCount   Int       @default(3)
+  resultsReleasedAt    DateTime?
+  dates                String    @default("")
+  location             String    @default("")
+  venue                String    @default("")
+  stageSize            String    @default("")
+  productionNotes      String    @default("")
+  lighting             String    @default("")
+  description          String    @default("")
+  googleSheetId        String    @default("")
+  googleSheetUrl       String    @default("")
+  eventDate            DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  applications      Application[]
+  judgeAssignments  JudgeAssignment[]
+}
+
+model Application {
+  id            String            @id @default(cuid())
+  teamId        String
+  competitionId String
+  status        ApplicationStatus @default(PENDING)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  team         TeamProfile        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  competition  CompetitionProfile @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  viewingSlots JudgeViewingSlot[]
+
+  @@unique([teamId, competitionId])
+  @@index([competitionId])
+  @@index([teamId])
+}
+
+model JudgeProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  phone     String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignments JudgeAssignment[]
+}
+
+model JudgeAssignment {
+  id            String             @id @default(cuid())
+  judgeId       String
+  judge         JudgeProfile       @relation(fields: [judgeId], references: [id], onDelete: Cascade)
+  competitionId String
+  competition   CompetitionProfile @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  status        JudgeRequestStatus @default(PENDING)
+  requestedAt   DateTime           @default(now())
+  decidedAt     DateTime?
+  submittedAt   DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  slots  JudgeViewingSlot[]
+  scores JudgeScore[]
+
+  @@unique([judgeId, competitionId])
+  @@index([competitionId, status])
+}
+
+model JudgeViewingSlot {
+  id            String          @id @default(cuid())
+  assignmentId  String
+  assignment    JudgeAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  applicationId String
+  application   Application     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  position      Int
+
+  score JudgeScore?
+
+  @@unique([assignmentId, position])
+  @@unique([assignmentId, applicationId])
+}
+
+model JudgeScore {
+  id                 String           @id @default(cuid())
+  assignmentId       String
+  assignment         JudgeAssignment  @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  slotId             String           @unique
+  slot               JudgeViewingSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  choreography       Int
+  formations         Int
+  technique          Int
+  syncCleanliness    Int
+  overallImpression  Int
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+}

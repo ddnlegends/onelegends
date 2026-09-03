@@ -1,0 +1,59 @@
+import { parseDriveUrl } from "@/lib/drive";
+
+export type TeamProfileForApply = {
+  name: string;
+  photoUrl: string;
+  blurb: string;
+  wikiUrl: string;
+  avDriveUrl: string;
+  captains: string;
+  yearsEstablished: number | null;
+  dancers: { name: string; tshirtSize: string }[];
+};
+
+function looksLikeHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+export function teamProfileGaps(team: TeamProfileForApply): string[] {
+  const missing: string[] = [];
+
+  if (team.name.trim().length < 2) missing.push("team name");
+  if (!team.captains.trim()) missing.push("captains");
+  if (team.yearsEstablished == null || !Number.isFinite(team.yearsEstablished)) {
+    missing.push("years established");
+  }
+  if (!looksLikeHttpUrl(team.photoUrl)) missing.push("team photo URL");
+  if (!looksLikeHttpUrl(team.wikiUrl)) missing.push("team wiki URL");
+  if (!team.blurb.trim()) missing.push("team blurb");
+
+  const drive = parseDriveUrl(team.avDriveUrl);
+  if (!drive) {
+    missing.push("AV Google Drive file link");
+  } else if (drive.kind === "folder") {
+    missing.push("AV as a Drive file link (not a folder)");
+  }
+
+  const dancers = team.dancers.filter((d) => d.name.trim());
+  if (dancers.length === 0) {
+    missing.push("at least one dancer on the roster");
+  } else if (dancers.some((d) => !d.tshirtSize.trim())) {
+    missing.push("a t-shirt size for every dancer");
+  }
+
+  return missing;
+}
+
+export function teamProfileReady(team: TeamProfileForApply): boolean {
+  return teamProfileGaps(team).length === 0;
+}
+
+export function teamProfileBlockedMessage(gaps: string[]): string {
+  if (gaps.length === 0) return "";
+  return `Finish your team profile before applying: ${gaps.join(", ")}.`;
+}
