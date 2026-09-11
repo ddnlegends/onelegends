@@ -1,13 +1,16 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { BrandMark } from "@/components/BrandMark";
 import { Lattice } from "@/components/Lattice";
 import { RoleGuide } from "@/components/RoleGuide";
 import { isCompetitionOpen } from "@/lib/judging";
+import { formatDateTime } from "@/lib/utils";
 
 export default async function HomePage() {
   const session = await auth();
+  if (session?.user) redirect("/dashboard");
   const competitions = await prisma.competitionProfile.findMany({
     orderBy: [{ eventDate: "desc" }, { name: "asc" }],
   });
@@ -42,33 +45,17 @@ export default async function HomePage() {
             comps. Send once.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            {session?.user.role === "TEAM" ? (
-              <Link href="/team/apply" className="btn btn-primary">
-                Apply with checkboxes
-              </Link>
-            ) : session?.user.role === "COMP" ? (
-              <Link href="/comp" className="btn btn-primary">
-                Application Stats
-              </Link>
-            ) : session?.user.role === "JUDGE" ? (
-              <Link href="/judge" className="btn btn-primary">
-                Open Judging
-              </Link>
-            ) : (
-              <>
-                <Link href="/register" className="btn btn-primary">
-                  Register A Team
-                </Link>
-                <Link href="/login" className="btn btn-ghost">
-                  Log In
-                </Link>
-              </>
-            )}
+            <Link href="/register" className="btn btn-primary">
+              Create account
+            </Link>
+            <Link href="/login" className="btn btn-ghost">
+              Log In
+            </Link>
           </div>
         </div>
       </section>
 
-      <RoleGuide sessionRole={session?.user.role} />
+      <RoleGuide signedIn={false} />
 
       <section className="mx-auto max-w-6xl space-y-6 px-4 py-10">
         <div>
@@ -76,20 +63,22 @@ export default async function HomePage() {
             Competitions
           </h2>
           <p className="mt-2 max-w-xl text-muted">
-            The full season list. Dates, city, venue, stage — then apply from
+            The full season list from each competition’s live details. Event
+            date, city, venue, stage, and when apps close — then apply from
             your team profile.
           </p>
         </div>
 
         <div className="overflow-x-auto rounded-xl border border-line bg-card shadow-[0_12px_40px_rgba(142,28,66,0.06)]">
-          <table className="w-full min-w-[44rem] text-left text-sm">
+          <table className="w-full min-w-[52rem] text-left text-sm">
             <thead className="border-b border-line bg-blush text-xs uppercase tracking-wide text-muted">
               <tr>
                 <th className="px-4 py-3 font-medium">Competition</th>
-                <th className="px-4 py-3 font-medium">Dates</th>
+                <th className="px-4 py-3 font-medium">Event</th>
                 <th className="px-4 py-3 font-medium">Location</th>
                 <th className="px-4 py-3 font-medium">Venue</th>
                 <th className="px-4 py-3 font-medium">Stage</th>
+                <th className="px-4 py-3 font-medium">Apps close</th>
                 <th className="px-4 py-3 font-medium">Apps</th>
               </tr>
             </thead>
@@ -108,8 +97,13 @@ export default async function HomePage() {
                   <td className="px-4 py-3 text-muted">{comp.location || "TBA"}</td>
                   <td className="px-4 py-3 text-muted">{comp.venue || "TBA"}</td>
                   <td className="px-4 py-3 text-muted">{comp.stageSize || "TBA"}</td>
+                  <td className="px-4 py-3 text-muted">
+                    {comp.applicationDeadline
+                      ? formatDateTime(comp.applicationDeadline)
+                      : "—"}
+                  </td>
                   <td className="px-4 py-3">
-              {isCompetitionOpen(comp) ? (
+                    {isCompetitionOpen(comp) ? (
                       <span className="font-semibold text-accent">Open</span>
                     ) : (
                       <span className="text-muted">Closed</span>

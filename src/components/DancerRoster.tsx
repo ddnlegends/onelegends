@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { saveDancers } from "@/app/actions/team";
 import { TSHIRT_SIZES } from "@/lib/utils";
+import { SaveNotice } from "@/components/SaveNotice";
 
 type Dancer = {
   name: string;
@@ -118,8 +119,7 @@ export function DancerRoster({ initial }: { initial: Dancer[] }) {
           {pending ? "Saving…" : "Save roster"}
         </button>
       </div>
-      {state?.error ? <p className="notice notice-error">{state.error}</p> : null}
-      {state?.ok ? <p className="notice notice-ok">Roster saved. Roster count updated.</p> : null}
+      <SaveNotice state={state} />
     </form>
   );
 }

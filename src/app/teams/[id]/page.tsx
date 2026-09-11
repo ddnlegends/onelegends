@@ -4,7 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { avDancerNames } from "@/lib/utils";
-import { dashboardPath } from "@/lib/roles";
+import { userHasCompAccess, userHasTeamAccess } from "@/lib/team-access";
+import { TeamPhoto } from "@/components/TeamPhoto";
 
 export default async function TeamPublicPage({
   params,
@@ -13,7 +14,10 @@ export default async function TeamPublicPage({
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  if (session.user.role !== "TEAM") redirect(dashboardPath(session.user.role));
+  const canBrowse =
+    (await userHasTeamAccess(session.user.id)) ||
+    (await userHasCompAccess(session.user.id));
+  if (!canBrowse) redirect("/dashboard");
 
   const { id } = await params;
   const team = await prisma.teamProfile.findUnique({
@@ -27,12 +31,7 @@ export default async function TeamPublicPage({
     <article className="space-y-8">
       <div className="flex flex-col gap-6 sm:flex-row">
         {team.photoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={team.photoUrl}
-            alt={team.name}
-            className="h-48 w-full rounded-xl object-cover sm:h-56 sm:w-72"
-          />
+          <TeamPhoto src={team.photoUrl} name={team.name} size="wide" />
         ) : null}
         <div>
           <p className="text-xs uppercase tracking-wide text-muted">Team</p>
@@ -60,11 +59,6 @@ export default async function TeamPublicPage({
             {team.avDriveUrl ? (
               <a href={team.avDriveUrl} className="underline" target="_blank" rel="noreferrer">
                 AV Drive
-              </a>
-            ) : null}
-            {team.wikiUrl ? (
-              <a href={team.wikiUrl} className="underline" target="_blank" rel="noreferrer">
-                Team wiki
               </a>
             ) : null}
           </div>

@@ -2,22 +2,19 @@
 
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth, signIn, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import type { Role } from "@prisma/client";
 import { passwordMeetsRules, passwordRuleMessage } from "@/lib/password";
 import { dashboardPath } from "@/lib/roles";
-import { normalizeClaimCode } from "@/lib/claim-code";
+import { hydrateEmailInvites } from "@/lib/invites";
 
 const registerSchema = z
   .object({
     email: z.string().email("Enter a valid email."),
     password: z.string(),
     confirmPassword: z.string(),
-    name: z.string(),
-    claimCode: z.string(),
-    role: z.enum(["TEAM", "COMP", "JUDGE"]),
   })
   .superRefine((data, ctx) => {
     if (!passwordMeetsRules(data.password)) {
@@ -34,27 +31,11 @@ const registerSchema = z
         message: "Passwords must match.",
       });
     }
-    if (data.role === "COMP") {
-      if (normalizeClaimCode(data.claimCode).length < 4) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["claimCode"],
-          message: "Enter the claim code for your competition.",
-        });
-      }
-    } else if (data.name.trim().length < 2) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["name"],
-        message: "Name must be at least 2 characters.",
-      });
-    }
   });
 
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
-  role: z.enum(["TEAM", "COMP", "JUDGE"]),
 });
 
 export async function registerAction(
@@ -65,77 +46,33 @@ export async function registerAction(
     email: String(formData.get("email") ?? "").trim().toLowerCase(),
     password: String(formData.get("password") ?? ""),
     confirmPassword: String(formData.get("confirmPassword") ?? ""),
-    name: String(formData.get("name") ?? "").trim(),
-    claimCode: String(formData.get("claimCode") ?? ""),
-    role: String(formData.get("role") ?? ""),
   });
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid form." };
   }
 
-  const { email, password, name, role, claimCode } = parsed.data;
+  const { email, password } = parsed.data;
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     return { error: "An account with that email already exists." };
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-
-  if (role === "COMP") {
-    const code = normalizeClaimCode(claimCode);
-    const listing = await prisma.competitionProfile.findUnique({
-      where: { claimCode: code },
-    });
-    if (!listing) {
-      return { error: "That claim code is not valid." };
-    }
-    if (listing.userId) {
-      return {
-        error: "That competition is already claimed. Ask circuit ops if you need access.",
-      };
-    }
-
-    try {
-      await prisma.$transaction(async (tx) => {
-        const user = await tx.user.create({
-          data: { email, passwordHash, role: "COMP" },
-        });
-        const claimed = await tx.competitionProfile.updateMany({
-          where: { id: listing.id, userId: null },
-          data: { userId: user.id, claimedAt: new Date() },
-        });
-        if (claimed.count !== 1) {
-          throw new Error("CLAIM_TAKEN");
-        }
-      });
-    } catch (error) {
-      if (error instanceof Error && error.message === "CLAIM_TAKEN") {
-        return {
-          error: "That competition was just claimed. Try a different code.",
-        };
-      }
-      throw error;
-    }
-  } else {
-    await prisma.user.create({
-      data: {
-        email,
-        passwordHash,
-        role: role as Role,
-        ...(role === "TEAM"
-          ? { team: { create: { name } } }
-          : { judge: { create: { name } } }),
-      },
-    });
+  const created = await prisma.user.create({
+    data: { email, passwordHash, role: "TEAM" },
+  });
+  try {
+    await hydrateEmailInvites(created.id, created.email);
+  } catch {
+    /* Invites can wait until the next Account load. */
   }
 
   try {
     await signIn("credentials", {
       email,
       password,
-      role,
-      redirectTo: dashboardPath(role),
+      redirectTo: dashboardPath(),
     });
   } catch (error) {
     if (error instanceof AuthError) {
@@ -154,25 +91,21 @@ export async function loginAction(
   const parsed = loginSchema.safeParse({
     email: String(formData.get("email") ?? "").trim().toLowerCase(),
     password: String(formData.get("password") ?? ""),
-    role: String(formData.get("role") ?? ""),
   });
 
   if (!parsed.success) {
-    return { error: "Enter email, password, and account type." };
+    return { error: "Enter email and password." };
   }
 
   try {
     await signIn("credentials", {
       email: parsed.data.email,
       password: parsed.data.password,
-      role: parsed.data.role,
-      redirectTo: dashboardPath(parsed.data.role),
+      redirectTo: dashboardPath(),
     });
   } catch (error) {
     if (error instanceof AuthError) {
-      return {
-        error: "Wrong email, password, or account type.",
-      };
+      return { error: "Wrong email or password." };
     }
     throw error;
   }
@@ -184,12 +117,136 @@ export async function signOutAction() {
   await signOut({ redirectTo: "/" });
 }
 
-export async function requireUser(role?: Role) {
+const profileSchema = z.object({
+  name: z.string().trim().max(80, "Name is too long."),
+  email: z.string().email("Enter a valid email."),
+});
+
+const passwordChangeSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Enter your current password."),
+    password: z.string(),
+    confirmPassword: z.string(),
+  })
+  .superRefine((data, ctx) => {
+    if (!passwordMeetsRules(data.password)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["password"],
+        message: passwordRuleMessage(),
+      });
+    }
+    if (data.password !== data.confirmPassword) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["confirmPassword"],
+        message: "Passwords must match.",
+      });
+    }
+  });
+
+function revalidateProfile() {
+  revalidatePath("/profile");
+  revalidatePath("/dashboard");
+}
+
+export async function updateProfileAction(
+  _prev: { error?: string; ok?: boolean; message?: string } | undefined,
+  formData: FormData,
+): Promise<{ error?: string; ok?: boolean; message?: string }> {
   const session = await auth();
   if (!session?.user) {
-    return null;
+    return { error: "Sign in to update your profile." };
   }
-  if (role && session.user.role !== role) {
+
+  const parsed = profileSchema.safeParse({
+    name: String(formData.get("name") ?? ""),
+    email: String(formData.get("email") ?? "").trim().toLowerCase(),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid form." };
+  }
+
+  const { name, email } = parsed.data;
+  const taken = await prisma.user.findFirst({
+    where: { email, NOT: { id: session.user.id } },
+    select: { id: true },
+  });
+  if (taken) {
+    return { error: "An account with that email already exists." };
+  }
+
+  const previous = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { email: true },
+  });
+  if (!previous) {
+    return { error: "Account not found." };
+  }
+
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { name, email },
+  });
+
+  if (email !== previous.email) {
+    try {
+      await hydrateEmailInvites(session.user.id, email);
+    } catch {
+      /* Invites can wait until the next dashboard load. */
+    }
+  }
+
+  revalidateProfile();
+  return { ok: true, message: "Changes saved." };
+}
+
+export async function changePasswordAction(
+  _prev: { error?: string; ok?: boolean; message?: string } | undefined,
+  formData: FormData,
+): Promise<{ error?: string; ok?: boolean; message?: string }> {
+  const session = await auth();
+  if (!session?.user) {
+    return { error: "Sign in to change your password." };
+  }
+
+  const parsed = passwordChangeSchema.safeParse({
+    currentPassword: String(formData.get("currentPassword") ?? ""),
+    password: String(formData.get("password") ?? ""),
+    confirmPassword: String(formData.get("confirmPassword") ?? ""),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid form." };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { passwordHash: true },
+  });
+  if (!user) {
+    return { error: "Account not found." };
+  }
+
+  const matches = await bcrypt.compare(
+    parsed.data.currentPassword,
+    user.passwordHash,
+  );
+  if (!matches) {
+    return { error: "Current password is incorrect." };
+  }
+
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { passwordHash: await bcrypt.hash(parsed.data.password, 10) },
+  });
+
+  revalidateProfile();
+  return { ok: true, message: "Password updated." };
+}
+
+export async function requireUser() {
+  const session = await auth();
+  if (!session?.user) {
     return null;
   }
   return session.user;

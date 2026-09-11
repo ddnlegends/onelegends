@@ -4,21 +4,16 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
 import { maybeReleaseResults } from "@/lib/judging";
-
-async function currentCompetition(userId: string) {
-  return prisma.competitionProfile.findUnique({
-    where: { userId },
-  });
-}
+import { requireActiveCompetition } from "@/lib/team-access";
 
 export async function decideJudgeRequest(
   assignmentId: string,
   decision: "APPROVED" | "DENIED",
 ): Promise<{ error?: string }> {
-  const user = await requireUser("COMP");
+  const user = await requireUser();
   if (!user) return { error: "Unauthorized." };
 
-  const competition = await currentCompetition(user.id);
+  const competition = await requireActiveCompetition(user.id);
   if (!competition) return { error: "Competition profile missing." };
 
   const assignment = await prisma.judgeAssignment.findFirst({
@@ -43,10 +38,10 @@ export async function setRequiredJudgeCount(
   _prev: { error?: string; ok?: boolean } | undefined,
   formData: FormData,
 ): Promise<{ error?: string; ok?: boolean }> {
-  const user = await requireUser("COMP");
+  const user = await requireUser();
   if (!user) return { error: "Unauthorized." };
 
-  const competition = await currentCompetition(user.id);
+  const competition = await requireActiveCompetition(user.id);
   if (!competition) return { error: "Competition profile missing." };
 
   const n = Number(formData.get("requiredJudgeCount"));

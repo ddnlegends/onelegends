@@ -10,6 +10,7 @@ type Comp = {
   dates: string;
   location: string;
   venue: string;
+  deadline?: string;
   acceptingApps: boolean;
   alreadyApplied: boolean;
 };
@@ -56,6 +57,7 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
               <p className="text-sm text-muted">
                 {[comp.dates, comp.location, comp.venue].filter(Boolean).join(" · ") ||
                   "Details TBA"}
+                {comp.deadline ? ` · Apps close ${comp.deadline}` : ""}
               </p>
               {comp.alreadyApplied ? (
                 <p className="mt-1 text-xs font-medium text-accent">Already applied</p>
@@ -75,6 +77,7 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
               <li key={comp.id}>
                 {comp.name}
                 {comp.dates ? ` — ${comp.dates}` : ""}
+                {comp.deadline ? ` · Apps close ${comp.deadline}` : ""}
               </li>
             ))}
           </ul>

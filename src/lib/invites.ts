@@ -1,0 +1,92 @@
+import { prisma } from "@/lib/prisma";
+
+export async function hydrateEmailInvites(userId: string, email: string) {
+  if (!prisma.teamInvite || !prisma.compInvite) return;
+
+  const teamInvites = await prisma.teamInvite.findMany({ where: { email } });
+  for (const invite of teamInvites) {
+    const existing = await prisma.teamMembership.findUnique({
+      where: { userId_teamId: { userId, teamId: invite.teamId } },
+    });
+    if (existing?.status !== "APPROVED") {
+      await prisma.teamMembership.upsert({
+        where: { userId_teamId: { userId, teamId: invite.teamId } },
+        create: {
+          userId,
+          teamId: invite.teamId,
+          status: "PENDING",
+          isAdmin: true,
+          isPrimary: false,
+        },
+        update: {
+          status: "PENDING",
+          isAdmin: true,
+          isPrimary: false,
+          decidedAt: null,
+          requestedAt: new Date(),
+        },
+      });
+    }
+    await prisma.teamInvite.delete({ where: { id: invite.id } });
+  }
+
+  const compInvites = await prisma.compInvite.findMany({ where: { email } });
+  for (const invite of compInvites) {
+    const existing = await prisma.competitionMembership.findUnique({
+      where: {
+        userId_competitionId: { userId, competitionId: invite.competitionId },
+      },
+    });
+    if (existing?.status !== "APPROVED") {
+      await prisma.competitionMembership.upsert({
+        where: {
+          userId_competitionId: {
+            userId,
+            competitionId: invite.competitionId,
+          },
+        },
+        create: {
+          userId,
+          competitionId: invite.competitionId,
+          status: "PENDING",
+          isAdmin: true,
+          isPrimary: false,
+        },
+        update: {
+          status: "PENDING",
+          isAdmin: true,
+          isPrimary: false,
+          decidedAt: null,
+          requestedAt: new Date(),
+        },
+      });
+    }
+    await prisma.compInvite.delete({ where: { id: invite.id } });
+  }
+}
+
+export async function getPendingInvites(userId: string, email: string) {
+  try {
+    await hydrateEmailInvites(userId, email);
+  } catch {
+    /* Account still loads even if invite hydration fails. */
+  }
+
+  const teams = await prisma.teamMembership.findMany({
+    where: { userId, status: "PENDING" },
+    include: { team: { select: { id: true, name: true } } },
+    orderBy: { requestedAt: "desc" },
+  });
+  const comps = await prisma.competitionMembership.findMany({
+    where: { userId, status: "PENDING" },
+    include: { competition: { select: { id: true, name: true } } },
+    orderBy: { requestedAt: "desc" },
+  });
+  const judges = await prisma.judgeInvite.findMany({
+    where: { email },
+    include: { competition: { select: { id: true, name: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return { teams, comps, judges };
+}

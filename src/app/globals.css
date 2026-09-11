@@ -83,7 +83,7 @@ select {
   color: var(--muted);
 }
 
-.field input,
+.field input:not([type="file"]),
 .field textarea,
 .field select {
   width: 100%;
@@ -99,7 +99,7 @@ select {
   resize: vertical;
 }
 
-.field input:focus,
+.field input:not([type="file"]):focus,
 .field textarea:focus,
 .field select:focus {
   outline: 2px solid color-mix(in srgb, var(--accent) 30%, white);
@@ -166,4 +166,5 @@ select {
 .notice-ok {
   background: #ecfdf3;
   color: #166534;
+  font-weight: 600;
 }

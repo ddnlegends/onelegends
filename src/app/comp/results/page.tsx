@@ -2,14 +2,16 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { StatusSelect } from "@/components/StatusSelect";
 import { DriveAvPlayer } from "@/components/DriveAvPlayer";
-import { rubricTotal, zScores, type RubricScores } from "@/lib/judging";
+import { rubricTotal, zScores, type RubricScores, scoreComment } from "@/lib/judging";
 import { formatDateTime } from "@/lib/utils";
+import { getActiveCompetitionId } from "@/lib/team-access";
 
 type JudgeRow = {
   judgeName: string;
   scores: RubricScores;
   total: number;
   z: number;
+  comment: string;
 };
 
 type RankedTeam = {
@@ -25,8 +27,10 @@ type RankedTeam = {
 
 export default async function CompResultsPage() {
   const session = await auth();
+  const competitionId = await getActiveCompetitionId(session!.user.id);
+  if (!competitionId) return null;
   const competition = await prisma.competitionProfile.findUnique({
-    where: { userId: session!.user.id },
+    where: { id: competitionId },
     include: {
       applications: { include: { team: true } },
       judgeAssignments: {
@@ -69,6 +73,7 @@ export default async function CompResultsPage() {
         scores: slot.score,
         total: totals[index],
         z: zs[index],
+        comment: scoreComment(slot.score),
       });
     });
   }
@@ -123,6 +128,7 @@ export default async function CompResultsPage() {
                   <th className="px-4 py-3 font-medium">Avg Total</th>
                   <th className="px-4 py-3 font-medium">Avg Z-Score</th>
                   <th className="px-4 py-3 font-medium">Judges</th>
+                  <th className="px-4 py-3 font-medium">Notes</th>
                   <th className="px-4 py-3 font-medium">Decision</th>
                 </tr>
               </thead>
@@ -134,6 +140,9 @@ export default async function CompResultsPage() {
                     <td className="px-4 py-3">{row.avgTotal.toFixed(1)} / 50</td>
                     <td className="px-4 py-3">{row.avgZ.toFixed(3)}</td>
                     <td className="px-4 py-3">{row.judges.length}</td>
+                    <td className="px-4 py-3">
+                      {row.judges.filter((judge) => judge.comment).length || "—"}
+                    </td>
                     <td className="px-4 py-3">
                       <StatusSelect applicationId={row.applicationId} value={row.status} />
                     </td>
@@ -157,6 +166,23 @@ export default async function CompResultsPage() {
                 </p>
               </div>
               <DriveAvPlayer url={row.avDriveUrl} label={`${row.name} audition video`} />
+              {row.judges.some((judge) => judge.comment) ? (
+                <div className="space-y-2 rounded-lg border border-line bg-blush p-4 text-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                    Judge notes
+                  </p>
+                  <ul className="space-y-2">
+                    {row.judges
+                      .filter((judge) => judge.comment)
+                      .map((judge) => (
+                        <li key={`${row.applicationId}-${judge.judgeName}`}>
+                          <span className="font-medium">{judge.judgeName}:</span>{" "}
+                          {judge.comment}
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              ) : null}
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[36rem] text-left text-sm">
                   <thead className="text-xs uppercase tracking-wide text-muted">

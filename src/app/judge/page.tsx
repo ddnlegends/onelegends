@@ -1,7 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { JudgeRequestForm } from "@/components/JudgeRequestForm";
 import { formatDateTime } from "@/lib/utils";
 import { isCompetitionOpen } from "@/lib/judging";
 
@@ -16,17 +16,7 @@ export default async function JudgeDashboardPage() {
       },
     },
   });
-  if (!judge) return null;
-
-  const requestedIds = new Set(judge.assignments.map((a) => a.competitionId));
-  const competitions = await prisma.competitionProfile.findMany({
-    orderBy: [{ eventDate: "desc" }, { name: "asc" }],
-  });
-  const requestable = competitions.filter((c) => {
-    const existing = judge.assignments.find((a) => a.competitionId === c.id);
-    if (!existing) return true;
-    return existing.status === "DENIED";
-  });
+  if (!judge) redirect("/dashboard");
 
   const todo = judge.assignments.filter(
     (a) => a.status === "APPROVED" && !a.submittedAt,
@@ -34,15 +24,14 @@ export default async function JudgeDashboardPage() {
   const completed = judge.assignments.filter(
     (a) => a.status === "APPROVED" && a.submittedAt,
   );
-  const pending = judge.assignments.filter((a) => a.status === "PENDING");
 
   return (
     <div className="space-y-10">
       <div>
         <h1 className="font-heading text-4xl">Judging</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          Request access, wait for the competition to approve you, then score
-          anonymous packets. You never see team names.
+          Competitions invite you by email. You approve that invite on your
+          dashboard, then score anonymous packets. You never see team names.
         </p>
       </div>
 
@@ -108,44 +97,13 @@ export default async function JudgeDashboardPage() {
         )}
       </section>
 
-      {pending.length ? (
-        <section className="space-y-3">
-          <h2 className="font-heading text-2xl">Awaiting Approval</h2>
-          <ul className="divide-y divide-line rounded-xl border border-line bg-card">
-            {pending.map((row) => (
-              <li key={row.id} className="px-4 py-3">
-                <p className="font-medium">{row.competition.name}</p>
-                <p className="text-sm text-muted">
-                  Requested {formatDateTime(row.requestedAt)}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
-      <section className="space-y-3">
-        <h2 className="font-heading text-2xl">Request Competitions</h2>
-        <p className="text-sm text-muted">
-          Access is not automatic. Each competition approves you one by one.
-        </p>
-        <JudgeRequestForm
-          competitions={requestable.map((c) => ({
-            id: c.id,
-            name: c.name,
-            dates: c.dates,
-            location: c.location,
-          }))}
-        />
-      </section>
-
-      {requestedIds.size === 0 && !judge.phone ? (
+      {!judge.phone ? (
         <p className="text-sm text-muted">
           Add a phone number on{" "}
           <Link href="/judge/profile" className="underline">
             Judge Profile
           </Link>{" "}
-          before comps review you.
+          so competitions can reach you.
         </p>
       ) : null}
     </div>

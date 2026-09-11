@@ -3,16 +3,21 @@ import { parseDriveUrl, drivePreviewSrc, driveViewUrl } from "@/lib/drive";
 export function DriveAvPlayer({
   url,
   label,
+  scoringHint = false,
 }: {
   url: string;
   label: string;
+  scoringHint?: boolean;
 }) {
   const parsed = parseDriveUrl(url);
+  const note = scoringHint
+    ? " Leave a comment below for the competition."
+    : "";
 
   if (!url.trim()) {
     return (
       <div className="rounded-xl border border-line bg-blush p-6 text-sm text-muted">
-        No audition video is on file for this team.
+        No audition video is on file for this team.{note}
       </div>
     );
   }
@@ -46,7 +51,7 @@ export function DriveAvPlayer({
     <div className="rounded-xl border border-line bg-blush p-6 text-sm">
       <p className="text-ink">
         This AV is a folder or unrecognized Drive link, so it cannot play inline
-        without showing file names.
+        without showing file names.{note}
       </p>
       <a
         href={url}

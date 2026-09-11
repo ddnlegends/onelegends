@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 import { SEASON_COMPS } from "./season-comps";
 
 const prisma = new PrismaClient();
@@ -8,9 +9,14 @@ async function wipeAppData() {
   await prisma.judgeViewingSlot.deleteMany();
   await prisma.judgeAssignment.deleteMany();
   await prisma.judgeProfile.deleteMany();
+  await prisma.judgeInvite.deleteMany();
   await prisma.application.deleteMany();
   await prisma.dancer.deleteMany();
+  await prisma.teamInvite.deleteMany();
+  await prisma.teamMembership.deleteMany();
   await prisma.teamProfile.deleteMany();
+  await prisma.compInvite.deleteMany();
+  await prisma.competitionMembership.deleteMany();
   await prisma.user.deleteMany();
   await prisma.competitionProfile.deleteMany();
 }
@@ -32,7 +38,7 @@ async function main() {
         stageSize: "TBA",
         productionNotes: "Payment is handled off this site.",
         lighting: "TBA",
-        description: `${comp.name} — ${comp.location}. Claim this listing with the official bid code, then run anonymous viewing.`,
+        description: `${comp.name} — ${comp.location}. Claim this listing with the official bid code after you log in, then run anonymous viewing.`,
         applicationDeadline:
           comp.acceptingApps === false
             ? new Date("2025-11-01T23:59:00")
@@ -42,10 +48,23 @@ async function main() {
     });
   }
 
+  const passwordHash = await bcrypt.hash("onelegends@143", 10);
+  await prisma.user.create({
+    data: {
+      email: "legendstech@desidancenetwork.org",
+      passwordHash,
+      role: "TEAM",
+      name: "Legends Admin",
+      platformAdmin: true,
+    },
+  });
+
   console.log(
-    `Reset complete. ${SEASON_COMPS.length} bid listings seeded, unclaimed. No team, judge, or comp users.`,
+    `Reset complete. ${SEASON_COMPS.length} bid listings seeded, unclaimed.`,
   );
-  console.log("Comp accounts register with a claim code from COMP_CODES.md.");
+  console.log(
+    "Team circuit ops: legendstech@desidancenetwork.org (Legends Admin). No dance teams until ops creates a team and hands out a claim code.",
+  );
 }
 
 main()

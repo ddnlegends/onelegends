@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
 import { parseSheetId, syncCompetitionSheet } from "@/lib/sheets";
 import { maybeReleaseResults } from "@/lib/judging";
+import { requireActiveCompetition } from "@/lib/team-access";
 
 const profileSchema = z.object({
   dates: z.string(),
@@ -26,8 +27,10 @@ export async function saveCompProfile(
   _prev: { error?: string; ok?: boolean } | undefined,
   formData: FormData,
 ): Promise<{ error?: string; ok?: boolean }> {
-  const user = await requireUser("COMP");
-  if (!user) return { error: "You must be signed in as a competition." };
+  const user = await requireUser();
+  if (!user) return { error: "You must be signed in." };
+  const competition = await requireActiveCompetition(user.id);
+  if (!competition) return { error: "You don’t have access to a competition." };
 
   const parsed = profileSchema.safeParse({
     dates: String(formData.get("dates") ?? "").trim(),
@@ -59,7 +62,7 @@ export async function saveCompProfile(
   }
 
   const updated = await prisma.competitionProfile.update({
-    where: { userId: user.id },
+    where: { id: competition.id },
     data: {
       dates: parsed.data.dates,
       location: parsed.data.location,
@@ -82,6 +85,9 @@ export async function saveCompProfile(
   revalidatePath("/comp/judges");
   revalidatePath("/comp/results");
   revalidatePath("/");
+  revalidatePath("/dashboard");
+  revalidatePath("/team/apply");
+  revalidatePath("/comps", "layout");
   return { ok: true };
 }
 
@@ -89,12 +95,10 @@ export async function setApplicationStatus(
   applicationId: string,
   status: ApplicationStatus,
 ): Promise<{ error?: string }> {
-  const user = await requireUser("COMP");
+  const user = await requireUser();
   if (!user) return { error: "Unauthorized." };
 
-  const competition = await prisma.competitionProfile.findUnique({
-    where: { userId: user.id },
-  });
+  const competition = await requireActiveCompetition(user.id);
   if (!competition) return { error: "Competition profile missing." };
 
   const app = await prisma.application.findFirst({
@@ -122,12 +126,10 @@ export async function syncMySheet(): Promise<{
   ok?: boolean;
   message?: string;
 }> {
-  const user = await requireUser("COMP");
+  const user = await requireUser();
   if (!user) return { error: "Unauthorized." };
 
-  const competition = await prisma.competitionProfile.findUnique({
-    where: { userId: user.id },
-  });
+  const competition = await requireActiveCompetition(user.id);
   if (!competition) return { error: "Competition profile missing." };
 
   const result = await syncCompetitionSheet(competition.id);

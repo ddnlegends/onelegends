@@ -11,21 +11,12 @@ import {
   teamProfileGaps,
   teamProfileBlockedMessage,
 } from "@/lib/team-profile";
-
-const httpUrl = z
-  .string()
-  .trim()
-  .url("Enter a full http(s) URL.")
-  .refine(
-    (value) => value.startsWith("http://") || value.startsWith("https://"),
-    "Enter a full http(s) URL.",
-  );
+import { getActiveTeamId } from "@/lib/team-access";
+import { storeTeamPhoto, hasTeamPhoto } from "@/lib/team-photo";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Team name is required."),
-  photoUrl: httpUrl,
   blurb: z.string().min(1, "Team blurb is required."),
-  wikiUrl: httpUrl,
   avDriveUrl: z
     .string()
     .min(1, "AV Google Drive file link is required.")
@@ -45,18 +36,51 @@ const dancerSchema = z.object({
   inAV: z.boolean(),
 });
 
+function revalidateLiveTeamSurfaces() {
+  revalidatePath("/team");
+  revalidatePath("/team/profile");
+  revalidatePath("/teams", "layout");
+  revalidatePath("/dashboard");
+  revalidatePath("/judge", "layout");
+  revalidatePath("/comp", "layout");
+}
+
+async function requireApprovedTeam() {
+  const user = await requireUser();
+  if (!user) return { error: "You must be signed in." };
+  const teamId = await getActiveTeamId(user.id);
+  if (!teamId) {
+    return { error: "You don’t have access to a team." };
+  }
+  const membership = await prisma.teamMembership.findUnique({
+    where: { userId_teamId: { userId: user.id, teamId } },
+  });
+  if (membership?.status !== "APPROVED") {
+    return { error: "You don’t have access to a team." };
+  }
+  return { user, teamId };
+}
+
 export async function saveTeamProfile(
-  _prev: { error?: string; ok?: boolean } | undefined,
+  _prev:
+    | { error?: string; ok?: boolean; message?: string; photoUrl?: string }
+    | undefined,
   formData: FormData,
-): Promise<{ error?: string; ok?: boolean }> {
-  const user = await requireUser("TEAM");
-  if (!user) return { error: "You must be signed in as a team." };
+): Promise<{
+  error?: string;
+  ok?: boolean;
+  message?: string;
+  photoUrl?: string;
+}> {
+  const access = await requireApprovedTeam();
+  if (!("teamId" in access) || !access.teamId) {
+    return { error: "error" in access ? access.error : "You don’t have access to a team." };
+  }
+  const teamId = access.teamId;
 
   const parsed = profileSchema.safeParse({
     name: String(formData.get("name") ?? "").trim(),
-    photoUrl: String(formData.get("photoUrl") ?? "").trim(),
     blurb: String(formData.get("blurb") ?? "").trim(),
-    wikiUrl: String(formData.get("wikiUrl") ?? "").trim(),
     avDriveUrl: String(formData.get("avDriveUrl") ?? "").trim(),
     captains: String(formData.get("captains") ?? "").trim(),
     yearsEstablished: String(formData.get("yearsEstablished") ?? "").trim(),
@@ -76,13 +100,35 @@ export async function saveTeamProfile(
     return { error: "Rostered dancers must be at least 1." };
   }
 
+  const existing = await prisma.teamProfile.findUnique({
+    where: { id: teamId },
+    select: { photoUrl: true },
+  });
+  if (!existing) return { error: "Team profile missing." };
+
+  let photoUrl = existing.photoUrl;
+  const photo = formData.get("photo");
+  if (photo instanceof File && photo.size > 0) {
+    try {
+      const stored = await storeTeamPhoto(teamId, photo);
+      if ("error" in stored) return { error: stored.error ?? "Could not save the photo." };
+      photoUrl = stored.url;
+    } catch {
+      return {
+        error: "Could not save the photo. Try a smaller JPEG, PNG, WebP, or GIF (5MB or less).",
+      };
+    }
+  }
+  if (!hasTeamPhoto(photoUrl)) {
+    return { error: "Upload a team photo." };
+  }
+
   await prisma.teamProfile.update({
-    where: { userId: user.id },
+    where: { id: teamId },
     data: {
       name: parsed.data.name,
-      photoUrl: parsed.data.photoUrl,
+      photoUrl,
       blurb: parsed.data.blurb,
-      wikiUrl: parsed.data.wikiUrl,
       avDriveUrl: parsed.data.avDriveUrl,
       captains: parsed.data.captains,
       yearsEstablished: years,
@@ -90,21 +136,19 @@ export async function saveTeamProfile(
     },
   });
 
-  revalidatePath("/team");
-  revalidatePath("/team/profile");
-  revalidatePath("/teams");
-  return { ok: true };
+  revalidateLiveTeamSurfaces();
+  return { ok: true, message: "Changes saved.", photoUrl };
 }
 
 export async function saveDancers(
-  _prev: { error?: string; ok?: boolean } | undefined,
+  _prev: { error?: string; ok?: boolean; message?: string } | undefined,
   formData: FormData,
-): Promise<{ error?: string; ok?: boolean }> {
-  const user = await requireUser("TEAM");
-  if (!user) return { error: "You must be signed in as a team." };
+): Promise<{ error?: string; ok?: boolean; message?: string }> {
+  const access = await requireApprovedTeam();
+  if (!("teamId" in access)) return { error: access.error };
 
   const team = await prisma.teamProfile.findUnique({
-    where: { userId: user.id },
+    where: { id: access.teamId },
   });
   if (!team) return { error: "Team profile missing." };
 
@@ -144,20 +188,19 @@ export async function saveDancers(
     }),
   ]);
 
-  revalidatePath("/team");
-  revalidatePath("/team/profile");
-  return { ok: true };
+  revalidateLiveTeamSurfaces();
+  return { ok: true, message: "Changes saved." };
 }
 
 export async function applyToCompetitions(
   _prev: { error?: string; ok?: boolean; message?: string } | undefined,
   formData: FormData,
 ): Promise<{ error?: string; ok?: boolean; message?: string }> {
-  const user = await requireUser("TEAM");
-  if (!user) return { error: "You must be signed in as a team." };
+  const access = await requireApprovedTeam();
+  if (!("teamId" in access)) return { error: access.error };
 
   const team = await prisma.teamProfile.findUnique({
-    where: { userId: user.id },
+    where: { id: access.teamId },
     include: { dancers: true },
   });
   if (!team) return { error: "Team profile missing." };
@@ -173,7 +216,7 @@ export async function applyToCompetitions(
   }
 
   const comps = await prisma.competitionProfile.findMany({
-    where: { id: { in: selected } },
+    where: { id: { in: selected }, claimedAt: { not: null } },
   });
   const open = comps.filter((c) => isCompetitionOpen(c));
 

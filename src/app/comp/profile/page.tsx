@@ -2,11 +2,14 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { CompProfileForm } from "@/components/CompProfileForm";
 import { toDatetimeLocalValue } from "@/lib/judging";
+import { getActiveCompetitionId } from "@/lib/team-access";
 
 export default async function CompProfilePage() {
   const session = await auth();
+  const competitionId = await getActiveCompetitionId(session!.user.id);
+  if (!competitionId) return null;
   const competition = await prisma.competitionProfile.findUnique({
-    where: { userId: session!.user.id },
+    where: { id: competitionId },
   });
   if (!competition) return null;
 

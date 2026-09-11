@@ -27,36 +27,77 @@ enum JudgeRequestStatus {
   DENIED
 }
 
-model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  role         Role
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+enum TeamMembershipStatus {
+  PENDING
+  APPROVED
+  DENIED
+}
 
-  team        TeamProfile?
-  competition CompetitionProfile?
-  judge       JudgeProfile?
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  passwordHash   String
+  role           Role     @default(TEAM)
+  name           String   @default("")
+  platformAdmin  Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  competition            CompetitionProfile?      @relation("CompPrimary")
+  judge                  JudgeProfile?
+  memberships            TeamMembership[]
+  competitionMemberships CompetitionMembership[]
 }
 
 model TeamProfile {
-  id               String   @id @default(cuid())
-  userId           String   @unique
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String    @id @default(cuid())
+  slug             String    @unique
+  claimCode        String    @unique
+  claimedAt        DateTime?
   name             String
-  photoUrl         String   @default("")
-  blurb            String   @default("")
-  wikiUrl          String   @default("")
-  avDriveUrl       String   @default("")
-  captains         String   @default("")
+  photoUrl         String    @default("")
+  blurb            String    @default("")
+  wikiUrl          String    @default("")
+  avDriveUrl       String    @default("")
+  captains         String    @default("")
   yearsEstablished Int?
   rosterSize       Int?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   dancers      Dancer[]
   applications Application[]
+  memberships  TeamMembership[]
+  invites      TeamInvite[]
+}
+
+model TeamMembership {
+  id          String                 @id @default(cuid())
+  userId      String
+  user        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teamId      String
+  team        TeamProfile            @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  status      TeamMembershipStatus   @default(PENDING)
+  isAdmin     Boolean                @default(false)
+  isPrimary   Boolean                @default(false)
+  requestedAt DateTime               @default(now())
+  decidedAt   DateTime?
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+
+  @@unique([userId, teamId])
+  @@index([teamId, status])
+}
+
+model TeamInvite {
+  id        String      @id @default(cuid())
+  teamId    String
+  team      TeamProfile @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  email     String
+  createdAt DateTime    @default(now())
+
+  @@unique([teamId, email])
+  @@index([email])
 }
 
 model Dancer {
@@ -72,7 +113,7 @@ model Dancer {
 model CompetitionProfile {
   id                   String    @id @default(cuid())
   userId               String?   @unique
-  user                 User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user                 User?     @relation("CompPrimary", fields: [userId], references: [id], onDelete: SetNull)
   slug                 String    @unique
   claimCode            String    @unique
   claimedAt            DateTime?
@@ -96,6 +137,49 @@ model CompetitionProfile {
 
   applications      Application[]
   judgeAssignments  JudgeAssignment[]
+  memberships       CompetitionMembership[]
+  invites           CompInvite[]
+  judgeInvites      JudgeInvite[]
+}
+
+model CompetitionMembership {
+  id          String                 @id @default(cuid())
+  userId      String
+  user        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  competitionId String
+  competition CompetitionProfile     @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  status      TeamMembershipStatus   @default(PENDING)
+  isAdmin     Boolean                @default(false)
+  isPrimary   Boolean                @default(false)
+  requestedAt DateTime               @default(now())
+  decidedAt   DateTime?
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+
+  @@unique([userId, competitionId])
+  @@index([competitionId, status])
+}
+
+model CompInvite {
+  id            String              @id @default(cuid())
+  competitionId String
+  competition   CompetitionProfile  @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  email         String
+  createdAt     DateTime            @default(now())
+
+  @@unique([competitionId, email])
+  @@index([email])
+}
+
+model JudgeInvite {
+  id            String             @id @default(cuid())
+  competitionId String
+  competition   CompetitionProfile @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  email         String
+  createdAt     DateTime           @default(now())
+
+  @@unique([competitionId, email])
+  @@index([email])
 }
 
 model Application {
@@ -172,6 +256,7 @@ model JudgeScore {
   technique          Int
   syncCleanliness    Int
   overallImpression  Int
+  comment            String           @default("")
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 }

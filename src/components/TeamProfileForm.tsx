@@ -1,24 +1,130 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { saveTeamProfile } from "@/app/actions/team";
+import { TeamPhoto } from "@/components/TeamPhoto";
+import { SaveNotice } from "@/components/SaveNotice";
+import {
+  TEAM_PHOTO_TOO_LARGE,
+  isBodyLimitError,
+  teamPhotoFileError,
+} from "@/lib/team-photo-rules";
 
 type Profile = {
   name: string;
   photoUrl: string;
   blurb: string;
-  wikiUrl: string;
   avDriveUrl: string;
   captains: string;
   yearsEstablished: number | null;
   rosterSize: number | null;
 };
 
+type SaveState = {
+  error?: string;
+  ok?: boolean;
+  message?: string;
+  photoUrl?: string;
+};
+
+async function submitTeamProfile(
+  prev: SaveState | undefined,
+  formData: FormData,
+): Promise<SaveState> {
+  const photo = formData.get("photo");
+  if (photo instanceof File && photo.size > 0) {
+    const problem = teamPhotoFileError(photo);
+    if (problem) return { error: problem };
+  }
+
+  try {
+    return await saveTeamProfile(prev, formData);
+  } catch (error) {
+    if (isBodyLimitError(error)) {
+      return { error: TEAM_PHOTO_TOO_LARGE };
+    }
+    return {
+      error: "Could not save the profile. Try a smaller photo (5MB or less).",
+    };
+  }
+}
+
 export function TeamProfileForm({ profile }: { profile: Profile }) {
-  const [state, formAction, pending] = useActionState(saveTeamProfile, undefined);
+  const [state, formAction, pending] = useActionState(
+    submitTeamProfile,
+    undefined,
+  );
+  const [preview, setPreview] = useState<string | null>(null);
+  const [pickedName, setPickedName] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [rosterSize, setRosterSize] = useState(String(profile.rosterSize ?? ""));
+  const photoInput = useRef<HTMLInputElement>(null);
+  const photoSrc = preview ?? state?.photoUrl ?? profile.photoUrl;
+  const notice = photoError ? { error: photoError } : state;
+
+  useEffect(() => {
+    setRosterSize(String(profile.rosterSize ?? ""));
+  }, [profile.rosterSize]);
+
+  useEffect(() => {
+    if (state?.ok) {
+      setPickedName(null);
+      setPreview((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+      if (photoInput.current) photoInput.current.value = "";
+    }
+  }, [state?.ok]);
+
+  function clearPickedFile() {
+    setPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    setPickedName(null);
+    if (photoInput.current) photoInput.current.value = "";
+  }
+
+  function onPhotoChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    setPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    setPickedName(null);
+    if (!file) {
+      setPhotoError(null);
+      return;
+    }
+    const problem = teamPhotoFileError(file);
+    if (problem) {
+      setPhotoError(problem);
+      event.target.value = "";
+      return;
+    }
+    setPhotoError(null);
+    setPickedName(file.name);
+    setPreview(URL.createObjectURL(file));
+  }
+
+  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    const file = photoInput.current?.files?.[0];
+    if (!file) return;
+    const problem = teamPhotoFileError(file);
+    if (problem) {
+      event.preventDefault();
+      setPhotoError(problem);
+      clearPickedFile();
+    }
+  }
 
   return (
-    <form action={formAction} className="space-y-4 rounded-xl border border-line bg-card p-6">
+    <form
+      action={formAction}
+      onSubmit={onSubmit}
+      className="space-y-4 rounded-xl border border-line bg-card p-6"
+    >
       <p className="text-sm text-muted">
         Every field is required. You cannot apply to competitions until this
         profile and the dancer roster below are complete.
@@ -57,30 +163,52 @@ export function TeamProfileForm({ profile }: { profile: Profile }) {
             type="number"
             min={1}
             required
-            defaultValue={profile.rosterSize ?? ""}
+            value={rosterSize}
+            onChange={(e) => setRosterSize(e.target.value)}
           />
         </div>
-        <div className="field">
-          <label htmlFor="photoUrl">Team photo URL</label>
-          <input
-            id="photoUrl"
-            name="photoUrl"
-            type="url"
-            required
-            defaultValue={profile.photoUrl}
-            placeholder="https://"
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="wikiUrl">Team wiki URL</label>
-          <input
-            id="wikiUrl"
-            name="wikiUrl"
-            type="url"
-            required
-            defaultValue={profile.wikiUrl}
-            placeholder="https://"
-          />
+        <div className="sm:col-span-2 space-y-2">
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted">
+            Team photo
+          </span>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <TeamPhoto
+              src={photoSrc}
+              name={profile.name || "Team photo"}
+              size="md"
+            />
+            <div className="min-w-0 flex-1 space-y-2">
+              {pickedName ? (
+                <p className="text-sm">
+                  Selected <span className="font-medium">{pickedName}</span>.
+                  Save the profile to keep it.
+                </p>
+              ) : photoSrc ? (
+                <p className="text-sm font-semibold text-emerald-700">
+                  Photo saved.
+                </p>
+              ) : (
+                <p className="text-sm text-muted">No photo yet.</p>
+              )}
+              <label className="btn btn-ghost w-fit cursor-pointer py-1.5">
+                {photoSrc || pickedName ? "Replace photo" : "Upload photo"}
+                <input
+                  ref={photoInput}
+                  id="photo"
+                  name="photo"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  required={!photoSrc}
+                  className="sr-only"
+                  onChange={onPhotoChange}
+                />
+              </label>
+              <p className="text-xs text-muted">
+                JPEG, PNG, WebP, or GIF up to 5MB. It also shows on your
+                dashboard next to the team name.
+              </p>
+            </div>
+          </div>
         </div>
         <div className="field sm:col-span-2">
           <label htmlFor="avDriveUrl">AV Google Drive link</label>
@@ -103,9 +231,12 @@ export function TeamProfileForm({ profile }: { profile: Profile }) {
           <textarea id="blurb" name="blurb" required defaultValue={profile.blurb} />
         </div>
       </div>
-      {state?.error ? <p className="notice notice-error">{state.error}</p> : null}
-      {state?.ok ? <p className="notice notice-ok">Profile saved.</p> : null}
-      <button className="btn btn-primary" disabled={pending} type="submit">
+      <SaveNotice state={notice} />
+      <button
+        className="btn btn-primary"
+        disabled={pending || Boolean(photoError)}
+        type="submit"
+      >
         {pending ? "Saving…" : "Save Team Profile"}
       </button>
     </form>

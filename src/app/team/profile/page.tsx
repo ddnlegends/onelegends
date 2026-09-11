@@ -1,22 +1,27 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 import { TeamProfileForm } from "@/components/TeamProfileForm";
 import { DancerRoster } from "@/components/DancerRoster";
+import { getActiveTeamId } from "@/lib/team-access";
 
 export default async function TeamProfilePage() {
   const session = await auth();
+  const teamId = await getActiveTeamId(session!.user.id);
+  if (!teamId) redirect("/dashboard");
+
   const team = await prisma.teamProfile.findUnique({
-    where: { userId: session!.user.id },
+    where: { id: teamId },
     include: { dancers: { orderBy: { name: "asc" } } },
   });
-  if (!team) return null;
+  if (!team) redirect("/team");
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="font-heading text-4xl">Team Profile</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          Required before you can apply: photo, blurb, wiki, AV Drive file,
+          Required before you can apply: team photo, blurb, AV Drive file,
           captains, years, roster count, and at least one dancer with a t-shirt
           size. Every selected competition receives this same packet.
         </p>

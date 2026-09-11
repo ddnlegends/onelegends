@@ -4,8 +4,6 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import type { Role } from "@prisma/client";
 
-const ROLES: Role[] = ["TEAM", "COMP", "JUDGE"];
-
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   session: { strategy: "jwt" },
@@ -16,26 +14,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
-        role: { label: "Role", type: "text" },
       },
       async authorize(credentials) {
         const email = String(credentials?.email ?? "")
           .trim()
           .toLowerCase();
         const password = String(credentials?.password ?? "");
-        const role = String(credentials?.role ?? "") as Role;
 
-        if (!email || !password || !ROLES.includes(role)) {
+        if (!email || !password) {
           return null;
         }
 
         const user = await prisma.user.findUnique({ where: { email } });
-        if (!user || user.role !== role) return null;
+        if (!user) return null;
 
         const matches = await bcrypt.compare(password, user.passwordHash);
         if (!matches) return null;
 
-        return { id: user.id, email: user.email, role: user.role };
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          platformAdmin: user.platformAdmin,
+        };
       },
     }),
   ],
@@ -44,17 +46,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.email = user.email;
+        token.name = user.name ?? "";
+        token.platformAdmin = Boolean(
+          "platformAdmin" in user && user.platformAdmin,
+        );
         return token;
       }
       if (!token.id) return token;
 
       const dbUser = await prisma.user.findUnique({
         where: { id: String(token.id) },
-        select: { id: true, role: true },
+        select: { id: true, email: true, name: true, role: true, platformAdmin: true },
       });
       if (!dbUser) return null;
 
+      token.email = dbUser.email;
+      token.name = dbUser.name;
       token.role = dbUser.role;
+      token.platformAdmin = dbUser.platformAdmin;
       return token;
     },
     session({ session, token }) {
@@ -62,7 +72,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return session;
       }
       session.user.id = token.id as string;
+      session.user.email = typeof token.email === "string" ? token.email : "";
+      session.user.name = typeof token.name === "string" ? token.name : "";
       session.user.role = token.role as Role;
+      session.user.platformAdmin = Boolean(token.platformAdmin);
       return session;
     },
   },

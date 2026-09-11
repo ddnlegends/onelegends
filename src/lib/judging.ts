@@ -31,6 +31,12 @@ export function rubricTotal(scores: RubricScores): number {
   );
 }
 
+export function scoreComment(
+  score: { comment?: string | null } | null | undefined,
+): string {
+  return score?.comment?.trim() ?? "";
+}
+
 export function parseRubricScore(value: unknown): number | null {
   const n = typeof value === "number" ? value : Number(value);
   if (!Number.isInteger(n) || n < 0 || n > 10) return null;

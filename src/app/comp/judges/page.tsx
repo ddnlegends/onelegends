@@ -3,12 +3,17 @@ import { prisma } from "@/lib/prisma";
 import { JudgeDecisionButtons } from "@/components/JudgeDecisionButtons";
 import { RequiredJudgeCountForm } from "@/components/RequiredJudgeCountForm";
 import { formatDateTime } from "@/lib/utils";
+import { getActiveCompetitionId } from "@/lib/team-access";
+import { InviteJudgeForm, CancelJudgeInviteForm } from "@/components/AccountForms";
 
 export default async function CompJudgesPage() {
   const session = await auth();
+  const competitionId = await getActiveCompetitionId(session!.user.id);
+  if (!competitionId) return null;
   const competition = await prisma.competitionProfile.findUnique({
-    where: { userId: session!.user.id },
+    where: { id: competitionId },
     include: {
+      judgeInvites: { orderBy: { createdAt: "desc" } },
       judgeAssignments: {
         include: {
           judge: { include: { user: { select: { email: true } } } },
@@ -30,10 +35,13 @@ export default async function CompJudgesPage() {
       <div>
         <h1 className="font-heading text-4xl">Judges</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          Approve each judge yourself. Set how many completed packets unlock
-          named results. Lower N if you need to release early.
+          Invite judges by email. This app does not send mail — they approve
+          the invite the next time they log in. Set how many completed packets
+          unlock named results. Lower N if you need to release early.
         </p>
       </div>
+
+      <InviteJudgeForm competitionId={competition.id} />
 
       <RequiredJudgeCountForm
         value={competition.requiredJudgeCount}
@@ -42,11 +50,25 @@ export default async function CompJudgesPage() {
       />
 
       <section className="space-y-3">
-        <h2 className="font-heading text-2xl">Pending Requests</h2>
-        {pending.length === 0 ? (
+        <h2 className="font-heading text-2xl">Pending</h2>
+        {competition.judgeInvites.length === 0 && pending.length === 0 ? (
           <p className="text-sm text-muted">No requests waiting.</p>
         ) : (
           <ul className="divide-y divide-line rounded-xl border border-line bg-card">
+            {competition.judgeInvites.map((invite) => (
+              <li
+                key={invite.id}
+                className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+              >
+                <div>
+                  <p className="font-medium">{invite.email}</p>
+                  <p className="text-sm text-muted">
+                    Waiting to approve the next time they log in
+                  </p>
+                </div>
+                <CancelJudgeInviteForm inviteId={invite.id} />
+              </li>
+            ))}
             {pending.map((row) => (
               <li
                 key={row.id}

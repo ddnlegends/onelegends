@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { PageShell } from "@/components/PageShell";
-import { dashboardPath } from "@/lib/roles";
+import { getApprovedTeamMemberships } from "@/lib/team-access";
 
 export default async function TeamLayout({
   children,
@@ -11,6 +11,7 @@ export default async function TeamLayout({
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  if (session.user.role !== "TEAM") redirect(dashboardPath(session.user.role));
+  const memberships = await getApprovedTeamMemberships(session.user.id);
+  if (memberships.length === 0) redirect("/dashboard");
   return <PageShell>{children}</PageShell>;
 }

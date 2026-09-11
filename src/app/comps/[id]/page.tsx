@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { isCompetitionOpen } from "@/lib/judging";
 import { formatDateTime } from "@/lib/utils";
+import { userHasTeamAccess } from "@/lib/team-access";
 
 export default async function CompPublicPage({
   params,
@@ -13,6 +14,8 @@ export default async function CompPublicPage({
 }) {
   const { id } = await params;
   const session = await auth();
+  const canApply =
+    session?.user && (await userHasTeamAccess(session.user.id));
   const comp = await prisma.competitionProfile.findUnique({ where: { id } });
   if (!comp) notFound();
 
@@ -55,7 +58,7 @@ export default async function CompPublicPage({
           </div>
         ))}
       </dl>
-      {session?.user.role === "TEAM" && open ? (
+      {canApply && open ? (
         <Link href="/team/apply" className="btn btn-primary">
           Apply from your profile
         </Link>

@@ -6,95 +6,34 @@ import { loginAction, registerAction } from "@/app/actions/auth";
 import { PASSWORD_RULES, passwordMeetsRules } from "@/lib/password";
 
 type Mode = "login" | "register";
-type AccountRole = "TEAM" | "COMP" | "JUDGE";
 
-export function AuthForm({
-  mode,
-  defaultRole = "TEAM",
-}: {
-  mode: Mode;
-  defaultRole?: AccountRole;
-}) {
+export function AuthForm({ mode }: { mode: Mode }) {
   const action = mode === "login" ? loginAction : registerAction;
   const [state, formAction, pending] = useActionState(action, undefined);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [role, setRole] = useState<AccountRole>(defaultRole);
 
   const allRulesMet = useMemo(() => passwordMeetsRules(password), [password]);
   const passwordsMatch = confirm.length > 0 && password === confirm;
   const canRegister = allRulesMet && passwordsMatch;
 
-  const nameLabel = role === "TEAM" ? "Team Name" : "Your Name";
-
   return (
     <form action={formAction} className="mx-auto max-w-md space-y-4 rounded-xl border border-line bg-card p-6">
-      <fieldset className="grid grid-cols-3 gap-2">
-        {(
-          [
-            ["TEAM", "Team"],
-            ["COMP", "Competition"],
-            ["JUDGE", "Judge"],
-          ] as const
-        ).map(([value, label]) => (
-          <label
-            key={value}
-            className="flex cursor-pointer items-center gap-2 rounded-md border border-line bg-white px-2 py-2 text-sm sm:px-3"
-          >
-            <input
-              type="radio"
-              name="role"
-              value={value}
-              checked={role === value}
-              onChange={() => setRole(value)}
-            />
-            {label}
-          </label>
-        ))}
-      </fieldset>
-      {mode === "login" ? (
-        <p className="text-xs text-muted">
-          Teams apply. Competitions claim an official listing with a bid code,
-          then see counts until judging is complete. Judges score anonymous
-          packets and never see team names.
-        </p>
-      ) : (
-        <p className="text-xs text-muted">
-          {role === "COMP"
-            ? "Enter the claim code you were given for your bid competition. That links this login to the listing teams already see."
-            : "Teams and judges create accounts here. Competitions must have an official claim code."}
-        </p>
-      )}
-
-      {mode === "register" && role === "COMP" ? (
-        <div className="field">
-          <label htmlFor="claimCode">Competition Claim Code</label>
-          <input
-            id="claimCode"
-            name="claimCode"
-            required
-            autoCapitalize="characters"
-            spellCheck={false}
-            placeholder="LGND-7K2M"
-          />
-        </div>
-      ) : null}
-
-      {mode === "register" && role !== "COMP" ? (
-        <div className="field">
-          <label htmlFor="name">{nameLabel}</label>
-          <input
-            id="name"
-            name="name"
-            required
-            placeholder={role === "TEAM" ? "Saffron Step" : "Priya Kapoor"}
-          />
-        </div>
-      ) : null}
+      <p className="text-xs text-muted">
+        One login for the whole circuit. After you sign in you land on your
+        dashboard. Use Code Claim to attach a team or competition with a code.
+      </p>
 
       <div className="field">
         <label htmlFor="email">Email</label>
-        <input id="email" name="email" type="email" required autoComplete="email" />
+        <input
+          id="email"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          placeholder="shoutoutdukerhydhun@gmail.com"
+        />
       </div>
       <div className="field">
         <label htmlFor="password">Password</label>
@@ -160,6 +99,13 @@ export function AuthForm({
         className="btn btn-primary w-full"
         disabled={pending || (mode === "register" && !canRegister)}
         type="submit"
+        onClick={() => {
+          try {
+            sessionStorage.removeItem("onelegends-invites-seen");
+          } catch {
+            /* ignore */
+          }
+        }}
       >
         {pending
           ? "Working…"

@@ -2,6 +2,11 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { isCompetitionOpen } from "@/lib/judging";
+import {
+  getActiveCompetitionId,
+  getApprovedCompMemberships,
+} from "@/lib/team-access";
+import { setActiveCompAction } from "@/app/actions/team-access";
 
 function shuffle<T>(items: T[], seed: string): T[] {
   const copy = [...items];
@@ -19,8 +24,12 @@ function shuffle<T>(items: T[], seed: string): T[] {
 
 export default async function CompDashboardPage() {
   const session = await auth();
+  const userId = session!.user.id;
+  const competitionId = await getActiveCompetitionId(userId);
+  if (!competitionId) return null;
+  const memberships = await getApprovedCompMemberships(userId);
   const competition = await prisma.competitionProfile.findUnique({
-    where: { userId: session!.user.id },
+    where: { id: competitionId },
     include: {
       applications: {
         include: {
@@ -88,11 +97,36 @@ export default async function CompDashboardPage() {
           <Link href="/comp/judges" className="btn btn-ghost">
             Judges
           </Link>
+          <Link href="/comp/access" className="btn btn-ghost">
+            Admins
+          </Link>
           <Link href="/comp/profile" className="btn btn-ghost">
             Edit Details
           </Link>
         </div>
       </div>
+
+      {memberships.length > 1 ? (
+        <form action={setActiveCompAction} className="flex flex-wrap items-end gap-3">
+          <div className="field">
+            <label htmlFor="active-comp">Active competition</label>
+            <select
+              id="active-comp"
+              name="competitionId"
+              defaultValue={competitionId}
+            >
+              {memberships.map((m) => (
+                <option key={m.competitionId} value={m.competitionId}>
+                  {m.competition.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button className="btn btn-ghost" type="submit">
+            Switch
+          </button>
+        </form>
+      ) : null}
 
       <div className="rounded-xl border border-line bg-blush p-5">
         <p className="text-sm text-ink/80">

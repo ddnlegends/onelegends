@@ -41,8 +41,11 @@ export function CompProfileForm({ profile }: { profile: Profile }) {
           </p>
         </div>
         <div className="field">
-          <label htmlFor="dates">Dates</label>
+          <label htmlFor="dates">Event dates</label>
           <input id="dates" name="dates" defaultValue={profile.dates} />
+          <p className="text-xs text-muted">
+            Shown as Event on Home and the public listing.
+          </p>
         </div>
         <div className="field">
           <label htmlFor="location">Location (city)</label>
@@ -57,8 +60,9 @@ export function CompProfileForm({ profile }: { profile: Profile }) {
             defaultValue={profile.applicationDeadline}
           />
           <p className="text-xs text-muted">
-            Sharp cutoff. Clear the field for no clock deadline. You can extend
-            it later if you reopen apps.
+            Shown as Apps close on Home. After this time, Open becomes Closed
+            even if Accepting Applications is still checked. Clear the field for
+            no clock deadline.
           </p>
         </div>
         <div className="field">

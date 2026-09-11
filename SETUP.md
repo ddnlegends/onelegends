@@ -92,9 +92,7 @@ npx prisma migrate deploy
 npm run db:seed
 ```
 
-That creates the tables in Supabase and leaves **no team, judge, or competition logins**. Season listings exist on Home / Apply, **unclaimed**. Competition organizers register with a code from **[COMP_CODES.md](COMP_CODES.md)**.
-
-Teams and judges register normally (no code).
+That creates the tables in Supabase and leaves **no dance-team logins**. Season listings exist on Home / Apply, **unclaimed**. After you register, claim a competition from Account with a code from **[COMP_CODES.md](COMP_CODES.md)**. Legends Admin (`legendstech@desidancenetwork.org`) is the only login that can create teams and hand out team claim codes.
 
 Anonymous judging is described in [SUAV.md](SUAV.md).
 
@@ -106,9 +104,11 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-- Home is the competition list (official bid names)
-- **Team** / **Judge**: Register
-- **Competition**: Register + claim code → that login is that listing
+- Home is the competition list (official bid names) plus **How it works**
+- **Register / Log In**: email and password only
+- **Account**: claim a team or competition with a code, or approve invites
+- **Competition**: bid code → primary admin for that listing
+- **Team**: Legends Admin creates the team and gives you a claim code
 
 ## 6. Optional Google Sheets
 

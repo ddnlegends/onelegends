@@ -8,8 +8,8 @@ export default function LoginPage() {
         <div className="text-center">
           <h1 className="mt-2 font-heading text-3xl tracking-[0.08em]">Log In</h1>
           <p className="mt-2 text-sm text-muted">
-            Team, competition, and judge accounts are separate. Competitions
-            claim their listing with a bid code when they register.
+            Email and password only. After you sign in you land on your
+            dashboard.
           </p>
         </div>
         <AuthForm mode="login" />

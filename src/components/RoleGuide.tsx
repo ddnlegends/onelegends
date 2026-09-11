@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import type { Role } from "@prisma/client";
 
 type GuideId = "TEAM" | "JUDGE" | "COMP";
 
@@ -21,107 +20,103 @@ const GUIDES: Guide[] = [
   {
     id: "TEAM",
     tab: "Teams",
-    kicker: "One profile · many comps",
+    kicker: "One login · claim code",
     title: "How teams apply",
     intro:
-      "You build one team profile, then check every competition you want. Payment stays off this site.",
+      "Everyone uses the same email and password login. Circuit ops creates the team listing and a claim code. The first person to enter that code becomes the primary admin. Payment stays off this site.",
     steps: [
       {
-        title: "Register as a team",
-        body: "Create a Team account with email, password, and your team name. This is not a competition or judge login — pick Team on the register screen.",
+        title: "Register once",
+        body: "Create an account with email and password only. That does not create a team. After you log in, you land on your dashboard. Open Code Claim with the team code.",
       },
       {
-        title: "Fill Team Profile",
-        body: "Every field is required: blurb, captains, wiki, photo, years established, roster size, and a Drive file AV. You cannot apply until this is saved.",
+        title: "Claim the team with the code",
+        body: "Only Legends Admin can create a team. Creating one generates a claim code. The app does not email anyone — ops gives you the code. First successful claim becomes primary admin and uses the code up. If it is already claimed, you will see that plus a blurred admin email (first two letters of the local part).",
       },
       {
-        title: "Add the dancer roster",
-        body: "List each dancer with a t-shirt size. Dietary notes are optional if there are none. Mark who is in the AV. At least one dancer is required to apply.",
+        title: "Invite secondary admins by email",
+        body: "Only the primary admin can invite more admins. Type their email. If they already have an account, they get a popup the next time they log in. If they do not, they get the same popup after they register. Clicking outside does not dismiss it. It also stays under Requests on your dashboard until they Approve. There is no “that’s not me” button that kills the invite.",
       },
       {
-        title: "Paste one AV Drive link",
-        body: "Use a Google Drive file link (not a folder) and share it so anyone with the link can view. That same video is sent to every comp you check. Folder links cannot play in the judge packet.",
+        title: "Fill Team Profile and roster",
+        body: "Every field is required: blurb, captains, uploaded team photo, years established, roster size, and a Drive file AV. List each dancer with a t-shirt size. You cannot apply until this is saved.",
       },
       {
         title: "Apply with checkboxes",
-        body: "Apply stays locked until the profile and roster are complete. Then check the competitions you want and submit once. Each listing has its own deadline. Late apps are locked unless that competition extends the date.",
+        body: "Apply stays locked until the profile and roster are complete. Then check the competitions you want and submit once. Each listing has its own deadline.",
       },
     ],
-    cta: { href: "/register?role=TEAM", label: "Register a team" },
-    signedInCta: { href: "/team/apply", label: "Go to Apply" },
+    cta: { href: "/register", label: "Create an account" },
+    signedInCta: { href: "/claim", label: "Code Claim" },
   },
   {
     id: "JUDGE",
     tab: "Judges",
-    kicker: "Blind packets · no names",
+    kicker: "Email invite · blind packets",
     title: "How judges score",
     intro:
-      "You never see team names. Each judge gets a shuffled Team 1…K packet and scores the same rubric.",
+      "Judges are invited by email from a competition. There is no judge claim code. You never see team names. Each judge gets a shuffled Team 1…K packet and scores the same rubric.",
     steps: [
       {
-        title: "Register as a judge",
-        body: "Create a Judge account, then fill Judge Profile with your name and phone. Competitions use that to know who requested access.",
+        title: "Register or log in",
+        body: "Same email and password as everyone else. You do not pick “Judge” on the form.",
       },
       {
-        title: "Request the comps you will judge",
-        body: "Nothing is automatic. Open Judging, pick competitions, and send a request. Wait until that competition Approves you. Denied requests stay off your to-do list.",
+        title: "Approve the invite",
+        body: "A competition types your email in-app. This site does not send real email. The next time you log in (or right after you register), a popup asks you to Approve. It also stays under Requests on your dashboard until you do.",
       },
       {
         title: "Wait until applications close",
-        body: "Your packet is built the first time you open it after that competition’s apps are closed. If they later extend the deadline, judges who already opened a packet keep their snapshot.",
+        body: "Your packet is the list of applied teams, built the first time you open it after apps close. The AV and profile you watch are live — if a team fixes a Drive link, you see the update. If they later extend the deadline, judges who already opened a packet keep that team list.",
       },
       {
         title: "Score Team 1, Team 2, …",
-        body: "Watch the AV and score 0–10 for choreography, formations, technique, sync & cleanliness, and overall impression (50 total). Your Team 1 is not another judge’s Team 1. Jump between teams like an exam — scores save as you go.",
+        body: "Watch the AV and score 0–10 for choreography, formations, technique, sync & cleanliness, and overall impression (50 total). Leave an optional comment for the competition if the link is invalid or the video will not play — other judges will not see it. Your Team 1 is not another judge’s Team 1. Jump between teams like an exam — scores save as you go.",
       },
       {
         title: "Submit Judging when every slot is filled",
         body: "Submit locks your packet. You will not see rankings, other judges’ scores, or team names. After N judges submit, only the competition login sees named results.",
       },
     ],
-    cta: { href: "/register?role=JUDGE", label: "Register as a judge" },
-    signedInCta: { href: "/judge", label: "Open Judging" },
+    cta: { href: "/register", label: "Create an account" },
+    signedInCta: { href: "/dashboard", label: "Your dashboard" },
   },
   {
     id: "COMP",
     tab: "Competitions",
-    kicker: "Claim a listing · then reveal",
+    kicker: "Bid code · then invite",
     title: "How competitions run apps",
     intro:
-      "Listings already appear on Home. You claim yours with a bid code. You see counts until anonymous judging is done.",
+      "Listings already appear on Home. You claim yours with a bid code — same door as teams. First claim is the primary admin. You see counts until anonymous judging is done.",
     steps: [
       {
-        title: "Register with your claim code",
-        body: "On Register, choose Competition and enter the official bid code (one code, one listing, one account). Teams already see the name on the public list. First valid claim wins.",
+        title: "Register, then claim with the bid code",
+        body: "One login for the whole site. After you sign in, enter the official bid code on Code Claim (one code, one listing). First valid claim wins. If it is already claimed, you will see that plus a blurred admin email.",
+      },
+      {
+        title: "Invite secondary admins",
+        body: "Only the primary admin can invite more competition admins by email. Same popup-on-login pattern as teams. Requests on your dashboard hold anything not yet approved.",
       },
       {
         title: "Set Comp Details",
-        body: "Dates, city, venue, stage, lighting, production notes, application deadline, and required judge count (N). The competition name stays locked to the official listing. Optionally paste a Google Sheet URL for applicant export.",
+        body: "Dates, city, venue, stage, lighting, production notes, application deadline, and required judge count (N). The competition name stays locked to the official listing.",
       },
       {
-        title: "Watch stats, not names",
-        body: "Application Stats shows volume and aggregates only. You do not see which teams applied until viewing is complete. Payment is handled off this site.",
-      },
-      {
-        title: "Approve judges",
-        body: "Judges request access. Open Judges and Approve or Deny each person. They cannot open a packet until you approve. You can lower N later if fewer judges finish than you planned.",
+        title: "Invite judges by email",
+        body: "Type a judge’s email. This app does not send mail — they approve in the popup / Account until they click Approve.",
       },
       {
         title: "Release Viewing Results",
-        body: "When N approved judges have submitted, ranked names unlock: scores, z-scores, AVs, and accept / waitlist / decline. Judges still cannot see that table. Until then, even you do not get the named list.",
+        body: "When N invited judges have submitted, ranked names unlock: scores, z-scores, judge comments, live AVs, and accept / waitlist / decline. Judges still cannot see that table. Until then, even you do not get the named list.",
       },
     ],
-    cta: { href: "/register?role=COMP", label: "Claim a competition" },
-    signedInCta: { href: "/comp", label: "Application Stats" },
+    cta: { href: "/register", label: "Create an account" },
+    signedInCta: { href: "/claim", label: "Code Claim" },
   },
 ];
 
-export function RoleGuide({ sessionRole }: { sessionRole?: Role }) {
-  const initial =
-    sessionRole === "JUDGE" || sessionRole === "COMP" || sessionRole === "TEAM"
-      ? sessionRole
-      : "TEAM";
-  const [activeId, setActiveId] = useState<GuideId>(initial);
+export function RoleGuide({ signedIn }: { signedIn?: boolean }) {
+  const [activeId, setActiveId] = useState<GuideId>("TEAM");
   const index = GUIDES.findIndex((g) => g.id === activeId);
   const guide = GUIDES[index] ?? GUIDES[0];
 
@@ -131,9 +126,7 @@ export function RoleGuide({ sessionRole }: { sessionRole?: Role }) {
   }
 
   const cta =
-    sessionRole === guide.id && guide.signedInCta
-      ? guide.signedInCta
-      : guide.cta;
+    signedIn && guide.signedInCta ? guide.signedInCta : guide.cta;
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-10">
@@ -142,8 +135,10 @@ export function RoleGuide({ sessionRole }: { sessionRole?: Role }) {
           <h2 className="font-heading text-2xl tracking-[0.12em]">
             How it works
           </h2>
-          <p className="mt-2 max-w-xl text-muted">
-            Three roles, three walkthroughs. Pick the one that is you.
+          <p className="mt-2 max-w-2xl text-muted">
+            One login for everyone. Teams and competitions are claimed with a
+            code. Judges are invited by email. You can be on a team and a
+            competition at the same time.
           </p>
         </div>
       </div>
@@ -151,7 +146,7 @@ export function RoleGuide({ sessionRole }: { sessionRole?: Role }) {
       <div className="overflow-hidden rounded-2xl border border-line bg-card shadow-[0_12px_40px_rgba(142,28,66,0.06)]">
         <div
           role="tablist"
-          aria-label="Choose a role"
+          aria-label="Choose a walkthrough"
           className="grid grid-cols-3 border-b border-line bg-blush"
         >
           {GUIDES.map((item) => {

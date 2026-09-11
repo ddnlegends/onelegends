@@ -3,12 +3,16 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { dashboardPath } from "@/lib/roles";
+import { userHasCompAccess, userHasTeamAccess } from "@/lib/team-access";
+import { TeamPhoto } from "@/components/TeamPhoto";
 
 export default async function TeamsDirectoryPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  if (session.user.role !== "TEAM") redirect(dashboardPath(session.user.role));
+  const canBrowse =
+    (await userHasTeamAccess(session.user.id)) ||
+    (await userHasCompAccess(session.user.id));
+  if (!canBrowse) redirect("/dashboard");
 
   const teams = await prisma.teamProfile.findMany({
     orderBy: { name: "asc" },
@@ -21,7 +25,7 @@ export default async function TeamsDirectoryPage() {
       <div>
         <h1 className="font-heading text-4xl">Teams</h1>
         <p className="mt-2 text-muted">
-          Competitions can open a team for AV, wiki, roster, and hospitality
+          Competitions can open a team for AV, roster, and hospitality
           details. Dietary and shirt sizes are on each team page for comps.
         </p>
       </div>
@@ -29,12 +33,7 @@ export default async function TeamsDirectoryPage() {
         {teams.map((team) => (
           <li key={team.id} className="flex items-center gap-4 px-4 py-3">
             {team.photoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={team.photoUrl}
-                alt=""
-                className="h-14 w-14 rounded-md object-cover"
-              />
+              <TeamPhoto src={team.photoUrl} name={team.name} size="sm" />
             ) : (
               <div className="h-14 w-14 rounded-md bg-line" />
             )}

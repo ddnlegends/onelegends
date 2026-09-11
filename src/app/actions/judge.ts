@@ -12,8 +12,8 @@ export async function saveJudgeProfile(
   _prev: { error?: string; ok?: boolean } | undefined,
   formData: FormData,
 ): Promise<{ error?: string; ok?: boolean }> {
-  const user = await requireUser("JUDGE");
-  if (!user) return { error: "You must be signed in as a judge." };
+  const user = await requireUser();
+  if (!user) return { error: "You must be signed in." };
 
   const name = String(formData.get("name") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
@@ -29,95 +29,21 @@ export async function saveJudgeProfile(
   return { ok: true };
 }
 
-export async function requestCompAccess(
+const COMMENT_MAX = 1000;
+
+export async function saveTeamScores(
   _prev: { error?: string; ok?: boolean; message?: string } | undefined,
   formData: FormData,
 ): Promise<{ error?: string; ok?: boolean; message?: string }> {
-  const user = await requireUser("JUDGE");
-  if (!user) return { error: "You must be signed in as a judge." };
-
-  const judge = await prisma.judgeProfile.findUnique({
-    where: { userId: user.id },
-  });
-  if (!judge?.name.trim()) {
-    return { error: "Add your name on your judge profile first." };
-  }
-
-  const selected = formData.getAll("competitionId").map(String);
-  if (selected.length === 0) {
-    return { error: "Select at least one competition." };
-  }
-
-  const comps = await prisma.competitionProfile.findMany({
-    where: { id: { in: selected } },
-    select: { id: true },
-  });
-  if (comps.length === 0) {
-    return { error: "Those competitions were not found." };
-  }
-
-  const existing = await prisma.judgeAssignment.findMany({
-    where: {
-      judgeId: judge.id,
-      competitionId: { in: comps.map((c) => c.id) },
-    },
-  });
-  const byComp = new Map(existing.map((row) => [row.competitionId, row]));
-
-  let created = 0;
-  let reopened = 0;
-  for (const comp of comps) {
-    const current = byComp.get(comp.id);
-    if (!current) {
-      await prisma.judgeAssignment.create({
-        data: { judgeId: judge.id, competitionId: comp.id },
-      });
-      created += 1;
-      continue;
-    }
-    if (current.status === "DENIED") {
-      await prisma.judgeAssignment.update({
-        where: { id: current.id },
-        data: {
-          status: "PENDING",
-          requestedAt: new Date(),
-          decidedAt: null,
-          submittedAt: null,
-        },
-      });
-      reopened += 1;
-    }
-  }
-
-  const parts = [];
-  if (created) {
-    parts.push(
-      `Requested ${created} competition${created === 1 ? "" : "s"}.`,
-    );
-  }
-  if (reopened) {
-    parts.push(
-      `Re-requested ${reopened} previously denied competition${reopened === 1 ? "" : "s"}.`,
-    );
-  }
-  if (!parts.length) {
-    parts.push("No new requests. Pending or approved comps were skipped.");
-  }
-
-  revalidatePath("/judge");
-  revalidatePath("/comp/judges");
-  return { ok: true, message: parts.join(" ") };
-}
-
-export async function saveTeamScores(
-  _prev: { error?: string; ok?: boolean } | undefined,
-  formData: FormData,
-): Promise<{ error?: string; ok?: boolean }> {
-  const user = await requireUser("JUDGE");
-  if (!user) return { error: "You must be signed in as a judge." };
+  const user = await requireUser();
+  if (!user) return { error: "You must be signed in." };
 
   const assignmentId = String(formData.get("assignmentId") ?? "");
   const position = Number(formData.get("position") ?? "");
+  const comment = String(formData.get("comment") ?? "").trim();
+  if (comment.length > COMMENT_MAX) {
+    return { error: `Comment must be ${COMMENT_MAX} characters or less.` };
+  }
   const choreography = parseRubricScore(formData.get("choreography"));
   const formations = parseRubricScore(formData.get("formations"));
   const technique = parseRubricScore(formData.get("technique"));
@@ -161,6 +87,7 @@ export async function saveTeamScores(
       technique,
       syncCleanliness,
       overallImpression,
+      comment,
     },
     create: {
       assignmentId,
@@ -170,20 +97,25 @@ export async function saveTeamScores(
       technique,
       syncCleanliness,
       overallImpression,
+      comment,
     },
   });
 
   revalidatePath(`/judge/${assignment.competitionId}`);
   revalidatePath(`/judge/${assignment.competitionId}/team/${position}`);
-  return { ok: true };
+  revalidatePath("/comp/results");
+  return {
+    ok: true,
+    message: `Scores saved for Team ${position}.`,
+  };
 }
 
 export async function submitJudgingPacket(
   _prev: { error?: string; ok?: boolean } | undefined,
   formData: FormData,
 ): Promise<{ error?: string; ok?: boolean }> {
-  const user = await requireUser("JUDGE");
-  if (!user) return { error: "You must be signed in as a judge." };
+  const user = await requireUser();
+  if (!user) return { error: "You must be signed in." };
 
   const assignmentId = String(formData.get("assignmentId") ?? "");
   const assignment = await prisma.judgeAssignment.findFirst({

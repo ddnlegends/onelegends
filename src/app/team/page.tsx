@@ -1,13 +1,25 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { formatDate, statusLabel } from "@/lib/utils";
 import { teamProfileGaps } from "@/lib/team-profile";
+import {
+  getActiveTeamId,
+  getApprovedTeamMemberships,
+} from "@/lib/team-access";
+import { setActiveTeamAction } from "@/app/actions/team-access";
+import { TeamPhoto } from "@/components/TeamPhoto";
 
 export default async function TeamDashboardPage() {
   const session = await auth();
+  const userId = session!.user.id;
+  const memberships = await getApprovedTeamMemberships(userId);
+  const activeTeamId = await getActiveTeamId(userId);
+  if (!activeTeamId) redirect("/dashboard");
+
   const team = await prisma.teamProfile.findUnique({
-    where: { userId: session!.user.id },
+    where: { id: activeTeamId },
     include: {
       applications: {
         include: { competition: true },
@@ -25,22 +37,47 @@ export default async function TeamDashboardPage() {
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="font-heading text-4xl">{team.name || "Your team"}</h1>
-          <p className="mt-2 text-muted">
-            Keep one team profile. You cannot apply until every profile field
-            and the dancer roster are filled in.
-          </p>
+        <div className="flex items-center gap-4">
+          <TeamPhoto src={team.photoUrl} name={team.name || "Your team"} size="lg" />
+          <div>
+            <h1 className="font-heading text-4xl">{team.name || "Your team"}</h1>
+            <p className="mt-2 text-muted">
+              {gaps.length
+                ? "Keep one team profile. You cannot apply until every profile field and the dancer roster are filled in."
+                : "Ready to apply."}
+            </p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Link href="/team/profile" className="btn btn-ghost">
             Edit Team Profile
+          </Link>
+          <Link href="/team/access" className="btn btn-ghost">
+            Admins
           </Link>
           <Link href={applyHref} className="btn btn-primary">
             {gaps.length ? "Finish profile to apply" : "Apply"}
           </Link>
         </div>
       </div>
+
+      {memberships.length > 1 ? (
+        <form action={setActiveTeamAction} className="flex flex-wrap items-end gap-3">
+          <div className="field">
+            <label htmlFor="active-team">Active team</label>
+            <select id="active-team" name="teamId" defaultValue={activeTeamId}>
+              {memberships.map((m) => (
+                <option key={m.teamId} value={m.teamId}>
+                  {m.team.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button className="btn btn-ghost" type="submit">
+            Switch
+          </button>
+        </form>
+      ) : null}
 
       {gaps.length ? (
         <p className="notice notice-error">
@@ -68,7 +105,7 @@ export default async function TeamDashboardPage() {
         {team.applications.length === 0 ? (
           <p className="text-muted">
             None yet.{" "}
-            <Link href="/team/apply" className="underline">
+            <Link href={applyHref} className="underline">
               Apply to comps
             </Link>
             .

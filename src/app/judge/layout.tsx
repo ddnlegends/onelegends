@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { PageShell } from "@/components/PageShell";
-import { dashboardPath } from "@/lib/roles";
+import { userHasJudgeAccess } from "@/lib/team-access";
 
 export default async function JudgeLayout({
   children,
@@ -11,6 +11,6 @@ export default async function JudgeLayout({
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  if (session.user.role !== "JUDGE") redirect(dashboardPath(session.user.role));
+  if (!(await userHasJudgeAccess(session.user.id))) redirect("/dashboard");
   return <PageShell>{children}</PageShell>;
 }

@@ -1,24 +1,15 @@
 import { parseDriveUrl } from "@/lib/drive";
+import { hasTeamPhoto } from "@/lib/team-photo";
 
 export type TeamProfileForApply = {
   name: string;
   photoUrl: string;
   blurb: string;
-  wikiUrl: string;
   avDriveUrl: string;
   captains: string;
   yearsEstablished: number | null;
   dancers: { name: string; tshirtSize: string }[];
 };
-
-function looksLikeHttpUrl(value: string): boolean {
-  try {
-    const url = new URL(value.trim());
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
 
 export function teamProfileGaps(team: TeamProfileForApply): string[] {
   const missing: string[] = [];
@@ -28,8 +19,7 @@ export function teamProfileGaps(team: TeamProfileForApply): string[] {
   if (team.yearsEstablished == null || !Number.isFinite(team.yearsEstablished)) {
     missing.push("years established");
   }
-  if (!looksLikeHttpUrl(team.photoUrl)) missing.push("team photo URL");
-  if (!looksLikeHttpUrl(team.wikiUrl)) missing.push("team wiki URL");
+  if (!hasTeamPhoto(team.photoUrl)) missing.push("team photo");
   if (!team.blurb.trim()) missing.push("team blurb");
 
   const drive = parseDriveUrl(team.avDriveUrl);

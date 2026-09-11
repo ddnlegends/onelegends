@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { saveTeamScores } from "@/app/actions/judge";
 import { RUBRIC_CATEGORIES, rubricTotal } from "@/lib/judging";
 import { DriveAvPlayer } from "@/components/DriveAvPlayer";
+import { SaveNotice } from "@/components/SaveNotice";
 
 const SCORE_OPTIONS = Array.from({ length: 11 }, (_, i) => i);
 
@@ -14,6 +15,7 @@ type Saved = {
   technique: number;
   syncCleanliness: number;
   overallImpression: number;
+  comment?: string;
 };
 
 export function JudgeScoreForm({
@@ -39,7 +41,11 @@ export function JudgeScoreForm({
 
   return (
     <div className="space-y-6">
-      <DriveAvPlayer url={avDriveUrl} label={`Team ${position} audition video`} />
+      <DriveAvPlayer
+        url={avDriveUrl}
+        label={`Team ${position} audition video`}
+        scoringHint
+      />
 
       <form action={formAction} className="space-y-4 rounded-xl border border-line bg-card">
         <input type="hidden" name="assignmentId" value={assignmentId} />
@@ -75,17 +81,29 @@ export function JudgeScoreForm({
             </div>
           ))}
         </div>
+        <div className="field px-4">
+          <label htmlFor="comment">Comment for the competition</label>
+          <textarea
+            id="comment"
+            name="comment"
+            maxLength={1000}
+            disabled={locked}
+            defaultValue={saved?.comment ?? ""}
+            placeholder="Optional. Invalid Drive link, video won’t play, wrong file, etc."
+          />
+          <p className="text-xs text-muted">
+            The competition sees this after results unlock. Other judges never
+            see it, and the team name stays hidden from you.
+          </p>
+        </div>
         <p className="px-4 text-sm text-muted">
           {saved
             ? `Saved total: ${rubricTotal(saved)} / 50. You can change scores until you submit the full packet.`
             : "Save this team, then continue. You can come back from the packet list."}
         </p>
-        {state?.error ? (
-          <p className="mx-4 notice notice-error">{state.error}</p>
-        ) : null}
-        {state?.ok ? (
-          <p className="mx-4 notice notice-ok">Scores saved for Team {position}.</p>
-        ) : null}
+        <div className="px-4">
+          <SaveNotice state={state} fallbackOk={`Scores saved for Team ${position}.`} />
+        </div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-4">
           {prev ? (
             <Link

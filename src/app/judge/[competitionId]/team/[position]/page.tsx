@@ -54,7 +54,9 @@ export default async function JudgeTeamPage({
           </p>
           <h1 className="font-heading text-4xl">Team {position}</h1>
           <p className="mt-2 text-sm text-muted">
-            {position} of {totalTeams} in your viewing order
+            {position} of {totalTeams} in your viewing order. The video is the
+            team’s current profile AV — if they fix the Drive link, refresh this
+            page.
           </p>
         </div>
         <Link href={`/judge/${competitionId}`} className="btn btn-ghost">

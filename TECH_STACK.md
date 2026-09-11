@@ -58,7 +58,7 @@ The site is a **Next.js app**. Login is **this app’s Auth.js**, not Supabase A
 | **Prisma schema** | `prisma/schema.prisma` | The source of truth for tables and relations. Edit this, then migrate. |
 | **Prisma Migrate** | `prisma` CLI | Turns schema changes into SQL in `prisma/migrations/`, then applies them to Supabase (`npm run db:migrate` / `npx prisma migrate deploy`). Uses `DIRECT_URL` (port **5432**) because migrations cannot run through transaction pooling. |
 | **Prisma Client** | `@prisma/client` | TypeScript queries in the app (`prisma.user.findUnique`, `create`, etc.). Generated on `npm install` (`postinstall`) and before `next build`. Uses `DATABASE_URL` (port **6543**, `pgbouncer=true`) so many serverless-style queries do not exhaust connections. |
-| **Prisma seed** | `tsx prisma/seed.ts` | Wipes app rows and restores the 23 unclaimed bid listings. Run with `npm run db:seed`. |
+| **Prisma seed** | `tsx prisma/seed.ts` | Wipes app rows, restores bid listings, and seeds the Legends Admin ops account. Run with `npm run db:seed`. |
 
 **Two URLs, one database**
 
@@ -78,15 +78,15 @@ The site is a **Next.js app**. Login is **this app’s Auth.js**, not Supabase A
 | Piece | Package | Used for |
 | --- | --- | --- |
 | **Auth.js (NextAuth v5)** | `next-auth` | Email + password login, signed session cookie, `auth()` in server layouts/actions, `signIn` / `signOut`. Config: `src/auth.ts`. HTTP handlers: `src/app/api/auth/[...nextauth]/route.ts`. |
-| **Credentials provider** | same | We look up `User` by email, check `role` (`TEAM` / `COMP` / `JUDGE`), compare the password hash. There is no Google/GitHub login. |
+| **Credentials provider** | same | We look up `User` by email and compare the password hash. There is no Team / Comp / Judge radio and no Google/GitHub login. Access is added after login with a claim code or an email invite. |
 | **JWT session** | `session: { strategy: "jwt" }` | After login, the browser holds a signed JWT cookie. The JWT callback re-checks that the user row still exists so a seed wipe invalidates old cookies. |
 | **`AUTH_SECRET`** | env | Signs/verifies that cookie. Change it before any public deploy (`openssl rand -base64 32`). |
 | **`AUTH_URL`** | env | Canonical site URL (local: `http://localhost:3000`). |
 | **bcryptjs** | `bcryptjs` | Hashes passwords on register (`hash`) and checks them on login (`compare`). The database stores `passwordHash`, never the raw password. |
 | **Password rules** | `src/lib/password.ts` | 10+ chars, upper, lower, number, special. Enforced in register (Zod) and shown in the UI. |
-| **Role dashboards** | `src/lib/roles.ts` + `src/app/{team,comp,judge}/layout.tsx` | Each area calls `auth()`. Wrong role is redirected. There is no Next.js `middleware.ts`; the layouts are the gate. |
+| **Account hub** | `/account` + membership layouts | After login everyone lands on Account. `/team`, `/comp`, and `/judge` layouts check approved memberships or judge assignments, not a role radio. |
 
-**Not used:** Supabase Auth, OAuth, magic links, Auth.js Prisma adapter (we query Prisma ourselves in `authorize`).
+**Not used:** Supabase Auth, OAuth, magic links, Auth.js Prisma adapter (we query Prisma ourselves in `authorize`). This app does **not** send email; invites wait on the next login.
 
 ---
 
@@ -96,7 +96,7 @@ The site is a **Next.js app**. Login is **this app’s Auth.js**, not Supabase A
 | --- | --- | --- |
 | **Zod** | `zod` | Validates form payloads in server actions (register, team profile, comp details). Returns field errors instead of crashing. |
 | **Server Actions** | `src/app/actions/*.ts` | Mutations from the UI without a separate API: register, apply, score, approve judges, sync sheets. Marked `"use server"`. |
-| **Claim codes** | `src/lib/claim-code.ts` + `prisma/season-comps.ts` | COMP register must match an unclaimed listing. First valid claim attaches `userId`. |
+| **Claim codes** | `src/lib/claim-code.ts` + `prisma/season-comps.ts` | After login, a team or competition code on Account attaches a primary admin. First valid claim wins. Secondary admins and judges are invited by email (stored in-app, not mailed). |
 | **Judging math** | `src/lib/judging.ts` | Rubric 0–10, packet shuffle per judge, z-scores for ranking. No stats library — this is a few functions. |
 | **cuid()** | Prisma `@default(cuid())` | String IDs for every row (not autoincrement integers). |
 
@@ -157,7 +157,7 @@ Copy `.env.example` → `.env`. Never commit `.env`. URI-encode special characte
 
 | Path | What lives there |
 | --- | --- |
-| `src/app/` | Routes: `/` landing, `/login`, `/register`, `/team/*`, `/comp/*`, `/judge/*`, `/api/auth/*`. |
+| `src/app/` | Routes: `/` landing, `/login`, `/register`, `/account`, `/team/*`, `/comp/*`, `/judge/*`, `/api/auth/*`. |
 | `src/app/actions/` | Server mutations (auth, team, comp, judging). |
 | `src/auth.ts` | Auth.js config (credentials, JWT, session). |
 | `src/lib/prisma.ts` | One Prisma Client (reused in dev so hot reload does not open extra connections). |

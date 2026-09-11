@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { SubmitPacketButton } from "@/components/SubmitPacketButton";
-import { ensureViewingSlots, isCompetitionOpen, rubricTotal } from "@/lib/judging";
+import { ensureViewingSlots, isCompetitionOpen, rubricTotal, scoreComment } from "@/lib/judging";
 import { formatDateTime } from "@/lib/utils";
 
 export default async function JudgePacketPage({
@@ -80,7 +80,9 @@ export default async function JudgePacketPage({
                   <p className="font-medium">Team {slot.position}</p>
                   <p className="text-sm text-muted">
                     {slot.score
-                      ? `Saved · ${rubricTotal(slot.score)} / 50`
+                      ? `Saved · ${rubricTotal(slot.score)} / 50${
+                          scoreComment(slot.score) ? " · Note saved" : ""
+                        }`
                       : "Not scored"}
                   </p>
                 </div>
