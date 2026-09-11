@@ -21,6 +21,7 @@ import {
   AcceptCompInviteForm,
   AcceptJudgeInviteForm,
   AcceptTeamInviteForm,
+  CreateCompForm,
   CreateTeamForm,
   InviteCompAdminForm,
   InviteTeamAdminForm,
@@ -451,9 +452,9 @@ async function OpsDashboard({
       <div>
         <h1 className="font-heading text-4xl">Circuit ops</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          This login does not claim a team or competition. Create teams, hand
-          out claim codes, and oversee every listing’s admins and application
-          statuses.
+          This login does not claim a team or competition. Create teams and
+          competitions, hand out claim codes, and oversee every listing’s
+          admins and application statuses.
         </p>
       </div>
 
@@ -467,7 +468,10 @@ async function OpsDashboard({
         </Link>
       </section>
 
-      <CreateTeamForm />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <CreateTeamForm />
+        <CreateCompForm />
+      </div>
 
       <section className="space-y-4">
         <h2 className="font-heading text-2xl">Teams</h2>
@@ -604,20 +608,27 @@ async function OpsDashboard({
 
       <section className="space-y-4">
         <h2 className="font-heading text-2xl">Competitions</h2>
-        <div className="space-y-6">
-          {comps.map((comp) => {
+        {comps.length === 0 ? (
+          <p className="text-muted">No competitions yet. Add the first one above.</p>
+        ) : (
+          <div className="space-y-6">
+            {comps.map((comp) => {
             const pending = comp.applications.filter((a) => a.status === "PENDING").length;
             const accepted = comp.applications.filter((a) => a.status === "ACCEPTED").length;
             const waitlisted = comp.applications.filter((a) => a.status === "WAITLISTED").length;
             const declined = comp.applications.filter((a) => a.status === "DECLINED").length;
             return (
               <article
+                id={`ops-comp-${comp.id}`}
                 key={comp.id}
                 className="space-y-4 rounded-xl border border-line bg-card p-5"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <h3 className="font-heading text-xl">{comp.name}</h3>
+                    <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-muted">
+                      Claim code
+                    </p>
                     <p className="font-mono text-sm text-accent">{comp.claimCode}</p>
                     <p className="text-sm text-muted">
                       {comp.claimedAt ? "Claimed" : "Unclaimed · not in team Apply"}
@@ -724,7 +735,8 @@ async function OpsDashboard({
               </article>
             );
           })}
-        </div>
+          </div>
+        )}
       </section>
     </div>
   );

@@ -12,6 +12,8 @@ import {
   isTeamPrimary,
   setActiveCompCookie,
   setActiveTeamCookie,
+  uniqueCompClaimCode,
+  uniqueCompSlug,
   uniqueTeamClaimCode,
   uniqueTeamSlug,
 } from "@/lib/team-access";
@@ -690,6 +692,59 @@ export async function createTeam(
     claimCode: team.claimCode,
     teamId: team.id,
     message: `Created ${team.name}.`,
+  };
+}
+
+export async function createCompetition(
+  _prev:
+    | {
+        error?: string;
+        ok?: boolean;
+        message?: string;
+        claimCode?: string;
+        competitionId?: string;
+      }
+    | undefined,
+  formData: FormData,
+): Promise<{
+  error?: string;
+  ok?: boolean;
+  message?: string;
+  claimCode?: string;
+  competitionId?: string;
+}> {
+  const user = await requireUser();
+  if (!user) return { error: "You must be signed in." };
+  if (!(await isPlatformAdmin(user.id))) {
+    return { error: "Only circuit ops can create competitions." };
+  }
+
+  const parsed = z
+    .object({ name: z.string().min(2, "Competition name is required.") })
+    .safeParse({ name: String(formData.get("name") ?? "").trim() });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid form." };
+  }
+
+  const slug = await uniqueCompSlug(parsed.data.name);
+  const claimCode = await uniqueCompClaimCode();
+  const competition = await prisma.competitionProfile.create({
+    data: {
+      name: parsed.data.name,
+      slug,
+      claimCode,
+      description: `${parsed.data.name}. Claim this listing with the official bid code after you log in.`,
+    },
+  });
+
+  revalidateAccessPaths();
+  revalidatePath("/");
+  revalidatePath("/comps", "layout");
+  return {
+    ok: true,
+    claimCode: competition.claimCode,
+    competitionId: competition.id,
+    message: `Created ${competition.name}.`,
   };
 }
 

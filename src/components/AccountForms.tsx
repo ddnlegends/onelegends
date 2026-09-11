@@ -12,6 +12,7 @@ import {
   previewTeamClaim,
   claimCompAction,
   claimTeamAction,
+  createCompetition,
   createTeam,
   inviteCompAdmin,
   inviteJudge,
@@ -461,6 +462,52 @@ export function CreateTeamForm() {
       <SaveNotice state={state} scroll={false} />
       <button className="btn btn-primary" disabled={pending} type="submit">
         {pending ? "Creating…" : "Create team"}
+      </button>
+    </form>
+  );
+}
+
+export function CreateCompForm() {
+  const [state, formAction, pending] = useActionState(
+    createCompetition,
+    undefined,
+  );
+
+  useEffect(() => {
+    if (!state?.ok || !state.competitionId) return;
+    const id = `ops-comp-${state.competitionId}`;
+    const timer = window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [state?.ok, state?.competitionId]);
+
+  return (
+    <form action={formAction} className="space-y-4 rounded-xl border border-line bg-card p-6">
+      <div>
+        <h2 className="font-heading text-xl">Add a competition</h2>
+        <p className="mt-1 text-sm text-muted">
+          Creating a competition generates a bid code. It shows on that listing
+          below. Teams cannot apply until someone claims it. This app does not
+          email anyone.
+        </p>
+      </div>
+      <div className="field">
+        <label htmlFor="comp-name">Competition name</label>
+        <input
+          id="comp-name"
+          name="name"
+          required
+          minLength={2}
+          placeholder="Buckeye Mela"
+        />
+      </div>
+      <SaveNotice state={state} scroll={false} />
+      <button className="btn btn-primary" disabled={pending} type="submit">
+        {pending ? "Creating…" : "Create competition"}
       </button>
     </form>
   );

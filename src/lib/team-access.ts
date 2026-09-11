@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { generateTeamClaimCode } from "@/lib/claim-code";
+import { generateCompClaimCode, generateTeamClaimCode } from "@/lib/claim-code";
 
 export const ACTIVE_TEAM_COOKIE = "onelegends-team";
 export const ACTIVE_COMP_COOKIE = "onelegends-comp";
@@ -35,6 +35,29 @@ export async function uniqueTeamClaimCode(): Promise<string> {
     if (!exists) return claimCode;
   }
   throw new Error("Could not generate a unique team claim code.");
+}
+
+export async function uniqueCompSlug(name: string): Promise<string> {
+  const base = slugifyTeamName(name);
+  let slug = base;
+  let n = 2;
+  while (await prisma.competitionProfile.findUnique({ where: { slug } })) {
+    slug = `${base}-${n}`;
+    n += 1;
+  }
+  return slug;
+}
+
+export async function uniqueCompClaimCode(): Promise<string> {
+  for (let i = 0; i < 24; i += 1) {
+    const claimCode = generateCompClaimCode();
+    const exists = await prisma.competitionProfile.findUnique({
+      where: { claimCode },
+      select: { id: true },
+    });
+    if (!exists) return claimCode;
+  }
+  throw new Error("Could not generate a unique competition claim code.");
 }
 
 export async function requireActiveCompetition(userId: string) {
