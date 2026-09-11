@@ -62,6 +62,7 @@ model TeamProfile {
   captains         String    @default("")
   yearsEstablished Int?
   rosterSize       Int?
+  applyBlocked     Boolean   @default(false)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 

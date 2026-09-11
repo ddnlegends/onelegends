@@ -654,9 +654,17 @@ export async function cancelCompInvite(
 }
 
 export async function createTeam(
-  _prev: { error?: string; ok?: boolean; message?: string; claimCode?: string } | undefined,
+  _prev:
+    | { error?: string; ok?: boolean; message?: string; claimCode?: string; teamId?: string }
+    | undefined,
   formData: FormData,
-): Promise<{ error?: string; ok?: boolean; message?: string; claimCode?: string }> {
+): Promise<{
+  error?: string;
+  ok?: boolean;
+  message?: string;
+  claimCode?: string;
+  teamId?: string;
+}> {
   const user = await requireUser();
   if (!user) return { error: "You must be signed in." };
   if (!(await isPlatformAdmin(user.id))) {
@@ -680,7 +688,8 @@ export async function createTeam(
   return {
     ok: true,
     claimCode: team.claimCode,
-    message: `Created ${team.name}. Give them this claim code: ${team.claimCode}`,
+    teamId: team.id,
+    message: `Created ${team.name}.`,
   };
 }
 
@@ -709,6 +718,34 @@ export async function resetTeamClaim(
   return {
     ok: true,
     message: `${team.name} is unclaimed again. The claim code is still ${team.claimCode}.`,
+  };
+}
+
+export async function setTeamApplyBlock(
+  _prev: { error?: string; ok?: boolean; message?: string } | undefined,
+  formData: FormData,
+): Promise<{ error?: string; ok?: boolean; message?: string }> {
+  const user = await requireUser();
+  if (!user) return { error: "You must be signed in." };
+  if (!(await isPlatformAdmin(user.id))) {
+    return { error: "Only circuit ops can block a team from applying." };
+  }
+  const teamId = String(formData.get("teamId") ?? "");
+  const blocked = String(formData.get("blocked") ?? "") === "1";
+  const team = await prisma.teamProfile.findUnique({ where: { id: teamId } });
+  if (!team) return { error: "Team not found." };
+
+  await prisma.teamProfile.update({
+    where: { id: teamId },
+    data: { applyBlocked: blocked },
+  });
+  revalidateAccessPaths();
+  revalidatePath("/comps", "layout");
+  return {
+    ok: true,
+    message: blocked
+      ? `${team.name} cannot apply until you unblock them.`
+      : `${team.name} can apply again.`,
   };
 }
 

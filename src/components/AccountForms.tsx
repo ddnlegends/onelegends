@@ -18,6 +18,7 @@ import {
   inviteTeamAdmin,
   resetCompClaim,
   resetTeamClaim,
+  setTeamApplyBlock,
   revokeCompAccess,
   revokeTeamAccess,
 } from "@/app/actions/team-access";
@@ -431,34 +432,102 @@ export function CancelCompInviteForm({ inviteId }: { inviteId: string }) {
 
 export function CreateTeamForm() {
   const [state, formAction, pending] = useActionState(createTeam, undefined);
+
+  useEffect(() => {
+    if (!state?.ok || !state.teamId) return;
+    const id = `ops-team-${state.teamId}`;
+    const timer = window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [state?.ok, state?.teamId]);
+
   return (
     <form action={formAction} className="space-y-4 rounded-xl border border-line bg-card p-6">
       <div>
         <h2 className="font-heading text-xl">Add a team</h2>
         <p className="mt-1 text-sm text-muted">
-          Creating a team generates a claim code. Give that code to the
-          captain. This app does not email anyone.
+          Creating a team generates a claim code. It shows on that team in the
+          list below. This app does not email anyone.
         </p>
       </div>
       <div className="field">
         <label htmlFor="team-name">Team name</label>
         <input id="team-name" name="name" required minLength={2} placeholder="Duke Rhydhun" />
       </div>
-      {state?.error ? <p className="notice notice-error">{state.error}</p> : null}
-      {state?.ok ? (
-        <p className="notice notice-ok">
-          {state.message}
-          {state.claimCode ? (
-            <>
-              {" "}
-              <span className="font-mono font-semibold">{state.claimCode}</span>
-            </>
-          ) : null}
-        </p>
-      ) : null}
+      <SaveNotice state={state} scroll={false} />
       <button className="btn btn-primary" disabled={pending} type="submit">
         {pending ? "Creating…" : "Create team"}
       </button>
+    </form>
+  );
+}
+
+export function SetTeamApplyBlockForm({
+  teamId,
+  teamName,
+  blocked,
+}: {
+  teamId: string;
+  teamName: string;
+  blocked: boolean;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [state, formAction, pending] = useActionState(setTeamApplyBlock, undefined);
+
+  if (blocked) {
+    return (
+      <form action={formAction} className="space-y-2">
+        <input type="hidden" name="teamId" value={teamId} />
+        <input type="hidden" name="blocked" value="0" />
+        <button className="btn btn-ghost py-1.5" disabled={pending} type="submit">
+          {pending ? "Unblocking…" : "Unblock applying"}
+        </button>
+        <SaveNotice state={state} />
+      </form>
+    );
+  }
+
+  if (!confirming) {
+    return (
+      <div>
+        <button
+          className="btn btn-ghost py-1.5"
+          type="button"
+          onClick={() => setConfirming(true)}
+        >
+          Block applying
+        </button>
+        <SaveNotice state={state} />
+      </div>
+    );
+  }
+
+  return (
+    <form action={formAction} className="space-y-2 rounded-md border border-line bg-blush p-3">
+      <input type="hidden" name="teamId" value={teamId} />
+      <input type="hidden" name="blocked" value="1" />
+      <p className="text-sm">
+        Block <strong>{teamName}</strong> from applying? Use this for unpaid
+        dues or a rules issue. They will see that circuit ops blocked them.
+        Existing applications stay on file.
+      </p>
+      <div className="flex gap-2">
+        <button className="btn btn-primary py-1.5" disabled={pending} type="submit">
+          {pending ? "Blocking…" : "Yes, block applying"}
+        </button>
+        <button
+          className="btn btn-ghost py-1.5"
+          type="button"
+          onClick={() => setConfirming(false)}
+        >
+          Cancel
+        </button>
+      </div>
+      <SaveNotice state={state} />
     </form>
   );
 }

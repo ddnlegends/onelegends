@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { formatDate, statusLabel } from "@/lib/utils";
-import { teamProfileGaps } from "@/lib/team-profile";
+import { teamProfileGaps, TEAM_APPLY_OPS_BLOCKED_MESSAGE } from "@/lib/team-profile";
 import {
   getActiveTeamId,
   getApprovedTeamMemberships,
@@ -42,9 +42,11 @@ export default async function TeamDashboardPage() {
           <div>
             <h1 className="font-heading text-4xl">{team.name || "Your team"}</h1>
             <p className="mt-2 text-muted">
-              {gaps.length
-                ? "Keep one team profile. You cannot apply until every profile field and the dancer roster are filled in."
-                : "Ready to apply."}
+              {team.applyBlocked
+                ? "Circuit ops has blocked this team from applying."
+                : gaps.length
+                  ? "Keep one team profile. You cannot apply until every profile field and the dancer roster are filled in."
+                  : "Ready to apply."}
             </p>
           </div>
         </div>
@@ -55,9 +57,11 @@ export default async function TeamDashboardPage() {
           <Link href="/team/access" className="btn btn-ghost">
             Admins
           </Link>
-          <Link href={applyHref} className="btn btn-primary">
-            {gaps.length ? "Finish profile to apply" : "Apply"}
-          </Link>
+          {team.applyBlocked ? null : (
+            <Link href={applyHref} className="btn btn-primary">
+              {gaps.length ? "Finish profile to apply" : "Apply"}
+            </Link>
+          )}
         </div>
       </div>
 
@@ -79,7 +83,9 @@ export default async function TeamDashboardPage() {
         </form>
       ) : null}
 
-      {gaps.length ? (
+      {team.applyBlocked ? (
+        <p className="notice notice-error">{TEAM_APPLY_OPS_BLOCKED_MESSAGE}</p>
+      ) : gaps.length ? (
         <p className="notice notice-error">
           Apply is locked until Team Profile is complete ({gaps.join(", ")}).
         </p>

@@ -47,3 +47,6 @@ export function teamProfileBlockedMessage(gaps: string[]): string {
   if (gaps.length === 0) return "";
   return `Finish your team profile before applying: ${gaps.join(", ")}.`;
 }
+
+export const TEAM_APPLY_OPS_BLOCKED_MESSAGE =
+  "Circuit ops has blocked this team from applying. This is usually unpaid dues or a circuit rules issue. Contact Legends Admin if you think this is a mistake.";

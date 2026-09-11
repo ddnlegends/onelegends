@@ -7,10 +7,12 @@ export function SaveNotice({
   state,
   fallbackOk = "Changes saved.",
   refresh = true,
+  scroll = true,
 }: {
   state: { ok?: boolean; error?: string; message?: string } | undefined;
   fallbackOk?: string;
   refresh?: boolean;
+  scroll?: boolean;
 }) {
   const ref = useRef<HTMLParagraphElement>(null);
   const router = useRouter();
@@ -19,16 +21,16 @@ export function SaveNotice({
   useEffect(() => {
     if (state?.error) {
       wasOk.current = false;
-      ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (scroll) ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
     if (state?.ok && !wasOk.current) {
       wasOk.current = true;
-      ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (scroll) ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       if (refresh) router.refresh();
     }
     if (!state?.ok) wasOk.current = false;
-  }, [state?.ok, state?.error, refresh, router]);
+  }, [state?.ok, state?.error, refresh, router, scroll]);
 
   if (state?.error) {
     return (

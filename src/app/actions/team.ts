@@ -10,6 +10,7 @@ import { parseDriveUrl } from "@/lib/drive";
 import {
   teamProfileGaps,
   teamProfileBlockedMessage,
+  TEAM_APPLY_OPS_BLOCKED_MESSAGE,
 } from "@/lib/team-profile";
 import { getActiveTeamId } from "@/lib/team-access";
 import { storeTeamPhoto, hasTeamPhoto } from "@/lib/team-photo";
@@ -202,6 +203,9 @@ export async function applyToCompetitions(
     include: { dancers: true },
   });
   if (!team) return { error: "Team profile missing." };
+  if (team.applyBlocked) {
+    return { error: TEAM_APPLY_OPS_BLOCKED_MESSAGE };
+  }
 
   const gaps = teamProfileGaps(team);
   if (gaps.length) {

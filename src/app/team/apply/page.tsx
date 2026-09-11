@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { ApplyForm } from "@/components/ApplyForm";
 import { isCompetitionOpen } from "@/lib/judging";
-import { teamProfileGaps } from "@/lib/team-profile";
+import { teamProfileGaps, TEAM_APPLY_OPS_BLOCKED_MESSAGE } from "@/lib/team-profile";
 import { getActiveTeamId } from "@/lib/team-access";
 import { formatDateTime } from "@/lib/utils";
 
@@ -36,7 +36,9 @@ export default async function TeamApplyPage() {
         </p>
       </div>
 
-      {gaps.length ? (
+      {team.applyBlocked ? (
+        <p className="notice notice-error">{TEAM_APPLY_OPS_BLOCKED_MESSAGE}</p>
+      ) : gaps.length ? (
         <div className="space-y-4 rounded-xl border border-line bg-card p-6">
           <p className="notice notice-error">
             Finish Team Profile before applying. Competitions need the complete

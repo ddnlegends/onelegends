@@ -5,7 +5,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { isCompetitionOpen } from "@/lib/judging";
 import { formatDateTime } from "@/lib/utils";
-import { userHasTeamAccess } from "@/lib/team-access";
+import { getActiveTeamId, userHasTeamAccess } from "@/lib/team-access";
+import { TEAM_APPLY_OPS_BLOCKED_MESSAGE } from "@/lib/team-profile";
 
 export default async function CompPublicPage({
   params,
@@ -16,6 +17,17 @@ export default async function CompPublicPage({
   const session = await auth();
   const canApply =
     session?.user && (await userHasTeamAccess(session.user.id));
+  let applyBlocked = false;
+  if (session?.user) {
+    const teamId = await getActiveTeamId(session.user.id);
+    if (teamId) {
+      const active = await prisma.teamProfile.findUnique({
+        where: { id: teamId },
+        select: { applyBlocked: true },
+      });
+      applyBlocked = Boolean(active?.applyBlocked);
+    }
+  }
   const comp = await prisma.competitionProfile.findUnique({ where: { id } });
   if (!comp) notFound();
 
@@ -58,7 +70,9 @@ export default async function CompPublicPage({
           </div>
         ))}
       </dl>
-      {canApply && open ? (
+      {applyBlocked ? (
+        <p className="notice notice-error">{TEAM_APPLY_OPS_BLOCKED_MESSAGE}</p>
+      ) : canApply && open ? (
         <Link href="/team/apply" className="btn btn-primary">
           Apply from your profile
         </Link>

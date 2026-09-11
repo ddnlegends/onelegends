@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getPendingInvites } from "@/lib/invites";
 import { formatDate, formatDateTime, statusLabel } from "@/lib/utils";
 import { isCompetitionOpen } from "@/lib/judging";
-import { teamProfileGaps } from "@/lib/team-profile";
+import { teamProfileGaps, TEAM_APPLY_OPS_BLOCKED_MESSAGE } from "@/lib/team-profile";
 import {
   getActiveCompetitionId,
   getActiveTeamId,
@@ -26,6 +26,7 @@ import {
   InviteTeamAdminForm,
   ResetCompClaimForm,
   ResetTeamClaimForm,
+  SetTeamApplyBlockForm,
   RevokeCompAccessForm,
   RevokeTeamAccessForm,
   CancelCompInviteForm,
@@ -199,9 +200,11 @@ export default async function DashboardPage() {
               <div>
                 <h2 className="font-heading text-2xl">{team.name}</h2>
                 <p className="mt-1 text-sm text-muted">
-                  {gaps.length
-                    ? "Fill the profile, then you can apply to competitions."
-                    : "Ready to apply."}
+                  {team.applyBlocked
+                    ? "Blocked from applying."
+                    : gaps.length
+                      ? "Fill the profile, then you can apply to competitions."
+                      : "Ready to apply."}
                 </p>
               </div>
             </div>
@@ -233,7 +236,9 @@ export default async function DashboardPage() {
             </form>
           ) : null}
 
-          {gaps.length ? (
+          {team.applyBlocked ? (
+            <p className="notice notice-error">{TEAM_APPLY_OPS_BLOCKED_MESSAGE}</p>
+          ) : gaps.length ? (
             <p className="notice notice-error">
               Apply is locked until Team Profile is complete ({gaps.join(", ")}
               ).
@@ -466,20 +471,32 @@ async function OpsDashboard({
           <div className="space-y-6">
             {teams.map((team) => (
               <article
+                id={`ops-team-${team.id}`}
                 key={team.id}
                 className="space-y-4 rounded-xl border border-line bg-card p-5"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <h3 className="font-heading text-xl">{team.name}</h3>
+                    <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-muted">
+                      Claim code
+                    </p>
                     <p className="font-mono text-sm text-accent">{team.claimCode}</p>
                     <p className="text-sm text-muted">
                       {team.claimedAt ? "Claimed" : "Unclaimed"}
+                      {team.applyBlocked ? " · Blocked from applying" : ""}
                     </p>
                   </div>
-                  {team.claimedAt ? (
-                    <ResetTeamClaimForm teamId={team.id} teamName={team.name} />
-                  ) : null}
+                  <div className="flex flex-wrap gap-2">
+                    <SetTeamApplyBlockForm
+                      teamId={team.id}
+                      teamName={team.name}
+                      blocked={team.applyBlocked}
+                    />
+                    {team.claimedAt ? (
+                      <ResetTeamClaimForm teamId={team.id} teamName={team.name} />
+                    ) : null}
+                  </div>
                 </div>
                 {team.claimedAt ? (
                   <InviteTeamAdminForm teamId={team.id} />
