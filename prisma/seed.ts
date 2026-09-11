@@ -14,6 +14,7 @@ async function wipeAppData() {
   await prisma.dancer.deleteMany();
   await prisma.teamInvite.deleteMany();
   await prisma.teamMembership.deleteMany();
+  await prisma.teamPhotoBlob.deleteMany();
   await prisma.teamProfile.deleteMany();
   await prisma.compInvite.deleteMany();
   await prisma.competitionMembership.deleteMany();

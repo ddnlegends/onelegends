@@ -69,6 +69,15 @@ model TeamProfile {
   applications Application[]
   memberships  TeamMembership[]
   invites      TeamInvite[]
+  photoBlob    TeamPhotoBlob?
+}
+
+model TeamPhotoBlob {
+  teamId    String      @id
+  team      TeamProfile @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  bytes     Bytes
+  mime      String
+  updatedAt DateTime    @updatedAt
 }
 
 model TeamMembership {

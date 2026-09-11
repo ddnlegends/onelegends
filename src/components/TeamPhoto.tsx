@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+
 export function TeamPhoto({
   src,
   name,
@@ -7,6 +11,7 @@ export function TeamPhoto({
   name: string;
   size?: "sm" | "md" | "lg" | "wide";
 }) {
+  const [failed, setFailed] = useState(false);
   const box =
     size === "wide"
       ? "h-48 w-full sm:h-56 sm:w-72"
@@ -16,7 +21,7 @@ export function TeamPhoto({
           ? "h-14 w-14"
           : "h-20 w-20 sm:h-24 sm:w-24";
 
-  if (!src) {
+  if (!src || failed) {
     return <div className={`${box} shrink-0 rounded-xl bg-line`} aria-hidden />;
   }
 
@@ -26,6 +31,7 @@ export function TeamPhoto({
       src={src}
       alt={name}
       className={`${box} shrink-0 rounded-xl object-cover`}
+      onError={() => setFailed(true)}
     />
   );
 }

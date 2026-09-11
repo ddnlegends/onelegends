@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { saveTeamProfile } from "@/app/actions/team";
 import { TeamPhoto } from "@/components/TeamPhoto";
 import { SaveNotice } from "@/components/SaveNotice";
+import { hasTeamPhoto } from "@/lib/team-photo";
 import {
   TEAM_PHOTO_TOO_LARGE,
   isBodyLimitError,
@@ -44,7 +45,7 @@ async function submitTeamProfile(
       return { error: TEAM_PHOTO_TOO_LARGE };
     }
     return {
-      error: "Could not save the profile. Try a smaller photo (5MB or less).",
+      error: "Could not save the photo. Try again.",
     };
   }
 }
@@ -59,7 +60,10 @@ export function TeamProfileForm({ profile }: { profile: Profile }) {
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [rosterSize, setRosterSize] = useState(String(profile.rosterSize ?? ""));
   const photoInput = useRef<HTMLInputElement>(null);
-  const photoSrc = preview ?? state?.photoUrl ?? profile.photoUrl;
+  const savedPhoto = hasTeamPhoto(state?.photoUrl ?? profile.photoUrl)
+    ? (state?.photoUrl ?? profile.photoUrl)
+    : "";
+  const photoSrc = preview ?? savedPhoto;
   const notice = photoError ? { error: photoError } : state;
 
   useEffect(() => {

@@ -114,9 +114,7 @@ export async function saveTeamProfile(
       if ("error" in stored) return { error: stored.error ?? "Could not save the photo." };
       photoUrl = stored.url;
     } catch {
-      return {
-        error: "Could not save the photo. Try a smaller JPEG, PNG, WebP, or GIF (5MB or less).",
-      };
+      return { error: "Could not save the photo. Try again." };
     }
   }
   if (!hasTeamPhoto(photoUrl)) {

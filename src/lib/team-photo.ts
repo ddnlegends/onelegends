@@ -1,23 +1,25 @@
-import { mkdir, readdir, unlink, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { prisma } from "@/lib/prisma";
 import {
   TEAM_PHOTO_BAD_TYPE,
   TEAM_PHOTO_MAX_BYTES,
   TEAM_PHOTO_TOO_LARGE,
 } from "@/lib/team-photo-rules";
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "teams");
 
-const TYPES: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-  "image/gif": "gif",
+const MIME: Record<string, string> = {
+  jpg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  gif: "image/gif",
 };
+
+export function teamPhotoSrc(teamId: string, version?: number | string): string {
+  return `/api/teams/${teamId}/photo?v=${version ?? Date.now()}`;
+}
 
 export function hasTeamPhoto(value: string): boolean {
   const photo = value.trim();
   if (!photo) return false;
-  if (photo.startsWith("/uploads/")) return true;
+  if (photo.startsWith("/api/teams/") && photo.includes("/photo")) return true;
   try {
     const url = new URL(photo);
     return url.protocol === "http:" || url.protocol === "https:";
@@ -26,8 +28,7 @@ export function hasTeamPhoto(value: string): boolean {
   }
 }
 
-function extensionFor(file: File, bytes: Uint8Array): string | null {
-  const fromType = TYPES[file.type];
+function kindFor(file: File, bytes: Uint8Array): keyof typeof MIME | null {
   if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
     return "jpg";
   }
@@ -56,7 +57,11 @@ function extensionFor(file: File, bytes: Uint8Array): string | null {
   ) {
     return "webp";
   }
-  return fromType ?? null;
+  if (file.type === "image/jpeg") return "jpg";
+  if (file.type === "image/png") return "png";
+  if (file.type === "image/webp") return "webp";
+  if (file.type === "image/gif") return "gif";
+  return null;
 }
 
 export async function storeTeamPhoto(
@@ -71,20 +76,19 @@ export async function storeTeamPhoto(
   }
 
   const bytes = new Uint8Array(await file.arrayBuffer());
-  const ext = extensionFor(file, bytes);
-  if (!ext) {
+  if (bytes.byteLength > TEAM_PHOTO_MAX_BYTES) {
+    return { error: TEAM_PHOTO_TOO_LARGE };
+  }
+  const kind = kindFor(file, bytes);
+  if (!kind) {
     return { error: TEAM_PHOTO_BAD_TYPE };
   }
 
-  await mkdir(UPLOAD_DIR, { recursive: true });
-  const existing = await readdir(UPLOAD_DIR);
-  await Promise.all(
-    existing
-      .filter((name) => name === teamId || name.startsWith(`${teamId}.`))
-      .map((name) => unlink(path.join(UPLOAD_DIR, name))),
-  );
+  await prisma.teamPhotoBlob.upsert({
+    where: { teamId },
+    create: { teamId, bytes: Buffer.from(bytes), mime: MIME[kind] },
+    update: { bytes: Buffer.from(bytes), mime: MIME[kind] },
+  });
 
-  const filename = `${teamId}.${ext}`;
-  await writeFile(path.join(UPLOAD_DIR, filename), bytes);
-  return { url: `/uploads/teams/${filename}?v=${Date.now()}` };
+  return { url: teamPhotoSrc(teamId) };
 }
