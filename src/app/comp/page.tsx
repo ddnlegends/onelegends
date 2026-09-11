@@ -111,6 +111,7 @@ export default async function CompDashboardPage() {
           <div className="field">
             <label htmlFor="active-comp">Active competition</label>
             <select
+              key={competitionId}
               id="active-comp"
               name="competitionId"
               defaultValue={competitionId}

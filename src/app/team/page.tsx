@@ -69,7 +69,12 @@ export default async function TeamDashboardPage() {
         <form action={setActiveTeamAction} className="flex flex-wrap items-end gap-3">
           <div className="field">
             <label htmlFor="active-team">Active team</label>
-            <select id="active-team" name="teamId" defaultValue={activeTeamId}>
+            <select
+              key={activeTeamId}
+              id="active-team"
+              name="teamId"
+              defaultValue={activeTeamId}
+            >
               {memberships.map((m) => (
                 <option key={m.teamId} value={m.teamId}>
                   {m.team.name}

@@ -222,7 +222,12 @@ export default async function DashboardPage() {
             <form action={setActiveTeamAction} className="flex flex-wrap items-end gap-3">
               <div className="field">
                 <label htmlFor="active-team">Active team</label>
-                <select id="active-team" name="teamId" defaultValue={team.id}>
+                <select
+                  key={team.id}
+                  id="active-team"
+                  name="teamId"
+                  defaultValue={team.id}
+                >
                   {teamMemberships.map((m) => (
                     <option key={m.teamId} value={m.teamId}>
                       {m.team.name}
@@ -327,6 +332,7 @@ export default async function DashboardPage() {
               <div className="field">
                 <label htmlFor="active-comp">Active competition</label>
                 <select
+                  key={competition.id}
                   id="active-comp"
                   name="competitionId"
                   defaultValue={competition.id}
