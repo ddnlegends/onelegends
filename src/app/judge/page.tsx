@@ -59,12 +59,18 @@ export default async function JudgeDashboardPage() {
                       : ""}
                   </p>
                 </div>
-                <Link
-                  href={`/judge/${row.competitionId}`}
-                  className="btn btn-primary py-1.5"
-                >
-                  Open Packet
-                </Link>
+                {isCompetitionOpen(row.competition) ? (
+                  <button className="btn btn-primary py-1.5" disabled type="button">
+                    Open Packet
+                  </button>
+                ) : (
+                  <Link
+                    href={`/judge/${row.competitionId}`}
+                    className="btn btn-primary py-1.5"
+                  >
+                    Open Packet
+                  </Link>
+                )}
               </li>
             ))}
           </ul>

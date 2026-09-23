@@ -29,14 +29,14 @@ export default async function JudgeTeamPage({
   });
   if (!assignment) notFound();
 
+  const stillOpen = isCompetitionOpen(assignment.competition);
+  if (stillOpen && !assignment.submittedAt) {
+    redirect(`/judge/${competitionId}`);
+  }
+
   const live = assignment.competition.judgingMode === "LIVE";
   const livePosition = assignment.competition.livePosition;
-  if (live) {
-    await ensureViewingSlots(assignment.id);
-  } else if (
-    !isCompetitionOpen(assignment.competition) &&
-    assignment.slots.length === 0
-  ) {
+  if (live || assignment.slots.length === 0) {
     await ensureViewingSlots(assignment.id);
   }
   if (live && !assignment.submittedAt) {

@@ -1,6 +1,8 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { generateCompClaimCode, generateTeamClaimCode } from "@/lib/claim-code";
+import { getCachedUser } from "@/lib/cached-user";
 
 export const ACTIVE_TEAM_COOKIE = "onelegends-team";
 export const ACTIVE_COMP_COOKIE = "onelegends-comp";
@@ -69,31 +71,67 @@ export async function requireActiveCompetition(userId: string) {
   });
 }
 
-export async function isPlatformAdmin(userId: string): Promise<boolean> {
+export const getNavAccess = cache(async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { platformAdmin: true },
+    select: {
+      platformAdmin: true,
+      competition: { select: { id: true } },
+      memberships: {
+        where: { status: "APPROVED" },
+        take: 1,
+        select: { id: true },
+      },
+      competitionMemberships: {
+        where: { status: "APPROVED" },
+        take: 1,
+        select: { id: true },
+      },
+      judge: {
+        select: {
+          assignments: {
+            where: { status: "APPROVED" },
+            take: 1,
+            select: { id: true },
+          },
+        },
+      },
+    },
   });
-  return Boolean(user?.platformAdmin);
-}
+  const ops = Boolean(user?.platformAdmin);
+  return {
+    ops,
+    teamAccess: Boolean(user?.memberships.length),
+    compAccess:
+      ops ||
+      Boolean(user?.competitionMemberships.length) ||
+      Boolean(user?.competition),
+    judgeAccess: Boolean(user?.judge?.assignments.length),
+  };
+});
 
-export async function getApprovedTeamMemberships(userId: string) {
+export const isPlatformAdmin = cache(async (userId: string): Promise<boolean> => {
+  const user = await getCachedUser(userId);
+  return Boolean(user?.platformAdmin);
+});
+
+export const getApprovedTeamMemberships = cache(async (userId: string) => {
   return prisma.teamMembership.findMany({
     where: { userId, status: "APPROVED" },
     include: { team: true },
     orderBy: { team: { name: "asc" } },
   });
-}
+});
 
-export async function getApprovedCompMemberships(userId: string) {
+export const getApprovedCompMemberships = cache(async (userId: string) => {
   return prisma.competitionMembership.findMany({
     where: { userId, status: "APPROVED" },
     include: { competition: true },
     orderBy: { competition: { name: "asc" } },
   });
-}
+});
 
-export async function getActiveTeamId(userId: string): Promise<string | null> {
+export const getActiveTeamId = cache(async (userId: string): Promise<string | null> => {
   const approved = await getApprovedTeamMemberships(userId);
   if (approved.length === 0) return null;
   const jar = await cookies();
@@ -102,24 +140,32 @@ export async function getActiveTeamId(userId: string): Promise<string | null> {
     return fromCookie;
   }
   return approved[0].teamId;
-}
+});
 
-export async function getActiveCompetitionId(
+export const getActiveCompetitionId = cache(async (
   userId: string,
-): Promise<string | null> {
+): Promise<string | null> => {
   if (await isPlatformAdmin(userId)) {
-    const all = await prisma.competitionProfile.findMany({
-      select: { id: true, judgingMode: true },
-      orderBy: { name: "asc" },
-    });
-    if (all.length === 0) return null;
     const jar = await cookies();
     const fromCookie = jar.get(ACTIVE_COMP_COOKIE)?.value;
-    if (fromCookie && all.some((row) => row.id === fromCookie)) {
-      return fromCookie;
+    if (fromCookie) {
+      const listing = await prisma.competitionProfile.findUnique({
+        where: { id: fromCookie },
+        select: { id: true },
+      });
+      if (listing) return listing.id;
     }
-    const live = all.find((row) => row.judgingMode === "LIVE");
-    return live?.id ?? all[0].id;
+    const live = await prisma.competitionProfile.findFirst({
+      where: { judgingMode: "LIVE" },
+      orderBy: { name: "asc" },
+      select: { id: true },
+    });
+    if (live) return live.id;
+    const first = await prisma.competitionProfile.findFirst({
+      orderBy: { name: "asc" },
+      select: { id: true },
+    });
+    return first?.id ?? null;
   }
 
   const approved = await getApprovedCompMemberships(userId);
@@ -136,7 +182,7 @@ export async function getActiveCompetitionId(
     return fromCookie;
   }
   return approved[0].competitionId;
-}
+});
 
 export async function setActiveTeamCookie(teamId: string) {
   const jar = await cookies();
@@ -156,33 +202,20 @@ export async function setActiveCompCookie(competitionId: string) {
   });
 }
 
-export async function userHasTeamAccess(userId: string): Promise<boolean> {
-  const count = await prisma.teamMembership.count({
-    where: { userId, status: "APPROVED" },
-  });
-  return count > 0;
-}
+export const userHasTeamAccess = cache(async (userId: string): Promise<boolean> => {
+  const access = await getNavAccess(userId);
+  return access.teamAccess;
+});
 
-export async function userHasCompAccess(userId: string): Promise<boolean> {
-  if (await isPlatformAdmin(userId)) return true;
-  const count = await prisma.competitionMembership.count({
-    where: { userId, status: "APPROVED" },
-  });
-  if (count > 0) return true;
-  const legacy = await prisma.competitionProfile.findUnique({
-    where: { userId },
-    select: { id: true },
-  });
-  return Boolean(legacy);
-}
+export const userHasCompAccess = cache(async (userId: string): Promise<boolean> => {
+  const access = await getNavAccess(userId);
+  return access.compAccess;
+});
 
-export async function userHasJudgeAccess(userId: string): Promise<boolean> {
-  const judge = await prisma.judgeProfile.findUnique({
-    where: { userId },
-    include: { assignments: { where: { status: "APPROVED" }, take: 1 } },
-  });
-  return Boolean(judge && judge.assignments.length > 0);
-}
+export const userHasJudgeAccess = cache(async (userId: string): Promise<boolean> => {
+  const access = await getNavAccess(userId);
+  return access.judgeAccess;
+});
 
 export async function isTeamPrimary(userId: string, teamId: string) {
   if (await isPlatformAdmin(userId)) return true;

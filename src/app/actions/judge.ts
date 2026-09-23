@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
 import {
+  isCompetitionOpen,
   maybeReleaseResults,
   parseRubricScore,
 } from "@/lib/judging";
@@ -72,6 +73,9 @@ export async function saveTeamScores(
   if (assignment.submittedAt) {
     return { error: "This packet is already submitted." };
   }
+  if (isCompetitionOpen(assignment.competition)) {
+    return { error: "Judging opens after applications close." };
+  }
   if (
     assignment.competition.judgingMode === "LIVE" &&
     assignment.competition.livePosition !== position
@@ -137,11 +141,15 @@ export async function submitJudgingPacket(
       judge: { userId: user.id },
     },
     include: {
+      competition: true,
       slots: { include: { score: true } },
     },
   });
   if (!assignment) return { error: "Assignment not found." };
   if (assignment.submittedAt) return { ok: true };
+  if (isCompetitionOpen(assignment.competition)) {
+    return { error: "Judging opens after applications close." };
+  }
   if (assignment.slots.length === 0) {
     return { error: "No teams in this packet yet." };
   }

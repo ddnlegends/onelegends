@@ -26,7 +26,7 @@ export default async function JudgePacketPage({
 
   const stillOpen = isCompetitionOpen(assignment.competition);
   const live = assignment.competition.judgingMode === "LIVE";
-  if (live || (!stillOpen && assignment.slots.length === 0)) {
+  if (!stillOpen && (live || assignment.slots.length === 0)) {
     await ensureViewingSlots(assignment.id);
   }
 
@@ -44,7 +44,7 @@ export default async function JudgePacketPage({
   const locked = Boolean(fresh.submittedAt);
   const livePosition = fresh.competition.livePosition;
 
-  if (live && livePosition && !locked) {
+  if (live && livePosition && !locked && !stillOpen) {
     redirect(`/judge/${competitionId}/team/${livePosition}`);
   }
 

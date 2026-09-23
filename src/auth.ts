@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { getCachedUser } from "@/lib/cached-user";
 import type { Role } from "@prisma/client";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -55,10 +56,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       if (!token.id) return token;
 
-      const dbUser = await prisma.user.findUnique({
-        where: { id: String(token.id) },
-        select: { id: true, email: true, name: true, role: true, platformAdmin: true },
-      });
+      const dbUser = await getCachedUser(String(token.id));
       if (!dbUser) return null;
 
       token.email = dbUser.email;

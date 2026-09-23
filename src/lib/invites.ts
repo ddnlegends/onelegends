@@ -1,9 +1,13 @@
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 
 export async function hydrateEmailInvites(userId: string, email: string) {
   if (!prisma.teamInvite || !prisma.compInvite) return;
 
-  const teamInvites = await prisma.teamInvite.findMany({ where: { email } });
+  const [teamInvites, compInvites] = await Promise.all([
+    prisma.teamInvite.findMany({ where: { email } }),
+    prisma.compInvite.findMany({ where: { email } }),
+  ]);
   for (const invite of teamInvites) {
     const existing = await prisma.teamMembership.findUnique({
       where: { userId_teamId: { userId, teamId: invite.teamId } },
@@ -30,7 +34,6 @@ export async function hydrateEmailInvites(userId: string, email: string) {
     await prisma.teamInvite.delete({ where: { id: invite.id } });
   }
 
-  const compInvites = await prisma.compInvite.findMany({ where: { email } });
   for (const invite of compInvites) {
     const existing = await prisma.competitionMembership.findUnique({
       where: {
@@ -65,28 +68,30 @@ export async function hydrateEmailInvites(userId: string, email: string) {
   }
 }
 
-export async function getPendingInvites(userId: string, email: string) {
+export const getPendingInvites = cache(async (userId: string, email: string) => {
   try {
     await hydrateEmailInvites(userId, email);
   } catch {
     /* Account still loads even if invite hydration fails. */
   }
 
-  const teams = await prisma.teamMembership.findMany({
-    where: { userId, status: "PENDING" },
-    include: { team: { select: { id: true, name: true } } },
-    orderBy: { requestedAt: "desc" },
-  });
-  const comps = await prisma.competitionMembership.findMany({
-    where: { userId, status: "PENDING" },
-    include: { competition: { select: { id: true, name: true } } },
-    orderBy: { requestedAt: "desc" },
-  });
-  const judges = await prisma.judgeInvite.findMany({
-    where: { email },
-    include: { competition: { select: { id: true, name: true } } },
-    orderBy: { createdAt: "desc" },
-  });
+  const [teams, comps, judges] = await Promise.all([
+    prisma.teamMembership.findMany({
+      where: { userId, status: "PENDING" },
+      include: { team: { select: { id: true, name: true } } },
+      orderBy: { requestedAt: "desc" },
+    }),
+    prisma.competitionMembership.findMany({
+      where: { userId, status: "PENDING" },
+      include: { competition: { select: { id: true, name: true } } },
+      orderBy: { requestedAt: "desc" },
+    }),
+    prisma.judgeInvite.findMany({
+      where: { email },
+      include: { competition: { select: { id: true, name: true } } },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
   return { teams, comps, judges };
-}
+});

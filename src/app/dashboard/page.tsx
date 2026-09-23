@@ -47,51 +47,64 @@ export default async function DashboardPage() {
     return <OpsDashboard email={email} name={name} userId={userId} />;
   }
 
-  const pending = await getPendingInvites(userId, email);
-  const teamMemberships = await getApprovedTeamMemberships(userId);
-  const compMemberships = await getApprovedCompMemberships(userId);
-  const judging = await userHasJudgeAccess(userId);
-  const activeTeamId = await getActiveTeamId(userId);
-  const activeCompId = await getActiveCompetitionId(userId);
+  const [pending, teamMemberships, compMemberships, judging] = await Promise.all([
+    getPendingInvites(userId, email),
+    getApprovedTeamMemberships(userId),
+    getApprovedCompMemberships(userId),
+    userHasJudgeAccess(userId),
+  ]);
+  const [activeTeamId, activeCompId] = await Promise.all([
+    getActiveTeamId(userId),
+    getActiveCompetitionId(userId),
+  ]);
 
-  const team = activeTeamId
-    ? await prisma.teamProfile.findUnique({
-        where: { id: activeTeamId },
-        include: {
-          applications: {
-            include: { competition: true },
-            orderBy: { createdAt: "desc" },
+  const [team, competition, judge] = await Promise.all([
+    activeTeamId
+      ? prisma.teamProfile.findUnique({
+          where: { id: activeTeamId },
+          include: {
+            applications: {
+              include: { competition: true },
+              orderBy: { createdAt: "desc" },
+            },
+            dancers: true,
           },
-          dancers: true,
-        },
-      })
-    : null;
-
-  const competition = activeCompId
-    ? await prisma.competitionProfile.findUnique({
-        where: { id: activeCompId },
-        include: {
-          applications: true,
-          judgeAssignments: {
-            where: { status: "APPROVED" },
-            select: { submittedAt: true },
+        })
+      : Promise.resolve(null),
+    activeCompId
+      ? prisma.competitionProfile.findUnique({
+          where: { id: activeCompId },
+          include: {
+            applications: true,
+            judgeAssignments: {
+              where: { status: "APPROVED" },
+              select: { submittedAt: true },
+            },
           },
-        },
-      })
-    : null;
-
-  const judge = judging
-    ? await prisma.judgeProfile.findUnique({
-        where: { userId },
-        include: {
-          assignments: {
-            where: { status: "APPROVED" },
-            include: { competition: { select: { id: true, name: true } } },
-            orderBy: { requestedAt: "desc" },
+        })
+      : Promise.resolve(null),
+    judging
+      ? prisma.judgeProfile.findUnique({
+          where: { userId },
+          include: {
+            assignments: {
+              where: { status: "APPROVED" },
+              include: {
+                competition: {
+                  select: {
+                    id: true,
+                    name: true,
+                    acceptingApps: true,
+                    applicationDeadline: true,
+                  },
+                },
+              },
+              orderBy: { requestedAt: "desc" },
+            },
           },
-        },
-      })
-    : null;
+        })
+      : Promise.resolve(null),
+  ]);
 
   const claimedComps = team
     ? await prisma.competitionProfile.findMany({
@@ -398,12 +411,23 @@ export default async function DashboardPage() {
                 className="flex flex-wrap items-center justify-between gap-2 px-4 py-3"
               >
                 <span className="font-medium">{row.competition.name}</span>
-                <Link
-                  href={`/judge/${row.competitionId}`}
-                  className="text-sm text-accent underline"
-                >
-                  {row.submittedAt ? "Review packet" : "Open packet"}
-                </Link>
+                {row.submittedAt ? (
+                  <Link
+                    href={`/judge/${row.competitionId}`}
+                    className="text-sm text-accent underline"
+                  >
+                    Review packet
+                  </Link>
+                ) : isCompetitionOpen(row.competition) ? (
+                  <span className="text-sm text-muted">Waiting for apps to close</span>
+                ) : (
+                  <Link
+                    href={`/judge/${row.competitionId}`}
+                    className="text-sm text-accent underline"
+                  >
+                    Open packet
+                  </Link>
+                )}
               </li>
             ))}
           </ul>
@@ -422,7 +446,8 @@ async function OpsDashboard({
   name: string;
   userId: string;
 }) {
-  const teams = await prisma.teamProfile.findMany({
+  const [teams, comps] = await Promise.all([
+    prisma.teamProfile.findMany({
     orderBy: { name: "asc" },
     include: {
       memberships: {
@@ -435,8 +460,8 @@ async function OpsDashboard({
         orderBy: { createdAt: "desc" },
       },
     },
-  });
-  const comps = await prisma.competitionProfile.findMany({
+    }),
+    prisma.competitionProfile.findMany({
     orderBy: { name: "asc" },
     include: {
       memberships: {
@@ -449,7 +474,8 @@ async function OpsDashboard({
         orderBy: { createdAt: "desc" },
       },
     },
-  });
+    }),
+  ]);
 
   return (
     <div className="space-y-10">

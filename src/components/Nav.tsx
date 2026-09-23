@@ -3,20 +3,16 @@ import { auth } from "@/auth";
 import { BrandMark } from "@/components/BrandMark";
 import { NavLink } from "@/components/NavLink";
 import { SignOutButton } from "@/components/SignOutButton";
-import {
-  isPlatformAdmin,
-  userHasCompAccess,
-  userHasJudgeAccess,
-  userHasTeamAccess,
-} from "@/lib/team-access";
+import { getNavAccess } from "@/lib/team-access";
 
 export async function Nav() {
   const session = await auth();
   const userId = session?.user?.id;
-  const ops = userId ? await isPlatformAdmin(userId) : false;
-  const teamAccess = userId ? await userHasTeamAccess(userId) : false;
-  const compAccess = userId ? await userHasCompAccess(userId) : false;
-  const judgeAccess = userId ? await userHasJudgeAccess(userId) : false;
+  const access = userId ? await getNavAccess(userId) : null;
+  const ops = access?.ops ?? false;
+  const teamAccess = access?.teamAccess ?? false;
+  const compAccess = access?.compAccess ?? false;
+  const judgeAccess = access?.judgeAccess ?? false;
   const homeHref = session ? "/dashboard" : "/";
 
   return (

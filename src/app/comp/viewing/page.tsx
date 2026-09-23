@@ -57,7 +57,19 @@ export default async function LiveViewingPage() {
 
   const live = competition.judgingMode === "LIVE";
   const started = Boolean(competition.livePosition);
-  if (live && started) {
+  const liveOrder = competition.liveOrder;
+  const alreadyAligned =
+    liveOrder.length === competition.applications.length &&
+    competition.judgeAssignments.every(
+      (row) =>
+        row.slots.length === liveOrder.length &&
+        row.slots.every(
+          (slot, index) =>
+            slot.position === index + 1 &&
+            slot.applicationId === liveOrder[index],
+        ),
+    );
+  if (live && started && !alreadyAligned) {
     await ensureSharedLiveSlots(competition.id);
     competition =
       (await prisma.competitionProfile.findUnique({
