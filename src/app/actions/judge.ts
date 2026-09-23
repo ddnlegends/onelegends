@@ -66,10 +66,21 @@ export async function saveTeamScores(
       status: "APPROVED",
       judge: { userId: user.id },
     },
+    include: { competition: true },
   });
   if (!assignment) return { error: "Assignment not found." };
   if (assignment.submittedAt) {
     return { error: "This packet is already submitted." };
+  }
+  if (
+    assignment.competition.judgingMode === "LIVE" &&
+    assignment.competition.livePosition !== position
+  ) {
+    return {
+      error: assignment.competition.livePosition
+        ? `The chair is on Team ${assignment.competition.livePosition}. Save that scoresheet.`
+        : "The chair has not started the live viewing yet.",
+    };
   }
 
   const slot = await prisma.judgeViewingSlot.findUnique({
@@ -103,6 +114,7 @@ export async function saveTeamScores(
 
   revalidatePath(`/judge/${assignment.competitionId}`);
   revalidatePath(`/judge/${assignment.competitionId}/team/${position}`);
+  revalidatePath("/comp/viewing");
   revalidatePath("/comp/results");
   return {
     ok: true,
@@ -147,6 +159,7 @@ export async function submitJudgingPacket(
   revalidatePath(`/judge/${assignment.competitionId}`);
   revalidatePath("/comp");
   revalidatePath("/comp/results");
+  revalidatePath("/comp/viewing");
   revalidatePath("/comp/judges");
   return { ok: true };
 }

@@ -31,7 +31,8 @@ export default async function JudgeDashboardPage() {
         <h1 className="font-heading text-4xl">Judging</h1>
         <p className="mt-2 max-w-2xl text-muted">
           Competitions invite you by email. You approve that invite on your
-          dashboard, then score anonymous packets. You never see team names.
+          dashboard, then score anonymous packets. Live viewings only show a
+          scoresheet — watch Zoom for the video.
         </p>
       </div>
 
@@ -53,6 +54,8 @@ export default async function JudgeDashboardPage() {
                     {row.decidedAt ? formatDateTime(row.decidedAt) : "—"}
                     {isCompetitionOpen(row.competition)
                       ? " · Waiting for applications to close"
+                      : row.competition.judgingMode === "LIVE"
+                        ? " · Live viewing · scoresheet only"
                       : ""}
                   </p>
                 </div>

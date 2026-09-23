@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { JudgeScoreForm } from "@/components/JudgeScoreForm";
+import { LiveSessionPoll } from "@/components/LiveSessionPoll";
+import { ensureViewingSlots, isCompetitionOpen } from "@/lib/judging";
 
 export default async function JudgeTeamPage({
   params,
@@ -22,10 +24,27 @@ export default async function JudgeTeamPage({
     },
     include: {
       competition: true,
-      slots: { select: { id: true } },
+      slots: { include: { score: true } },
     },
   });
   if (!assignment) notFound();
+
+  const live = assignment.competition.judgingMode === "LIVE";
+  const livePosition = assignment.competition.livePosition;
+  if (live) {
+    await ensureViewingSlots(assignment.id);
+  } else if (
+    !isCompetitionOpen(assignment.competition) &&
+    assignment.slots.length === 0
+  ) {
+    await ensureViewingSlots(assignment.id);
+  }
+  if (live && !assignment.submittedAt) {
+    if (!livePosition) redirect(`/judge/${competitionId}`);
+    if (position !== livePosition) {
+      redirect(`/judge/${competitionId}/team/${livePosition}`);
+    }
+  }
 
   const slot = await prisma.judgeViewingSlot.findUnique({
     where: {
@@ -43,10 +62,13 @@ export default async function JudgeTeamPage({
   });
   if (!slot) notFound();
 
-  const totalTeams = assignment.slots.length;
+  const totalTeams = await prisma.judgeViewingSlot.count({
+    where: { assignmentId: assignment.id },
+  });
 
   return (
     <div className="space-y-6">
+      {live ? <LiveSessionPoll active /> : null}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-wide text-muted">
@@ -54,16 +76,19 @@ export default async function JudgeTeamPage({
           </p>
           <h1 className="font-heading text-4xl">Team {position}</h1>
           <p className="mt-2 text-sm text-muted">
-            {position} of {totalTeams} in your viewing order. The video is the
-            team’s current profile AV — if they fix the Drive link, refresh this
-            page.
+            {live
+              ? `${position} of ${totalTeams}. Watch Zoom, then save this scoresheet.`
+              : `${position} of ${totalTeams} in your viewing order. The video is the team’s current profile AV — if they fix the Drive link, refresh this page.`}
           </p>
         </div>
-        <Link href={`/judge/${competitionId}`} className="btn btn-ghost">
-          Packet List
-        </Link>
+        {live ? null : (
+          <Link href={`/judge/${competitionId}`} className="btn btn-ghost">
+            Packet List
+          </Link>
+        )}
       </div>
       <JudgeScoreForm
+        key={`${assignment.id}-${position}`}
         competitionId={competitionId}
         assignmentId={assignment.id}
         position={position}
@@ -71,6 +96,7 @@ export default async function JudgeTeamPage({
         avDriveUrl={slot.application.team.avDriveUrl}
         saved={slot.score}
         locked={Boolean(assignment.submittedAt)}
+        live={live}
       />
     </div>
   );

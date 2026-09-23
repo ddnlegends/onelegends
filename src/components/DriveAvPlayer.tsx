@@ -4,10 +4,12 @@ export function DriveAvPlayer({
   url,
   label,
   scoringHint = false,
+  hideOpenLink = false,
 }: {
   url: string;
   label: string;
   scoringHint?: boolean;
+  hideOpenLink?: boolean;
 }) {
   const parsed = parseDriveUrl(url);
   const note = scoringHint
@@ -33,15 +35,20 @@ export function DriveAvPlayer({
           allowFullScreen
         />
         <p className="text-xs text-muted">
-          In-site Google Drive player.{" "}
-          <a
-            href={driveViewUrl(parsed)}
-            className="underline"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Open In Drive
-          </a>
+          In-site Google Drive player.
+          {hideOpenLink ? null : (
+            <>
+              {" "}
+              <a
+                href={driveViewUrl(parsed)}
+                className="underline"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open In Drive
+              </a>
+            </>
+          )}
         </p>
       </div>
     );
@@ -53,14 +60,20 @@ export function DriveAvPlayer({
         This AV is a folder or unrecognized Drive link, so it cannot play inline
         without showing file names.{note}
       </p>
-      <a
-        href={url}
-        className="mt-3 inline-flex text-accent underline"
-        target="_blank"
-        rel="noreferrer"
-      >
-        Open AV In Google Drive
-      </a>
+      {hideOpenLink ? (
+        <p className="mt-3 text-sm text-muted">
+          Ask the team for a Drive file link so it can play here without names.
+        </p>
+      ) : (
+        <a
+          href={url}
+          className="mt-3 inline-flex text-accent underline"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Open AV In Google Drive
+        </a>
+      )}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { JudgeDecisionButtons } from "@/components/JudgeDecisionButtons";
@@ -32,13 +33,19 @@ export default async function CompJudgesPage() {
 
   return (
     <div className="space-y-10">
-      <div>
-        <h1 className="font-heading text-4xl">Judges</h1>
-        <p className="mt-2 max-w-2xl text-muted">
-          Invite judges by email. This app does not send mail — they approve
-          the invite the next time they log in. Set how many completed packets
-          unlock named results. Lower N if you need to release early.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="font-heading text-4xl">Judges</h1>
+          <p className="mt-2 max-w-2xl text-muted">
+            Invite judges by email. This app does not send mail — they approve
+            the invite the next time they log in. For a live viewing, open Live
+            Viewing and share that page on Zoom. Set how many completed packets
+            unlock named results.
+          </p>
+        </div>
+        <Link href="/comp/viewing" className="btn btn-primary">
+          Live Viewing
+        </Link>
       </div>
 
       <InviteJudgeForm competitionId={competition.id} />

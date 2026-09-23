@@ -17,6 +17,7 @@ import {
   setActiveCompAction,
   setActiveTeamAction,
 } from "@/app/actions/team-access";
+import { openLiveViewing } from "@/app/actions/live-viewing";
 import {
   AcceptCompInviteForm,
   AcceptJudgeInviteForm,
@@ -319,6 +320,9 @@ export default async function DashboardPage() {
               </Link>
               <Link href="/comp/judges" className="btn btn-ghost">
                 Judges
+              </Link>
+              <Link href="/comp/viewing" className="btn btn-ghost">
+                Live Viewing
               </Link>
               <Link href="/comp/results" className="btn btn-primary">
                 Viewing Results
@@ -634,12 +638,20 @@ async function OpsDashboard({
                       {comp.claimedAt ? "Claimed" : "Unclaimed · not in team Apply"}
                     </p>
                   </div>
-                  {comp.claimedAt ? (
-                    <ResetCompClaimForm
-                      competitionId={comp.id}
-                      competitionName={comp.name}
-                    />
-                  ) : null}
+                  <div className="flex flex-wrap gap-2">
+                    <form action={openLiveViewing}>
+                      <input type="hidden" name="competitionId" value={comp.id} />
+                      <button className="btn btn-ghost py-1.5" type="submit">
+                        Live viewing
+                      </button>
+                    </form>
+                    {comp.claimedAt ? (
+                      <ResetCompClaimForm
+                        competitionId={comp.id}
+                        competitionName={comp.name}
+                      />
+                    ) : null}
+                  </div>
                 </div>
                 {comp.claimedAt ? <InviteCompAdminForm competitionId={comp.id} /> : null}
                 {(() => {

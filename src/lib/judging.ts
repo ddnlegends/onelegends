@@ -1,3 +1,4 @@
+import type { JudgingMode } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export const RUBRIC_CATEGORIES = [
@@ -106,6 +107,14 @@ export async function ensureViewingSlots(assignmentId: string) {
   }
   if (assignment.slots.length > 0) return assignment;
 
+  if (assignment.competition.judgingMode === "LIVE") {
+    await ensureSharedLiveSlots(assignment.competitionId);
+    return prisma.judgeAssignment.findUnique({
+      where: { id: assignmentId },
+      include: { slots: true },
+    });
+  }
+
   const applications = assignment.competition.applications;
   if (applications.length === 0) return assignment;
 
@@ -121,5 +130,113 @@ export async function ensureViewingSlots(assignmentId: string) {
   return prisma.judgeAssignment.findUnique({
     where: { id: assignmentId },
     include: { slots: true },
+  });
+}
+
+export function isLiveJudging(mode: JudgingMode): boolean {
+  return mode === "LIVE";
+}
+
+export async function ensureSharedLiveSlots(competitionId: string) {
+  const competition = await prisma.competitionProfile.findUnique({
+    where: { id: competitionId },
+    include: {
+      applications: { select: { id: true } },
+      judgeAssignments: {
+        where: { status: "APPROVED" },
+        include: { slots: { orderBy: { position: "asc" } } },
+      },
+    },
+  });
+  if (!competition) return null;
+
+  const applications = competition.applications;
+  if (applications.length === 0) return competition;
+
+  const appIds = new Set(applications.map((row) => row.id));
+  let order = competition.liveOrder.filter((id) => appIds.has(id));
+  if (order.length !== applications.length) {
+    const existing = competition.judgeAssignments.find(
+      (row) => row.slots.length === applications.length,
+    );
+    order = existing
+      ? existing.slots.map((slot) => slot.applicationId)
+      : shuffleCopy(applications).map((row) => row.id);
+    await prisma.competitionProfile.update({
+      where: { id: competitionId },
+      data: { liveOrder: order },
+    });
+  }
+
+  for (const assignment of competition.judgeAssignments) {
+    const matches =
+      assignment.slots.length === order.length &&
+      assignment.slots.every(
+        (slot, index) =>
+          slot.position === index + 1 && slot.applicationId === order[index],
+      );
+    if (matches) continue;
+
+    if (assignment.slots.length === 0) {
+      await prisma.judgeViewingSlot.createMany({
+        data: order.map((applicationId, index) => ({
+          assignmentId: assignment.id,
+          applicationId,
+          position: index + 1,
+        })),
+      });
+      continue;
+    }
+
+    await realignLiveSlots(assignment.id, order);
+  }
+
+  return prisma.competitionProfile.findUnique({
+    where: { id: competitionId },
+  });
+}
+
+async function realignLiveSlots(assignmentId: string, order: string[]) {
+  await prisma.$transaction(async (tx) => {
+    const scores = await tx.judgeScore.findMany({
+      where: { assignmentId },
+      include: { slot: { select: { applicationId: true } } },
+    });
+    const scoreByApp = new Map(
+      scores.map((row) => [row.slot.applicationId, row] as const),
+    );
+
+    await tx.judgeScore.deleteMany({ where: { assignmentId } });
+    await tx.judgeViewingSlot.deleteMany({ where: { assignmentId } });
+    await tx.judgeViewingSlot.createMany({
+      data: order.map((applicationId, index) => ({
+        assignmentId,
+        applicationId,
+        position: index + 1,
+      })),
+    });
+
+    const newSlots = await tx.judgeViewingSlot.findMany({
+      where: { assignmentId },
+    });
+    const restored = newSlots.flatMap((slot) => {
+      const prev = scoreByApp.get(slot.applicationId);
+      if (!prev) return [];
+      return [
+        {
+          assignmentId,
+          slotId: slot.id,
+          choreography: prev.choreography,
+          formations: prev.formations,
+          technique: prev.technique,
+          syncCleanliness: prev.syncCleanliness,
+          overallImpression: prev.overallImpression,
+          comment: prev.comment,
+        },
+      ];
+    });
+    if (restored.length > 0) {
+      await tx.judgeScore.createMany({ data: restored });
+    }
   });
 }

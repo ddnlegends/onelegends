@@ -6,6 +6,7 @@ import { saveTeamScores } from "@/app/actions/judge";
 import { RUBRIC_CATEGORIES, rubricTotal } from "@/lib/judging";
 import { DriveAvPlayer } from "@/components/DriveAvPlayer";
 import { SaveNotice } from "@/components/SaveNotice";
+import { SubmitPacketButton } from "@/components/SubmitPacketButton";
 
 const SCORE_OPTIONS = Array.from({ length: 11 }, (_, i) => i);
 
@@ -26,6 +27,7 @@ export function JudgeScoreForm({
   avDriveUrl,
   saved,
   locked,
+  live = false,
 }: {
   competitionId: string;
   assignmentId: string;
@@ -34,18 +36,26 @@ export function JudgeScoreForm({
   avDriveUrl: string;
   saved: Saved | null;
   locked: boolean;
+  live?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(saveTeamScores, undefined);
-  const prev = position > 1 ? position - 1 : null;
-  const next = position < totalTeams ? position + 1 : null;
+  const prev = !live && position > 1 ? position - 1 : null;
+  const next = !live && position < totalTeams ? position + 1 : null;
 
   return (
     <div className="space-y-6">
-      <DriveAvPlayer
-        url={avDriveUrl}
-        label={`Team ${position} audition video`}
-        scoringHint
-      />
+      {live ? (
+        <p className="rounded-xl border border-line bg-blush p-4 text-sm">
+          Watch the chair’s Zoom screenshare for Team {position}. This page is
+          the scoresheet only.
+        </p>
+      ) : (
+        <DriveAvPlayer
+          url={avDriveUrl}
+          label={`Team ${position} audition video`}
+          scoringHint
+        />
+      )}
 
       <form action={formAction} className="space-y-4 rounded-xl border border-line bg-card">
         <input type="hidden" name="assignmentId" value={assignmentId} />
@@ -97,9 +107,13 @@ export function JudgeScoreForm({
           </p>
         </div>
         <p className="px-4 text-sm text-muted">
-          {saved
-            ? `Saved total: ${rubricTotal(saved)} / 50. You can change scores until you submit the full packet.`
-            : "Save this team, then continue. You can come back from the packet list."}
+          {live
+            ? saved
+              ? `Saved total: ${rubricTotal(saved)} / 50. Wait for the chair to go to the next team.`
+              : "Save this team, then wait. The chair advances when every judge has saved."
+            : saved
+              ? `Saved total: ${rubricTotal(saved)} / 50. You can change scores until you submit the full packet.`
+              : "Save this team, then continue. You can come back from the packet list."}
         </p>
         <div className="px-4">
           <SaveNotice state={state} fallbackOk={`Scores saved for Team ${position}.`} />
@@ -116,9 +130,11 @@ export function JudgeScoreForm({
             <span />
           )}
           <div className="flex gap-2">
-            <Link href={`/judge/${competitionId}`} className="btn btn-ghost">
-              Packet List
-            </Link>
+            {live ? null : (
+              <Link href={`/judge/${competitionId}`} className="btn btn-ghost">
+                Packet List
+              </Link>
+            )}
             {locked ? null : (
               <button className="btn btn-primary" disabled={pending} type="submit">
                 {pending ? "Saving…" : "Save Scores"}
@@ -135,6 +151,9 @@ export function JudgeScoreForm({
           </div>
         </div>
       </form>
+      {live && !locked && position === totalTeams && saved ? (
+        <SubmitPacketButton assignmentId={assignmentId} ready />
+      ) : null}
     </div>
   );
 }

@@ -107,6 +107,21 @@ export async function getActiveTeamId(userId: string): Promise<string | null> {
 export async function getActiveCompetitionId(
   userId: string,
 ): Promise<string | null> {
+  if (await isPlatformAdmin(userId)) {
+    const all = await prisma.competitionProfile.findMany({
+      select: { id: true, judgingMode: true },
+      orderBy: { name: "asc" },
+    });
+    if (all.length === 0) return null;
+    const jar = await cookies();
+    const fromCookie = jar.get(ACTIVE_COMP_COOKIE)?.value;
+    if (fromCookie && all.some((row) => row.id === fromCookie)) {
+      return fromCookie;
+    }
+    const live = all.find((row) => row.judgingMode === "LIVE");
+    return live?.id ?? all[0].id;
+  }
+
   const approved = await getApprovedCompMemberships(userId);
   if (approved.length === 0) {
     const legacy = await prisma.competitionProfile.findUnique({
@@ -149,6 +164,7 @@ export async function userHasTeamAccess(userId: string): Promise<boolean> {
 }
 
 export async function userHasCompAccess(userId: string): Promise<boolean> {
+  if (await isPlatformAdmin(userId)) return true;
   const count = await prisma.competitionMembership.count({
     where: { userId, status: "APPROVED" },
   });

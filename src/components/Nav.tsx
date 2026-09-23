@@ -36,9 +36,14 @@ export async function Nav() {
             </NavLink>
           ) : null}
           {compAccess ? (
-            <NavLink href="/comp/profile" match="prefix">
-              Comp Details
-            </NavLink>
+            <>
+              <NavLink href="/comp/profile" match="prefix">
+                Comp Details
+              </NavLink>
+              <NavLink href="/comp/viewing" match="prefix">
+                Live Viewing
+              </NavLink>
+            </>
           ) : null}
           {judgeAccess ? (
             <NavLink href="/judge" match="prefix">

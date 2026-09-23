@@ -5,8 +5,9 @@ import { isCompetitionOpen } from "@/lib/judging";
 import {
   getActiveCompetitionId,
   getApprovedCompMemberships,
+  isPlatformAdmin,
 } from "@/lib/team-access";
-import { setActiveCompAction } from "@/app/actions/team-access";
+import { CompSwitcher } from "@/components/CompSwitcher";
 
 function shuffle<T>(items: T[], seed: string): T[] {
   const copy = [...items];
@@ -27,7 +28,17 @@ export default async function CompDashboardPage() {
   const userId = session!.user.id;
   const competitionId = await getActiveCompetitionId(userId);
   if (!competitionId) return null;
+  const ops = await isPlatformAdmin(userId);
   const memberships = await getApprovedCompMemberships(userId);
+  const switcher = ops
+    ? await prisma.competitionProfile.findMany({
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      })
+    : memberships.map((m) => ({
+        id: m.competition.id,
+        name: m.competition.name,
+      }));
   const competition = await prisma.competitionProfile.findUnique({
     where: { id: competitionId },
     include: {
@@ -97,6 +108,9 @@ export default async function CompDashboardPage() {
           <Link href="/comp/judges" className="btn btn-ghost">
             Judges
           </Link>
+          <Link href="/comp/viewing" className="btn btn-primary">
+            Live Viewing
+          </Link>
           <Link href="/comp/access" className="btn btn-ghost">
             Admins
           </Link>
@@ -106,28 +120,7 @@ export default async function CompDashboardPage() {
         </div>
       </div>
 
-      {memberships.length > 1 ? (
-        <form action={setActiveCompAction} className="flex flex-wrap items-end gap-3">
-          <div className="field">
-            <label htmlFor="active-comp">Active competition</label>
-            <select
-              key={competitionId}
-              id="active-comp"
-              name="competitionId"
-              defaultValue={competitionId}
-            >
-              {memberships.map((m) => (
-                <option key={m.competitionId} value={m.competitionId}>
-                  {m.competition.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button className="btn btn-ghost" type="submit">
-            Switch
-          </button>
-        </form>
-      ) : null}
+      <CompSwitcher competitions={switcher} activeId={competitionId} />
 
       <div className="rounded-xl border border-line bg-blush p-5">
         <p className="text-sm text-ink/80">

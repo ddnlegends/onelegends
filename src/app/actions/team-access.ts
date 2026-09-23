@@ -67,6 +67,16 @@ export async function setActiveCompAction(formData: FormData) {
   const user = await requireUser();
   if (!user) return;
   const competitionId = String(formData.get("competitionId") ?? "");
+  if (await isPlatformAdmin(user.id)) {
+    const listing = await prisma.competitionProfile.findUnique({
+      where: { id: competitionId },
+      select: { id: true },
+    });
+    if (!listing) return;
+    await setActiveCompCookie(competitionId);
+    revalidateAccessPaths();
+    return;
+  }
   const membership = await prisma.competitionMembership.findUnique({
     where: { userId_competitionId: { userId: user.id, competitionId } },
   });

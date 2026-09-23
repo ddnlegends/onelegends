@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { SubmitPacketButton } from "@/components/SubmitPacketButton";
+import { LiveSessionPoll } from "@/components/LiveSessionPoll";
 import { ensureViewingSlots, isCompetitionOpen, rubricTotal, scoreComment } from "@/lib/judging";
 import { formatDateTime } from "@/lib/utils";
 
@@ -24,7 +25,8 @@ export default async function JudgePacketPage({
   if (!assignment) notFound();
 
   const stillOpen = isCompetitionOpen(assignment.competition);
-  if (!stillOpen && assignment.slots.length === 0) {
+  const live = assignment.competition.judgingMode === "LIVE";
+  if (live || (!stillOpen && assignment.slots.length === 0)) {
     await ensureViewingSlots(assignment.id);
   }
 
@@ -40,15 +42,24 @@ export default async function JudgePacketPage({
   const scored = fresh.slots.filter((slot) => slot.score).length;
   const ready = fresh.slots.length > 0 && scored === fresh.slots.length;
   const locked = Boolean(fresh.submittedAt);
+  const livePosition = fresh.competition.livePosition;
+
+  if (live && livePosition && !locked) {
+    redirect(`/judge/${competitionId}/team/${livePosition}`);
+  }
 
   return (
     <div className="space-y-8">
+      {live ? <LiveSessionPoll active /> : null}
       <div>
-        <p className="text-xs uppercase tracking-wide text-muted">Anonymous packet</p>
+        <p className="text-xs uppercase tracking-wide text-muted">
+          {live ? "Live viewing" : "Anonymous packet"}
+        </p>
         <h1 className="font-heading text-4xl">{fresh.competition.name}</h1>
         <p className="mt-2 text-muted">
-          Teams are labeled Team 1, Team 2, … in your private random order. The
-          server keeps the real mapping. You never see names.
+          {live
+            ? "Join the Zoom. You will only see a scoresheet. The chair plays the videos and advances teams."
+            : "Teams are labeled Team 1, Team 2, … in your private random order. The server keeps the real mapping. You never see names."}
         </p>
         {fresh.decidedAt ? (
           <p className="mt-1 text-sm text-muted">
@@ -65,6 +76,11 @@ export default async function JudgePacketPage({
           This competition is still accepting applications. Judging opens when
           they close apps or the deadline passes, so every judge scores the same
           locked packet.
+        </div>
+      ) : live && !livePosition ? (
+        <div className="rounded-xl border border-line bg-blush p-5 text-sm">
+          Waiting for the chair to start Team 1. Keep Zoom open. This page will
+          refresh when the scoresheet unlocks.
         </div>
       ) : fresh.slots.length === 0 ? (
         <p className="text-muted">No applications are in this packet yet.</p>
@@ -86,12 +102,14 @@ export default async function JudgePacketPage({
                       : "Not scored"}
                   </p>
                 </div>
-                <Link
-                  href={`/judge/${competitionId}/team/${slot.position}`}
-                  className="btn btn-ghost py-1.5"
-                >
-                  {slot.score ? "Edit / Review" : "Score"}
-                </Link>
+                {live ? null : (
+                  <Link
+                    href={`/judge/${competitionId}/team/${slot.position}`}
+                    className="btn btn-ghost py-1.5"
+                  >
+                    {slot.score ? "Edit / Review" : "Score"}
+                  </Link>
+                )}
               </li>
             ))}
           </ul>

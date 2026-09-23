@@ -14,6 +14,7 @@ type Profile = {
   description: string;
   googleSheetUrl: string;
   acceptingApps: boolean;
+  liveJudging: boolean;
   applicationDeadline: string;
   requiredJudgeCount: number;
 };
@@ -31,6 +32,18 @@ export function CompProfileForm({ profile }: { profile: Profile }) {
         />
         Accepting Applications
       </label>
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          name="liveJudging"
+          defaultChecked={profile.liveJudging}
+        />
+        Live viewing session (chair plays videos; judges only see a scoresheet)
+      </label>
+      <p className="-mt-2 text-xs text-muted">
+        Use this with a Zoom call. Open Live Viewing, screenshare the chair
+        page, and go team by team. Judges cannot play AVs on their laptops.
+      </p>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="field sm:col-span-2">
           <label htmlFor="name">Competition name</label>

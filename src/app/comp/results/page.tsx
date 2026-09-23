@@ -96,8 +96,11 @@ export default async function CompResultsPage() {
       <div>
         <h1 className="font-heading text-4xl">Viewing Results</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          Names stay sealed until {competition.requiredJudgeCount} judges submit.
-          Rank is average z-score, then average total.
+          Names stay sealed until{" "}
+          {competition.requiredJudgeCount === 1
+            ? "1 judge submits"
+            : `${competition.requiredJudgeCount} judges submit`}
+          . Rank is average z-score, then average total.
         </p>
       </div>
 

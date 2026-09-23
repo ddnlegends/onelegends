@@ -55,7 +55,7 @@ const GUIDES: Guide[] = [
     kicker: "Email invite · blind packets",
     title: "How judges score",
     intro:
-      "Judges are invited by email from a competition. There is no judge claim code. You never see team names. Each judge gets a shuffled Team 1…K packet and scores the same rubric.",
+      "Judges are invited by email from a competition. There is no judge claim code. You never see team names. Async comps give each judge a private shuffled order. Live viewings use one shared order: the chair plays the video on Zoom, and you only get a scoresheet.",
     steps: [
       {
         title: "Register or log in",
@@ -67,15 +67,15 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Wait until applications close",
-        body: "Your packet is the list of applied teams, built the first time you open it after apps close. The AV and profile you watch are live — if a team fixes a Drive link, you see the update. If they later extend the deadline, judges who already opened a packet keep that team list.",
+        body: "Judging starts after they close apps or the deadline passes. Async packets shuffle once after that. Live viewings wait for the chair to start Team 1. If a team later fixes a Drive link, the chair’s player (or your async packet) shows the update.",
       },
       {
         title: "Score Team 1, Team 2, …",
-        body: "Watch the AV and score 0–10 for choreography, formations, technique, sync & cleanliness, and overall impression (50 total). Leave an optional comment for the competition if the link is invalid or the video will not play — other judges will not see it. Your Team 1 is not another judge’s Team 1. Jump between teams like an exam — scores save as you go.",
+        body: "Score 0–10 for choreography, formations, technique, sync & cleanliness, and overall impression (50 total). Async: watch the Drive AV on your laptop and jump between teams. Live: watch the chair’s Zoom screenshare — your page is scoresheet only, and every judge’s Team N is the same team. Leave an optional comment for the competition; other judges will not see it.",
       },
       {
         title: "Submit Judging when every slot is filled",
-        body: "Submit locks your packet. You will not see rankings, other judges’ scores, or team names. After N judges submit, only the competition login sees named results.",
+        body: "Save as you go. On a live viewing, wait for the chair to advance after everyone saves. Submit locks your packet. You will not see rankings, other judges’ scores, or team names. After N judges submit, only the competition login sees named results.",
       },
     ],
     cta: { href: "/register", label: "Create an account" },
