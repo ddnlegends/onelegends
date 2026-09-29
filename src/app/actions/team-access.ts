@@ -31,6 +31,9 @@ function revalidateAccessPaths() {
   revalidatePath("/comp/access");
   revalidatePath("/comp/profile");
   revalidatePath("/comp/judges");
+  revalidatePath("/comp/results");
+  revalidatePath("/comp/progress");
+  revalidatePath("/comp/live");
   revalidatePath("/judge");
   revalidatePath("/teams");
 }
@@ -834,7 +837,7 @@ export async function resetCompClaim(
     prisma.compInvite.deleteMany({ where: { competitionId } }),
     prisma.competitionProfile.update({
       where: { id: competitionId },
-      data: { claimedAt: null, userId: null },
+      data: { claimedAt: null, userId: null, judgingOpen: false },
     }),
   ]);
   revalidateAccessPaths();

@@ -35,7 +35,6 @@ export default async function CompProfilePage() {
           description: competition.description,
           googleSheetUrl: competition.googleSheetUrl,
           acceptingApps: competition.acceptingApps,
-          liveJudging: competition.judgingMode === "LIVE",
           applicationDeadline: toDatetimeLocalValue(
             competition.applicationDeadline,
           ),

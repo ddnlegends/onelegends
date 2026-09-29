@@ -21,6 +21,7 @@ export function BrandMark({
   return (
     <Link
       href={href}
+      prefetch
       className="inline-flex items-center gap-2"
       aria-label="OneLegends home"
     >

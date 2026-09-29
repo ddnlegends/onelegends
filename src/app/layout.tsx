@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Montserrat } from "next/font/google";
 import { Nav } from "@/components/Nav";
+import { NavigationPulse } from "@/components/NavigationPulse";
 import { PendingInviteGate } from "@/components/PendingInviteGate";
 import "./globals.css";
 
@@ -21,7 +23,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${sans.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col font-sans">
         <Nav />
-        <PendingInviteGate />
+        <NavigationPulse />
+        <Suspense fallback={null}>
+          <PendingInviteGate />
+        </Suspense>
         <main className="flex-1">{children}</main>
         <footer className="border-t border-line bg-blush">
           <div className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-6 text-xs tracking-wide text-muted sm:flex-row sm:items-center sm:justify-between">

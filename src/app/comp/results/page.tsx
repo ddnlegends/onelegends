@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { StatusSelect } from "@/components/StatusSelect";
 import { DriveAvPlayer } from "@/components/DriveAvPlayer";
-import { rubricTotal, zScores, type RubricScores, scoreComment } from "@/lib/judging";
+import { rubricTotal, zScores, type RubricScores, scoreComment, isScoreComplete } from "@/lib/judging";
 import { formatDateTime } from "@/lib/utils";
 import { getActiveCompetitionId } from "@/lib/team-access";
 
@@ -62,12 +62,15 @@ export default async function CompResultsPage() {
   }
 
   for (const assignment of submitted) {
-    const scoredSlots = assignment.slots.filter((slot) => slot.score);
-    const totals = scoredSlots.map((slot) => rubricTotal(slot.score!));
+    const scoredSlots = assignment.slots.filter(
+      (slot): slot is typeof slot & { score: RubricScores } =>
+        isScoreComplete(slot.score),
+    );
+    const totals = scoredSlots.map((slot) => rubricTotal(slot.score));
     const zs = zScores(totals);
     scoredSlots.forEach((slot, index) => {
       const row = byApplication.get(slot.applicationId);
-      if (!row || !slot.score) return;
+      if (!row) return;
       row.judges.push({
         judgeName: assignment.judge.name,
         scores: slot.score,

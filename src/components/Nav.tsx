@@ -10,6 +10,7 @@ export async function Nav() {
   const userId = session?.user?.id;
   const access = userId ? await getNavAccess(userId) : null;
   const ops = access?.ops ?? false;
+  const liveViewOpen = access?.liveViewOpen ?? false;
   const teamAccess = access?.teamAccess ?? false;
   const compAccess = access?.compAccess ?? false;
   const judgeAccess = access?.judgeAccess ?? false;
@@ -32,14 +33,19 @@ export async function Nav() {
             </NavLink>
           ) : null}
           {compAccess ? (
-            <>
-              <NavLink href="/comp/profile" match="prefix">
-                Comp Details
-              </NavLink>
-              <NavLink href="/comp/viewing" match="prefix">
-                Live Viewing
-              </NavLink>
-            </>
+            <NavLink href="/comp/profile" match="prefix">
+              Comp Details
+            </NavLink>
+          ) : null}
+          {ops ? (
+            <NavLink href="/comp/progress" match="prefix">
+              View Progress
+            </NavLink>
+          ) : null}
+          {liveViewOpen ? (
+            <NavLink href="/comp/live" match="prefix">
+              Live View
+            </NavLink>
           ) : null}
           {judgeAccess ? (
             <NavLink href="/judge" match="prefix">
@@ -54,7 +60,7 @@ export async function Nav() {
           ) : (
             <>
               <NavLink href="/login">Log In</NavLink>
-              <Link href="/register" className="btn btn-primary py-1.5">
+              <Link href="/register" prefetch className="btn btn-primary py-1.5">
                 Create account
               </Link>
             </>

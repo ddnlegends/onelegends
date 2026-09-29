@@ -1,0 +1,5 @@
+ALTER TABLE "JudgeScore" ALTER COLUMN "choreography" DROP NOT NULL;
+ALTER TABLE "JudgeScore" ALTER COLUMN "formations" DROP NOT NULL;
+ALTER TABLE "JudgeScore" ALTER COLUMN "technique" DROP NOT NULL;
+ALTER TABLE "JudgeScore" ALTER COLUMN "syncCleanliness" DROP NOT NULL;
+ALTER TABLE "JudgeScore" ALTER COLUMN "overallImpression" DROP NOT NULL;

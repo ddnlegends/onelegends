@@ -36,6 +36,14 @@ yarn-error.log*
 .env.*.local
 !.env.example
 
+# local secrets (logins and claim codes)
+CREDENTIALS.md
+docs/CREDENTIALS.md
+docs/claim-codes.md
+COMP_CODES.md
+**/CREDENTIALS.md
+**/claim-codes.md
+
 # vercel
 .vercel
 

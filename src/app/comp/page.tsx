@@ -105,16 +105,16 @@ export default async function CompDashboardPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Link href="/comp/judges" className="btn btn-ghost">
+          <Link href="/comp/judges" prefetch className="btn btn-ghost">
             Judges
           </Link>
-          <Link href="/comp/viewing" className="btn btn-primary">
-            Live Viewing
+          <Link href="/comp/results" prefetch className="btn btn-primary">
+            Viewing Results
           </Link>
-          <Link href="/comp/access" className="btn btn-ghost">
+          <Link href="/comp/access" prefetch className="btn btn-ghost">
             Admins
           </Link>
-          <Link href="/comp/profile" className="btn btn-ghost">
+          <Link href="/comp/profile" prefetch className="btn btn-ghost">
             Edit Details
           </Link>
         </div>

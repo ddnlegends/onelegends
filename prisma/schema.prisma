@@ -33,11 +33,6 @@ enum TeamMembershipStatus {
   DENIED
 }
 
-enum JudgingMode {
-  ASYNC
-  LIVE
-}
-
 model User {
   id             String   @id @default(cuid())
   email          String   @unique
@@ -147,10 +142,7 @@ model CompetitionProfile {
   googleSheetId        String    @default("")
   googleSheetUrl       String    @default("")
   eventDate            DateTime?
-  judgingMode          JudgingMode @default(ASYNC)
-  livePosition         Int?
-  liveStartedAt        DateTime?
-  liveOrder            String[]    @default([])
+  judgingOpen          Boolean   @default(false)
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
@@ -270,11 +262,11 @@ model JudgeScore {
   assignment         JudgeAssignment  @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   slotId             String           @unique
   slot               JudgeViewingSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
-  choreography       Int
-  formations         Int
-  technique          Int
-  syncCleanliness    Int
-  overallImpression  Int
+  choreography       Int?
+  formations         Int?
+  technique          Int?
+  syncCleanliness    Int?
+  overallImpression  Int?
   comment            String           @default("")
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt

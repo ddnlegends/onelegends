@@ -9,7 +9,7 @@ export type SeasonComp = {
   acceptingApps?: boolean;
 };
 
-/** Official bid listings. Codes are also listed in COMP_CODES.md — treat them as secrets. */
+/** Official bid listings. Codes are also listed in local docs/CREDENTIALS.md — treat them as secrets. */
 export const SEASON_COMPS: SeasonComp[] = [
   {
     slug: "legends",

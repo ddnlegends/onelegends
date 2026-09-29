@@ -6,9 +6,11 @@ import { submitJudgingPacket } from "@/app/actions/judge";
 export function SubmitPacketButton({
   assignmentId,
   ready,
+  closed = false,
 }: {
   assignmentId: string;
   ready: boolean;
+  closed?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(
     submitJudgingPacket,
@@ -24,12 +26,17 @@ export function SubmitPacketButton({
       ) : null}
       <button
         className="btn btn-primary"
-        disabled={pending || !ready}
+        disabled={pending || !ready || closed}
         type="submit"
       >
         {pending ? "Submitting…" : "Submit Judging"}
       </button>
-      {!ready ? (
+      {closed ? (
+        <p className="text-sm text-muted">
+          Judging is closed. You can review, but you cannot submit until
+          circuit ops opens it again.
+        </p>
+      ) : !ready ? (
         <p className="text-sm text-muted">
           Save scores for every team before you submit the packet.
         </p>

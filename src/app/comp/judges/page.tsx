@@ -6,6 +6,7 @@ import { RequiredJudgeCountForm } from "@/components/RequiredJudgeCountForm";
 import { formatDateTime } from "@/lib/utils";
 import { getActiveCompetitionId } from "@/lib/team-access";
 import { InviteJudgeForm, CancelJudgeInviteForm } from "@/components/AccountForms";
+import { isScoreComplete } from "@/lib/judging";
 
 export default async function CompJudgesPage() {
   const session = await auth();
@@ -38,13 +39,12 @@ export default async function CompJudgesPage() {
           <h1 className="font-heading text-4xl">Judges</h1>
           <p className="mt-2 max-w-2xl text-muted">
             Invite judges by email. This app does not send mail — they approve
-            the invite the next time they log in. For a live viewing, open Live
-            Viewing and share that page on Zoom. Set how many completed packets
-            unlock named results.
+            the invite the next time they log in. Set how many completed
+            packets unlock named results for the competition login.
           </p>
         </div>
-        <Link href="/comp/viewing" className="btn btn-primary">
-          Live Viewing
+        <Link href="/comp/results" className="btn btn-primary">
+          Viewing Results
         </Link>
       </div>
 
@@ -104,7 +104,7 @@ export default async function CompJudgesPage() {
         ) : (
           <ul className="divide-y divide-line rounded-xl border border-line bg-card">
             {approved.map((row) => {
-              const scored = row.slots.filter((s) => s.score).length;
+              const scored = row.slots.filter((s) => isScoreComplete(s.score)).length;
               const total = row.slots.length;
               return (
                 <li key={row.id} className="px-4 py-3">

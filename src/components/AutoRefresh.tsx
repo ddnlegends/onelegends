@@ -3,7 +3,13 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-export function LiveSessionPoll({ active }: { active: boolean }) {
+export function AutoRefresh({
+  active,
+  intervalMs = 5000,
+}: {
+  active: boolean;
+  intervalMs?: number;
+}) {
   const router = useRouter();
 
   useEffect(() => {
@@ -14,15 +20,15 @@ export function LiveSessionPoll({ active }: { active: boolean }) {
     const tick = () => {
       if (cancelled) return;
       router.refresh();
-      timeoutId = window.setTimeout(tick, 5000);
+      timeoutId = window.setTimeout(tick, intervalMs);
     };
 
-    timeoutId = window.setTimeout(tick, 5000);
+    timeoutId = window.setTimeout(tick, intervalMs);
     return () => {
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [active, router]);
+  }, [active, intervalMs, router]);
 
   return null;
 }

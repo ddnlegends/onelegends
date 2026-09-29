@@ -4,9 +4,12 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
 import {
-  isCompetitionOpen,
+  judgingLockMessage,
   maybeReleaseResults,
   parseRubricScore,
+  RUBRIC_CATEGORIES,
+  isScoreComplete,
+  type RubricKey,
 } from "@/lib/judging";
 
 export async function saveJudgeProfile(
@@ -45,20 +48,16 @@ export async function saveTeamScores(
   if (comment.length > COMMENT_MAX) {
     return { error: `Comment must be ${COMMENT_MAX} characters or less.` };
   }
-  const choreography = parseRubricScore(formData.get("choreography"));
-  const formations = parseRubricScore(formData.get("formations"));
-  const technique = parseRubricScore(formData.get("technique"));
-  const syncCleanliness = parseRubricScore(formData.get("syncCleanliness"));
-  const overallImpression = parseRubricScore(formData.get("overallImpression"));
 
-  if (
-    choreography == null ||
-    formations == null ||
-    technique == null ||
-    syncCleanliness == null ||
-    overallImpression == null
-  ) {
-    return { error: "Each category must be a whole number from 0 to 10." };
+  const parsed: Partial<Record<RubricKey, number>> = {};
+  for (const category of RUBRIC_CATEGORIES) {
+    const raw = String(formData.get(category.key) ?? "").trim();
+    if (!raw) continue;
+    const value = parseRubricScore(raw);
+    if (value == null) {
+      return { error: "Each category must be a whole number from 0 to 10." };
+    }
+    parsed[category.key] = value;
   }
 
   const assignment = await prisma.judgeAssignment.findFirst({
@@ -73,52 +72,41 @@ export async function saveTeamScores(
   if (assignment.submittedAt) {
     return { error: "This packet is already submitted." };
   }
-  if (isCompetitionOpen(assignment.competition)) {
-    return { error: "Judging opens after applications close." };
-  }
-  if (
-    assignment.competition.judgingMode === "LIVE" &&
-    assignment.competition.livePosition !== position
-  ) {
-    return {
-      error: assignment.competition.livePosition
-        ? `The chair is on Team ${assignment.competition.livePosition}. Save that scoresheet.`
-        : "The chair has not started the live viewing yet.",
-    };
-  }
+  const lock = judgingLockMessage(assignment.competition);
+  if (lock) return { error: lock };
 
   const slot = await prisma.judgeViewingSlot.findUnique({
     where: {
       assignmentId_position: { assignmentId, position },
     },
+    include: { score: true },
   });
   if (!slot) return { error: "That team slot was not found." };
 
+  const previous = slot.score;
+  const next = {
+    choreography: parsed.choreography ?? previous?.choreography ?? null,
+    formations: parsed.formations ?? previous?.formations ?? null,
+    technique: parsed.technique ?? previous?.technique ?? null,
+    syncCleanliness: parsed.syncCleanliness ?? previous?.syncCleanliness ?? null,
+    overallImpression: parsed.overallImpression ?? previous?.overallImpression ?? null,
+    comment,
+  };
+
   await prisma.judgeScore.upsert({
     where: { slotId: slot.id },
-    update: {
-      choreography,
-      formations,
-      technique,
-      syncCleanliness,
-      overallImpression,
-      comment,
-    },
+    update: next,
     create: {
       assignmentId,
       slotId: slot.id,
-      choreography,
-      formations,
-      technique,
-      syncCleanliness,
-      overallImpression,
-      comment,
+      ...next,
     },
   });
 
   revalidatePath(`/judge/${assignment.competitionId}`);
   revalidatePath(`/judge/${assignment.competitionId}/team/${position}`);
-  revalidatePath("/comp/viewing");
+  revalidatePath("/comp/progress");
+  revalidatePath("/comp/live");
   revalidatePath("/comp/results");
   return {
     ok: true,
@@ -147,13 +135,12 @@ export async function submitJudgingPacket(
   });
   if (!assignment) return { error: "Assignment not found." };
   if (assignment.submittedAt) return { ok: true };
-  if (isCompetitionOpen(assignment.competition)) {
-    return { error: "Judging opens after applications close." };
-  }
+  const lock = judgingLockMessage(assignment.competition);
+  if (lock) return { error: lock };
   if (assignment.slots.length === 0) {
     return { error: "No teams in this packet yet." };
   }
-  if (assignment.slots.some((slot) => !slot.score)) {
+  if (assignment.slots.some((slot) => !isScoreComplete(slot.score))) {
     return { error: "Score every team before submitting the packet." };
   }
 
@@ -167,7 +154,8 @@ export async function submitJudgingPacket(
   revalidatePath(`/judge/${assignment.competitionId}`);
   revalidatePath("/comp");
   revalidatePath("/comp/results");
-  revalidatePath("/comp/viewing");
+  revalidatePath("/comp/progress");
+  revalidatePath("/comp/live");
   revalidatePath("/comp/judges");
   return { ok: true };
 }

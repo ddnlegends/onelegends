@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { formatDateTime } from "@/lib/utils";
-import { isCompetitionOpen } from "@/lib/judging";
+import { isCompetitionOpen, isJudgingOpen } from "@/lib/judging";
 
 export default async function JudgeDashboardPage() {
   const session = await auth();
@@ -31,8 +31,8 @@ export default async function JudgeDashboardPage() {
         <h1 className="font-heading text-4xl">Judging</h1>
         <p className="mt-2 max-w-2xl text-muted">
           Competitions invite you by email. You approve that invite on your
-          dashboard, then score anonymous packets. Live viewings only show a
-          scoresheet — watch Zoom for the video.
+          dashboard, then score anonymous packets. Watch each team’s AV in
+          your private shuffled order. You never see names.
         </p>
       </div>
 
@@ -54,9 +54,9 @@ export default async function JudgeDashboardPage() {
                     {row.decidedAt ? formatDateTime(row.decidedAt) : "—"}
                     {isCompetitionOpen(row.competition)
                       ? " · Waiting for applications to close"
-                      : row.competition.judgingMode === "LIVE"
-                        ? " · Live viewing · scoresheet only"
-                      : ""}
+                      : isJudgingOpen(row.competition)
+                        ? ""
+                        : " · Waiting for judging to open"}
                   </p>
                 </div>
                 {isCompetitionOpen(row.competition) ? (
@@ -66,6 +66,7 @@ export default async function JudgeDashboardPage() {
                 ) : (
                   <Link
                     href={`/judge/${row.competitionId}`}
+                    prefetch
                     className="btn btn-primary py-1.5"
                   >
                     Open Packet
@@ -96,6 +97,7 @@ export default async function JudgeDashboardPage() {
                 </div>
                 <Link
                   href={`/judge/${row.competitionId}`}
+                  prefetch
                   className="btn btn-ghost py-1.5"
                 >
                   Review Packet
@@ -109,7 +111,7 @@ export default async function JudgeDashboardPage() {
       {!judge.phone ? (
         <p className="text-sm text-muted">
           Add a phone number on{" "}
-          <Link href="/judge/profile" className="underline">
+          <Link href="/judge/profile" prefetch className="underline">
             Judge Profile
           </Link>{" "}
           so competitions can reach you.

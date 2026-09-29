@@ -55,7 +55,7 @@ const GUIDES: Guide[] = [
     kicker: "Email invite · blind packets",
     title: "How judges score",
     intro:
-      "Judges are invited by email from a competition. There is no judge claim code. You never see team names. Async comps give each judge a private shuffled order. Live viewings use one shared order: the chair plays the video on Zoom, and you only get a scoresheet.",
+      "Judges are invited by email from a competition. There is no judge claim code. You never see team names. Each judge gets a private shuffled packet and watches the Drive AV on their own laptop.",
     steps: [
       {
         title: "Register or log in",
@@ -67,15 +67,15 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Wait until applications close",
-        body: "Judging starts after they close apps or the deadline passes. Async packets shuffle once after that. Live viewings wait for the chair to start Team 1. If a team later fixes a Drive link, the chair’s player (or your async packet) shows the update.",
+        body: "Judging starts after applications close and circuit ops opens judging. Packets shuffle once after that. If a team later fixes a Drive link, refresh your packet to see the update.",
       },
       {
         title: "Score Team 1, Team 2, …",
-        body: "Score 0–10 for choreography, formations, technique, sync & cleanliness, and overall impression (50 total). Async: watch the Drive AV on your laptop and jump between teams. Live: watch the chair’s Zoom screenshare — your page is scoresheet only, and every judge’s Team N is the same team. Leave an optional comment for the competition; other judges will not see it.",
+        body: "Score 0–10 for choreography, formations, technique, sync & cleanliness, and overall impression (50 total). Watch the Drive AV on your laptop and jump between teams. Leave an optional comment for the competition; other judges will not see it.",
       },
       {
         title: "Submit Judging when every slot is filled",
-        body: "Save as you go. On a live viewing, wait for the chair to advance after everyone saves. Submit locks your packet. You will not see rankings, other judges’ scores, or team names. After N judges submit, only the competition login sees named results.",
+        body: "Save as you go. Submit locks your packet. You will not see rankings, other judges’ scores, or team names. If judging is closed, you cannot change scores until circuit ops opens it again. After N judges submit, only the competition login sees named results.",
       },
     ],
     cta: { href: "/register", label: "Create an account" },
@@ -107,7 +107,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Release Viewing Results",
-        body: "When N invited judges have submitted, ranked names unlock: scores, z-scores, judge comments, live AVs, and accept / waitlist / decline. Judges still cannot see that table. Until then, even you do not get the named list.",
+        body: "When N invited judges have submitted, ranked names unlock: scores, z-scores, judge comments, live AVs, and accept / waitlist / decline. Judges still cannot see that table. Until then, even you do not get the named list. Circuit ops can open judging, then use Live View for every subscore as judges autosave.",
       },
     ],
     cta: { href: "/register", label: "Create an account" },

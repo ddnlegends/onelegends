@@ -19,7 +19,6 @@ const profileSchema = z.object({
   description: z.string(),
   googleSheetUrl: z.string(),
   acceptingApps: z.string().optional(),
-  liveJudging: z.string().optional(),
   applicationDeadline: z.string(),
   requiredJudgeCount: z.string(),
 });
@@ -43,7 +42,6 @@ export async function saveCompProfile(
     description: String(formData.get("description") ?? "").trim(),
     googleSheetUrl: String(formData.get("googleSheetUrl") ?? "").trim(),
     acceptingApps: formData.get("acceptingApps") ? "on" : "",
-    liveJudging: formData.get("liveJudging") ? "on" : "",
     applicationDeadline: String(formData.get("applicationDeadline") ?? "").trim(),
     requiredJudgeCount: String(formData.get("requiredJudgeCount") ?? "").trim(),
   });
@@ -63,7 +61,7 @@ export async function saveCompProfile(
     return { error: "Enter a valid application deadline." };
   }
 
-  const live = parsed.data.liveJudging === "on";
+  const acceptingApps = parsed.data.acceptingApps === "on";
   const updated = await prisma.competitionProfile.update({
     where: { id: competition.id },
     data: {
@@ -76,13 +74,10 @@ export async function saveCompProfile(
       description: parsed.data.description,
       googleSheetUrl: parsed.data.googleSheetUrl,
       googleSheetId: sheetId,
-      acceptingApps: parsed.data.acceptingApps === "on",
+      acceptingApps,
       applicationDeadline,
       requiredJudgeCount: n,
-      judgingMode: live ? "LIVE" : "ASYNC",
-      ...(live
-        ? {}
-        : { livePosition: null, liveStartedAt: null, liveOrder: [] }),
+      ...(acceptingApps ? { judgingOpen: false } : {}),
     },
   });
   await maybeReleaseResults(updated.id);
@@ -91,7 +86,8 @@ export async function saveCompProfile(
   revalidatePath("/comp/profile");
   revalidatePath("/comp/judges");
   revalidatePath("/comp/results");
-  revalidatePath("/comp/viewing");
+  revalidatePath("/comp/progress");
+  revalidatePath("/comp/live");
   revalidatePath("/judge");
   revalidatePath("/");
   revalidatePath("/dashboard");

@@ -168,3 +168,16 @@ select {
   color: #166534;
   font-weight: 600;
 }
+
+@keyframes nav-pulse {
+  0% {
+    transform: scaleX(0.12);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+.animate-nav-pulse {
+  animation: nav-pulse 0.7s ease-out forwards;
+}

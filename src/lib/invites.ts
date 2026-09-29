@@ -70,7 +70,13 @@ export async function hydrateEmailInvites(userId: string, email: string) {
 
 export const getPendingInvites = cache(async (userId: string, email: string) => {
   try {
-    await hydrateEmailInvites(userId, email);
+    const [teamInviteCount, compInviteCount] = await Promise.all([
+      prisma.teamInvite.count({ where: { email } }),
+      prisma.compInvite.count({ where: { email } }),
+    ]);
+    if (teamInviteCount + compInviteCount > 0) {
+      await hydrateEmailInvites(userId, email);
+    }
   } catch {
     /* Account still loads even if invite hydration fails. */
   }

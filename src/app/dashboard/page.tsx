@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPendingInvites } from "@/lib/invites";
 import { formatDate, formatDateTime, statusLabel } from "@/lib/utils";
-import { isCompetitionOpen } from "@/lib/judging";
+import { isCompetitionOpen, isJudgingOpen } from "@/lib/judging";
 import { teamProfileGaps, TEAM_APPLY_OPS_BLOCKED_MESSAGE } from "@/lib/team-profile";
 import {
   getActiveCompetitionId,
@@ -17,7 +17,7 @@ import {
   setActiveCompAction,
   setActiveTeamAction,
 } from "@/app/actions/team-access";
-import { openLiveViewing } from "@/app/actions/live-viewing";
+import { openJudgingProgress, openLiveView } from "@/app/actions/ops-judging";
 import {
   AcceptCompInviteForm,
   AcceptJudgeInviteForm,
@@ -35,6 +35,7 @@ import {
   CancelTeamInviteForm,
 } from "@/components/AccountForms";
 import { ApplyForm } from "@/components/ApplyForm";
+import { InstantSelect } from "@/components/InstantSelect";
 import { TeamPhoto } from "@/components/TeamPhoto";
 
 export default async function DashboardPage() {
@@ -96,6 +97,7 @@ export default async function DashboardPage() {
                     name: true,
                     acceptingApps: true,
                     applicationDeadline: true,
+                    judgingOpen: true,
                   },
                 },
               },
@@ -224,10 +226,10 @@ export default async function DashboardPage() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Link href="/team/profile" className="btn btn-ghost">
+              <Link href="/team/profile" prefetch className="btn btn-ghost">
                 Team Profile
               </Link>
-              <Link href="/team/access" className="btn btn-ghost">
+              <Link href="/team/access" prefetch className="btn btn-ghost">
                 Admins
               </Link>
             </div>
@@ -237,7 +239,7 @@ export default async function DashboardPage() {
             <form action={setActiveTeamAction} className="flex flex-wrap items-end gap-3">
               <div className="field">
                 <label htmlFor="active-team">Active team</label>
-                <select
+                <InstantSelect
                   key={team.id}
                   id="active-team"
                   name="teamId"
@@ -248,7 +250,7 @@ export default async function DashboardPage() {
                       {m.team.name}
                     </option>
                   ))}
-                </select>
+                </InstantSelect>
               </div>
               <button className="btn btn-ghost" type="submit">
                 Switch
@@ -328,19 +330,16 @@ export default async function DashboardPage() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Link href="/comp/profile" className="btn btn-ghost">
+              <Link href="/comp/profile" prefetch className="btn btn-ghost">
                 Comp Details
               </Link>
-              <Link href="/comp/judges" className="btn btn-ghost">
+              <Link href="/comp/judges" prefetch className="btn btn-ghost">
                 Judges
               </Link>
-              <Link href="/comp/viewing" className="btn btn-ghost">
-                Live Viewing
-              </Link>
-              <Link href="/comp/results" className="btn btn-primary">
+              <Link href="/comp/results" prefetch className="btn btn-primary">
                 Viewing Results
               </Link>
-              <Link href="/comp/access" className="btn btn-ghost">
+              <Link href="/comp/access" prefetch className="btn btn-ghost">
                 Admins
               </Link>
             </div>
@@ -349,7 +348,7 @@ export default async function DashboardPage() {
             <form action={setActiveCompAction} className="flex flex-wrap items-end gap-3">
               <div className="field">
                 <label htmlFor="active-comp">Active competition</label>
-                <select
+                <InstantSelect
                   key={competition.id}
                   id="active-comp"
                   name="competitionId"
@@ -360,7 +359,7 @@ export default async function DashboardPage() {
                       {m.competition.name}
                     </option>
                   ))}
-                </select>
+                </InstantSelect>
               </div>
               <button className="btn btn-ghost" type="submit">
                 Switch
@@ -420,13 +419,15 @@ export default async function DashboardPage() {
                   </Link>
                 ) : isCompetitionOpen(row.competition) ? (
                   <span className="text-sm text-muted">Waiting for apps to close</span>
-                ) : (
+                ) : isJudgingOpen(row.competition) ? (
                   <Link
                     href={`/judge/${row.competitionId}`}
                     className="text-sm text-accent underline"
                   >
                     Open packet
                   </Link>
+                ) : (
+                  <span className="text-sm text-muted">Waiting for judging to open</span>
                 )}
               </li>
             ))}
@@ -662,15 +663,32 @@ async function OpsDashboard({
                     <p className="font-mono text-sm text-accent">{comp.claimCode}</p>
                     <p className="text-sm text-muted">
                       {comp.claimedAt ? "Claimed" : "Unclaimed · not in team Apply"}
+                      {comp.claimedAt
+                        ? isCompetitionOpen(comp)
+                          ? " · Apps open"
+                          : comp.judgingOpen
+                            ? " · Judging open"
+                            : " · Judging closed"
+                        : ""}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <form action={openLiveViewing}>
-                      <input type="hidden" name="competitionId" value={comp.id} />
-                      <button className="btn btn-ghost py-1.5" type="submit">
-                        Live viewing
-                      </button>
-                    </form>
+                    {comp.claimedAt ? (
+                      <form action={openJudgingProgress}>
+                        <input type="hidden" name="competitionId" value={comp.id} />
+                        <button className="btn btn-ghost py-1.5" type="submit">
+                          View progress
+                        </button>
+                      </form>
+                    ) : null}
+                    {comp.claimedAt && comp.judgingOpen ? (
+                      <form action={openLiveView}>
+                        <input type="hidden" name="competitionId" value={comp.id} />
+                        <button className="btn btn-primary py-1.5" type="submit">
+                          Live View
+                        </button>
+                      </form>
+                    ) : null}
                     {comp.claimedAt ? (
                       <ResetCompClaimForm
                         competitionId={comp.id}

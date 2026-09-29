@@ -118,14 +118,14 @@ export function AuthForm({ mode }: { mode: Mode }) {
         {mode === "login" ? (
           <>
             New here?{" "}
-            <Link href="/register" className="text-ink underline">
+            <Link href="/register" prefetch className="text-ink underline">
               Register
             </Link>
           </>
         ) : (
           <>
             Already have an account?{" "}
-            <Link href="/login" className="text-ink underline">
+            <Link href="/login" prefetch className="text-ink underline">
               Log In
             </Link>
           </>

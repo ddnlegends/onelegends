@@ -99,8 +99,16 @@ export const getNavAccess = cache(async (userId: string) => {
     },
   });
   const ops = Boolean(user?.platformAdmin);
+  const liveOpen = ops
+    ? prisma.competitionProfile.findFirst({
+        where: { judgingOpen: true, claimedAt: { not: null } },
+        select: { id: true },
+      })
+    : Promise.resolve(null);
+  const live = await liveOpen;
   return {
     ops,
+    liveViewOpen: Boolean(live),
     teamAccess: Boolean(user?.memberships.length),
     compAccess:
       ops ||
@@ -155,12 +163,18 @@ export const getActiveCompetitionId = cache(async (
       });
       if (listing) return listing.id;
     }
-    const live = await prisma.competitionProfile.findFirst({
-      where: { judgingMode: "LIVE" },
+    const openJudging = await prisma.competitionProfile.findFirst({
+      where: { judgingOpen: true, claimedAt: { not: null } },
       orderBy: { name: "asc" },
       select: { id: true },
     });
-    if (live) return live.id;
+    if (openJudging) return openJudging.id;
+    const firstClaimed = await prisma.competitionProfile.findFirst({
+      where: { claimedAt: { not: null } },
+      orderBy: { name: "asc" },
+      select: { id: true },
+    });
+    if (firstClaimed) return firstClaimed.id;
     const first = await prisma.competitionProfile.findFirst({
       orderBy: { name: "asc" },
       select: { id: true },
