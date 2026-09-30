@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -9,9 +9,7 @@ import {
   RUBRIC_CATEGORIES,
   isCompetitionClaimed,
   isCompetitionOpen,
-  isScoreComplete,
   rubricCell,
-  rubricFilledCount,
   rubricTotalOrNull,
   scoreComment,
 } from "@/lib/judging";
@@ -41,8 +39,9 @@ export default async function LiveViewPage() {
         include: { team: { select: { id: true, name: true } } },
         orderBy: { team: { name: "asc" } },
       },
+      judgeInvites: { orderBy: { createdAt: "desc" } },
       judgeAssignments: {
-        where: { status: "APPROVED" },
+        where: { status: { not: "DENIED" } },
         include: {
           judge: { select: { name: true, user: { select: { email: true } } } },
           slots: { include: { score: true } },
@@ -57,21 +56,26 @@ export default async function LiveViewPage() {
   const claimed = isCompetitionClaimed(competition);
   const live = claimed && competition.judgingOpen;
   const judges = competition.judgeAssignments;
-  const submitted = judges.filter((row) => row.submittedAt).length;
+  const teams = competition.applications;
 
   return (
     <div className="space-y-8">
       <AutoRefresh active={live} intervalMs={5000} />
-      <div>
-        <p className="text-xs uppercase tracking-wide text-muted">
-          Circuit ops only
-        </p>
-        <h1 className="font-heading text-4xl">Live View</h1>
-        <p className="mt-2 max-w-3xl text-muted">
-          {live
-            ? `Every rubric cell for ${competition.name}, every team, every judge. Cells update as soon as a judge picks a score or clicks out.`
-            : "Live View opens after judging is open on a claimed competition."}
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted">
+            Circuit ops only
+          </p>
+          <h1 className="font-heading text-4xl">Live View</h1>
+          <p className="mt-2 max-w-3xl text-muted">
+            {live
+              ? `One score sheet per invited judge for ${competition.name}. Cells update as they pick a number.`
+              : "Live View opens after judging is open on a claimed competition."}
+          </p>
+        </div>
+        <Link href="/comp/progress" prefetch className="btn btn-ghost">
+          View Progress
+        </Link>
       </div>
 
       <CompSwitcher
@@ -90,118 +94,63 @@ export default async function LiveViewPage() {
       />
 
       {live ? (
-        <>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-xl border border-line bg-card p-5">
-              <p className="text-xs uppercase tracking-wide text-muted">Teams</p>
-              <p className="mt-2 font-heading text-3xl text-accent">
-                {competition.applications.length}
-              </p>
-            </div>
-            <div className="rounded-xl border border-line bg-card p-5">
-              <p className="text-xs uppercase tracking-wide text-muted">Judges</p>
-              <p className="mt-2 font-heading text-3xl text-accent">
-                {judges.length}
-              </p>
-            </div>
-            <div className="rounded-xl border border-line bg-card p-5">
-              <p className="text-xs uppercase tracking-wide text-muted">
-                Packets in
-              </p>
-              <p className="mt-2 font-heading text-3xl text-accent">
-                {submitted} / {competition.requiredJudgeCount}
-              </p>
-            </div>
-          </div>
+        <div className="space-y-10">
+          {competition.judgeInvites.length === 0 && judges.length === 0 ? (
+            <p className="text-sm text-muted">No judges invited yet.</p>
+          ) : null}
 
-          <section className="space-y-3">
-            <h2 className="font-heading text-2xl">Judge packets</h2>
-            {judges.length === 0 ? (
-              <p className="text-sm text-muted">No judges approved yet.</p>
-            ) : (
-              <ul className="divide-y divide-line rounded-xl border border-line bg-card">
-                {judges.map((row) => {
-                  const complete = row.slots.filter((slot) =>
-                    isScoreComplete(slot.score),
-                  ).length;
-                  const started = row.slots.filter(
-                    (slot) => rubricFilledCount(slot.score) > 0,
-                  ).length;
-                  const total = row.slots.length;
-                  return (
-                    <li key={row.id} className="px-4 py-3">
-                      <p className="font-medium">{row.judge.name}</p>
-                      <p className="text-sm text-muted">{row.judge.user.email}</p>
-                      <p className="mt-1 text-sm">
-                        {row.submittedAt
-                          ? "Packet submitted"
-                          : total
-                            ? `Live · ${complete} complete · ${started} started / ${total} teams`
-                            : "Approved · packet not opened yet"}
-                      </p>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </section>
-
-          <section className="space-y-3">
-            <h2 className="font-heading text-2xl">Every subscore</h2>
-            {competition.applications.length === 0 ? (
-              <p className="text-sm text-muted">No applications yet.</p>
-            ) : judges.length === 0 ? (
-              <p className="text-sm text-muted">
-                Invite judges to see live scores here.
+          {competition.judgeInvites.map((invite) => (
+            <section key={invite.id} className="space-y-3">
+              <div>
+                <h2 className="font-heading text-2xl">{invite.email}</h2>
+                <p className="text-sm text-muted">
+                  Invite sent · waiting to log in
+                </p>
+              </div>
+              <p className="rounded-xl border border-line bg-card px-4 py-3 text-sm text-muted">
+                No scores yet.
               </p>
-            ) : (
-              <div className="overflow-x-auto rounded-xl border border-line bg-card">
-                <table className="w-full min-w-[56rem] text-left text-sm">
-                  <thead className="border-b border-line bg-blush text-xs uppercase tracking-wide text-muted">
-                    <tr>
-                      <th
-                        className="sticky left-0 z-10 bg-blush px-4 py-3 font-medium"
-                        rowSpan={2}
-                      >
-                        Team
-                      </th>
-                      {judges.map((row) => (
-                        <th
-                          key={row.id}
-                          className="px-4 py-3 text-center font-medium"
-                          colSpan={RUBRIC_CATEGORIES.length + 2}
-                        >
-                          {row.judge.name}
-                        </th>
-                      ))}
-                    </tr>
-                    <tr>
-                      {judges.map((row) => (
-                        <Fragment key={`${row.id}-cats`}>
+            </section>
+          ))}
+
+          {judges.map((row) => {
+            const pending = row.status === "PENDING";
+            return (
+              <section key={row.id} className="space-y-3">
+                <div>
+                  <h2 className="font-heading text-2xl">{row.judge.name}</h2>
+                  <p className="text-sm text-muted">{row.judge.user.email}</p>
+                  <p className="mt-1 text-sm">
+                    {pending
+                      ? "Invite pending"
+                      : row.submittedAt
+                        ? "Packet submitted"
+                        : "Scoring live"}
+                  </p>
+                </div>
+                {pending ? (
+                  <p className="rounded-xl border border-line bg-card px-4 py-3 text-sm text-muted">
+                    This judge has not accepted yet, so there is no score sheet.
+                  </p>
+                ) : teams.length === 0 ? (
+                  <p className="text-sm text-muted">No applications yet.</p>
+                ) : (
+                  <div className="overflow-x-auto rounded-xl border border-line bg-card">
+                    <table className="w-full min-w-[40rem] text-left text-sm">
+                      <thead className="border-b border-line bg-blush text-xs uppercase tracking-wide text-muted">
+                        <tr>
+                          <th className="px-4 py-3 font-medium">Team</th>
                           {RUBRIC_CATEGORIES.map((category) => (
-                            <th
-                              key={`${row.id}-${category.key}`}
-                              className="px-3 py-2 font-medium"
-                            >
+                            <th key={category.key} className="px-3 py-3 font-medium">
                               {category.label}
                             </th>
                           ))}
-                          <th className="px-3 py-2 font-medium">Total</th>
-                          <th className="px-3 py-2 font-medium">Note</th>
-                        </Fragment>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {competition.applications.map((app) => (
-                      <tr
-                        key={app.id}
-                        className="border-b border-line last:border-0 align-top"
-                      >
-                        <th className="sticky left-0 z-10 bg-card px-4 py-3 text-left font-semibold">
-                          {app.team.name}
-                        </th>
-                        {judges.map((row) => {
+                          <th className="px-3 py-3 font-medium">Total</th>
+                          <th className="px-3 py-3 font-medium">Note</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {teams.map((app) => {
                           const slot = row.slots.find(
                             (item) => item.applicationId === app.id,
                           );
@@ -209,36 +158,42 @@ export default async function LiveViewPage() {
                           const total = rubricTotalOrNull(score);
                           const note = scoreComment(score);
                           return (
-                            <Fragment key={`${row.id}-${app.id}`}>
+                            <tr
+                              key={app.id}
+                              className="border-b border-line last:border-0"
+                            >
+                              <th className="px-4 py-3 text-left font-semibold">
+                                {app.team.name}
+                              </th>
                               {RUBRIC_CATEGORIES.map((category) => (
                                 <td
-                                  key={`${row.id}-${app.id}-${category.key}`}
+                                  key={category.key}
                                   className="px-3 py-3 tabular-nums"
                                 >
                                   {rubricCell(score?.[category.key])}
                                 </td>
                               ))}
                               <td className="px-3 py-3 font-medium tabular-nums">
-                                {total != null ? `${total}` : "—"}
+                                {total != null ? String(total) : "—"}
                               </td>
                               <td className="max-w-[12rem] px-3 py-3 text-xs text-muted">
                                 {note || "—"}
                               </td>
-                            </Fragment>
+                            </tr>
                           );
                         })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            <p className="text-xs text-muted">
-              This board refreshes every few seconds. Judges stay anonymous to
-              each other; you see names because you are circuit ops.
-            </p>
-          </section>
-        </>
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
+            );
+          })}
+          <p className="text-xs text-muted">
+            This board refreshes every few seconds. Judges stay anonymous to
+            each other; you see names because you are circuit ops.
+          </p>
+        </div>
       ) : null}
     </div>
   );

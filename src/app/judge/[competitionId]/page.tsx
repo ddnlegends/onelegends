@@ -8,6 +8,7 @@ import {
   isJudgingOpen,
   isScoreComplete,
   judgingLockMessage,
+  priorTeamsScored,
   rubricFilledCount,
   rubricTotal,
   scoreComment,
@@ -101,13 +102,26 @@ export default async function JudgePacketPage({
                         : "Not scored"}
                   </p>
                 </div>
-                <Link
-                  href={`/judge/${competitionId}/team/${slot.position}`}
-                  prefetch
-                  className="btn btn-ghost py-1.5"
-                >
-                  {isScoreComplete(slot.score) ? "Edit / Review" : "Score"}
-                </Link>
+                {locked ||
+                !scoringOpen ||
+                priorTeamsScored(fresh.slots, slot.position) ? (
+                  <Link
+                    href={`/judge/${competitionId}/team/${slot.position}`}
+                    prefetch
+                    className="btn btn-ghost py-1.5"
+                  >
+                    {isScoreComplete(slot.score) ? "Edit / Review" : "Score"}
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-ghost py-1.5"
+                    disabled
+                    title={`Fill all five scores for Team ${slot.position - 1} first`}
+                  >
+                    Score
+                  </button>
+                )}
               </li>
             ))}
           </ul>

@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
-import { openLiveView, setJudgingOpen } from "@/app/actions/ops-judging";
+import { setJudgingOpen } from "@/app/actions/ops-judging";
 import { SaveNotice } from "@/components/SaveNotice";
 
 export function JudgingControls({
@@ -9,11 +10,13 @@ export function JudgingControls({
   judgingOpen,
   appsOpen,
   claimed,
+  showLiveLink = false,
 }: {
   competitionId: string;
   judgingOpen: boolean;
   appsOpen: boolean;
   claimed: boolean;
+  showLiveLink?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(setJudgingOpen, undefined);
 
@@ -63,13 +66,10 @@ export function JudgingControls({
               </>
             )}
           </form>
-          {judgingOpen ? (
-            <form action={openLiveView}>
-              <input type="hidden" name="competitionId" value={competitionId} />
-              <button className="btn btn-primary" type="submit">
-                Live View
-              </button>
-            </form>
+          {judgingOpen && showLiveLink ? (
+            <Link href="/comp/live" prefetch className="btn btn-primary">
+              Live View
+            </Link>
           ) : null}
         </div>
       ) : null}

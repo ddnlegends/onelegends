@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useRef, useState } from "react";
+import { startTransition, useActionState, useState } from "react";
 import { saveTeamScores } from "@/app/actions/judge";
 import {
   RUBRIC_CATEGORIES,
   isScoreComplete,
-  rubricFilledCount,
   rubricTotal,
+  type RubricKey,
 } from "@/lib/judging";
 import { DriveAvPlayer } from "@/components/DriveAvPlayer";
 import { SaveNotice } from "@/components/SaveNotice";
@@ -22,6 +22,26 @@ type Saved = {
   overallImpression: number | null;
   comment?: string | null;
 };
+
+type Draft = Record<RubricKey, string> & { comment: string };
+
+function toDraft(saved: Saved | null): Draft {
+  return {
+    choreography: saved?.choreography == null ? "" : String(saved.choreography),
+    formations: saved?.formations == null ? "" : String(saved.formations),
+    technique: saved?.technique == null ? "" : String(saved.technique),
+    syncCleanliness:
+      saved?.syncCleanliness == null ? "" : String(saved.syncCleanliness),
+    overallImpression:
+      saved?.overallImpression == null ? "" : String(saved.overallImpression),
+    comment: saved?.comment ?? "",
+  };
+}
+
+function filledFromDraft(draft: Draft): number {
+  return RUBRIC_CATEGORIES.filter((category) => draft[category.key] !== "")
+    .length;
+}
 
 export function JudgeScoreForm({
   competitionId,
@@ -40,26 +60,47 @@ export function JudgeScoreForm({
   saved: Saved | null;
   locked: boolean;
 }) {
-  const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, pending] = useActionState(saveTeamScores, undefined);
+  const [draft, setDraft] = useState(() => toDraft(saved));
   const prev = position > 1 ? position - 1 : null;
   const next = position < totalTeams ? position + 1 : null;
-  const filled = rubricFilledCount(saved);
-  const complete = isScoreComplete(saved);
+  const filled = filledFromDraft(draft);
+  const complete = isScoreComplete({
+    choreography: draft.choreography === "" ? null : Number(draft.choreography),
+    formations: draft.formations === "" ? null : Number(draft.formations),
+    technique: draft.technique === "" ? null : Number(draft.technique),
+    syncCleanliness:
+      draft.syncCleanliness === "" ? null : Number(draft.syncCleanliness),
+    overallImpression:
+      draft.overallImpression === "" ? null : Number(draft.overallImpression),
+  });
 
-  const [draftFilled, setDraftFilled] = useState(filled);
-
-  function queueSave() {
+  function persist(draftToSave: Draft) {
     if (locked) return;
-    const form = formRef.current;
-    if (!form) return;
-    const data = new FormData(form);
-    setDraftFilled(
-      RUBRIC_CATEGORIES.filter(
-        (category) => String(data.get(category.key) ?? "").trim() !== "",
-      ).length,
-    );
-    form.requestSubmit();
+    const data = new FormData();
+    data.set("assignmentId", assignmentId);
+    data.set("position", String(position));
+    data.set("comment", draftToSave.comment);
+    for (const category of RUBRIC_CATEGORIES) {
+      if (draftToSave[category.key] !== "") {
+        data.set(category.key, draftToSave[category.key]);
+      }
+    }
+    startTransition(() => {
+      formAction(data);
+    });
+  }
+
+  function updateScore(key: RubricKey, value: string) {
+    const draftToSave = { ...draft, [key]: value };
+    setDraft(draftToSave);
+    persist(draftToSave);
+  }
+
+  function updateComment(value: string) {
+    const draftToSave = { ...draft, comment: value };
+    setDraft(draftToSave);
+    persist(draftToSave);
   }
 
   return (
@@ -70,13 +111,7 @@ export function JudgeScoreForm({
         scoringHint
       />
 
-      <form
-        ref={formRef}
-        action={formAction}
-        className="space-y-4 rounded-xl border border-line bg-card"
-      >
-        <input type="hidden" name="assignmentId" value={assignmentId} />
-        <input type="hidden" name="position" value={position} />
+      <form className="space-y-4 rounded-xl border border-line bg-card">
         <div className="rounded-t-xl bg-accent px-4 py-3 text-white">
           <p className="font-heading text-lg tracking-wide">Team {position}</p>
           <p className="text-xs uppercase tracking-widest text-white/80">
@@ -91,11 +126,11 @@ export function JudgeScoreForm({
               </label>
               <select
                 id={category.key}
-                name={category.key}
                 disabled={locked}
-                defaultValue={saved?.[category.key] ?? ""}
-                onChange={queueSave}
-                onBlur={queueSave}
+                value={draft[category.key]}
+                onChange={(event) =>
+                  updateScore(category.key, event.target.value)
+                }
               >
                 <option value="">—</option>
                 {SCORE_OPTIONS.map((n) => (
@@ -111,12 +146,17 @@ export function JudgeScoreForm({
           <label htmlFor="comment">Comment for the competition</label>
           <textarea
             id="comment"
-            name="comment"
             maxLength={1000}
             disabled={locked}
-            defaultValue={saved?.comment ?? ""}
+            value={draft.comment}
             placeholder="Optional. Invalid Drive link, video won’t play, wrong file, etc."
-            onBlur={queueSave}
+            onChange={(event) =>
+              setDraft((current) => ({
+                ...current,
+                comment: event.target.value,
+              }))
+            }
+            onBlur={(event) => updateComment(event.target.value)}
           />
           <p className="text-xs text-muted">
             The competition sees this after results unlock. Other judges never
@@ -124,10 +164,16 @@ export function JudgeScoreForm({
           </p>
         </div>
         <p className="px-4 text-sm text-muted">
-          {complete && saved && draftFilled === 5
-            ? `Saved total: ${rubricTotal(saved)} / 50. Scores autosave when you pick a number or leave a field.`
-            : draftFilled
-              ? `Autosaved ${draftFilled} / 5 categories. Fill the rest when you are ready.`
+          {complete
+            ? `Saved total: ${rubricTotal({
+                choreography: Number(draft.choreography),
+                formations: Number(draft.formations),
+                technique: Number(draft.technique),
+                syncCleanliness: Number(draft.syncCleanliness),
+                overallImpression: Number(draft.overallImpression),
+              })} / 50. Scores autosave when you pick a number or leave a field.`
+            : filled
+              ? `Autosaved ${filled} / 5 categories. Fill all five to go to the next team. Comments are optional.`
               : "Pick a score — it saves as soon as you choose it or click out."}
         </p>
         <div className="px-4">
@@ -156,13 +202,24 @@ export function JudgeScoreForm({
               Packet List
             </Link>
             {next ? (
-              <Link
-                href={`/judge/${competitionId}/team/${next}`}
-                prefetch
-                className="btn btn-ghost"
-              >
-                Team {next}
-              </Link>
+              complete || locked ? (
+                <Link
+                  href={`/judge/${competitionId}/team/${next}`}
+                  prefetch
+                  className="btn btn-ghost"
+                >
+                  Team {next}
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  disabled
+                  title="Fill all five rubric scores first. Comments are optional."
+                >
+                  Team {next}
+                </button>
+              )
             ) : null}
           </div>
         </div>

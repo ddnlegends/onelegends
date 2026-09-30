@@ -5,8 +5,10 @@ import { prisma } from "@/lib/prisma";
 import { JudgeScoreForm } from "@/components/JudgeScoreForm";
 import {
   ensureViewingSlots,
+  firstIncompletePosition,
   isJudgingOpen,
   judgingLockMessage,
+  priorTeamsScored,
 } from "@/lib/judging";
 
 export default async function JudgeTeamPage({
@@ -40,10 +42,8 @@ export default async function JudgeTeamPage({
     redirect(`/judge/${competitionId}`);
   }
 
-  const slot = await prisma.judgeViewingSlot.findUnique({
-    where: {
-      assignmentId_position: { assignmentId: assignment.id, position },
-    },
+  const slots = await prisma.judgeViewingSlot.findMany({
+    where: { assignmentId: assignment.id },
     include: {
       score: true,
       application: {
@@ -53,13 +53,23 @@ export default async function JudgeTeamPage({
         },
       },
     },
+    orderBy: { position: "asc" },
   });
+  const slot = slots.find((row) => row.position === position);
   if (!slot) notFound();
 
-  const totalTeams = await prisma.judgeViewingSlot.count({
-    where: { assignmentId: assignment.id },
-  });
+  const totalTeams = slots.length;
   const locked = Boolean(assignment.submittedAt) || !scoringOpen;
+  if (
+    scoringOpen &&
+    !assignment.submittedAt &&
+    !priorTeamsScored(slots, position)
+  ) {
+    const fallback = firstIncompletePosition(slots) ?? 1;
+    if (fallback !== position) {
+      redirect(`/judge/${competitionId}/team/${fallback}`);
+    }
+  }
   const lockMessage = assignment.submittedAt
     ? "Packet submitted. Scores are locked."
     : judgingLockMessage(assignment.competition);

@@ -103,6 +103,28 @@ export function isScoreComplete(
   });
 }
 
+export function priorTeamsScored(
+  slots: Array<{
+    position: number;
+    score: PartialRubricScores | RubricScores | null | undefined;
+  }>,
+  position: number,
+): boolean {
+  return slots
+    .filter((slot) => slot.position < position)
+    .every((slot) => isScoreComplete(slot.score));
+}
+
+export function firstIncompletePosition(
+  slots: Array<{
+    position: number;
+    score: PartialRubricScores | RubricScores | null | undefined;
+  }>,
+): number | null {
+  const ordered = [...slots].sort((a, b) => a.position - b.position);
+  return ordered.find((slot) => !isScoreComplete(slot.score))?.position ?? null;
+}
+
 export function rubricFilledCount(
   score: PartialRubricScores | RubricScores | null | undefined,
 ): number {
