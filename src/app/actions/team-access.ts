@@ -32,8 +32,8 @@ function revalidateAccessPaths() {
   revalidatePath("/comp/profile");
   revalidatePath("/comp/judges");
   revalidatePath("/comp/results");
-  revalidatePath("/comp/progress");
-  revalidatePath("/comp/live");
+  revalidatePath("/ops/comps", "layout");
+  revalidatePath("/reg", "layout");
   revalidatePath("/judge");
   revalidatePath("/teams");
 }
@@ -331,6 +331,29 @@ export async function acceptJudgeInvite(
     where: { id: inviteId, email: dbUser.email },
   });
   if (!invite) return { error: "That judging invite was not found." };
+  const [regAccess, regInvite] = await Promise.all([
+    prisma.registrationAccess.findUnique({
+      where: {
+        userId_competitionId: {
+          userId: user.id,
+          competitionId: invite.competitionId,
+        },
+      },
+      select: { id: true },
+    }),
+    prisma.registrationInvite.findUnique({
+      where: {
+        competitionId_email: {
+          competitionId: invite.competitionId,
+          email: dbUser.email,
+        },
+      },
+      select: { id: true },
+    }),
+  ]);
+  if (regAccess || regInvite) {
+    return { error: "Registration staff for this competition cannot judge it." };
+  }
 
   const name = dbUser.name.trim() || dbUser.email.split("@")[0] || "Judge";
 
@@ -572,6 +595,23 @@ export async function inviteJudge(
   });
   if (account?.judge?.assignments.some((a) => a.competitionId === competitionId && a.status === "APPROVED")) {
     return { error: "That email is already an approved judge for this competition." };
+  }
+  const [regAccess, regInvite] = await Promise.all([
+    account
+      ? prisma.registrationAccess.findUnique({
+          where: { userId_competitionId: { userId: account.id, competitionId } },
+          select: { id: true },
+        })
+      : Promise.resolve(null),
+    prisma.registrationInvite.findUnique({
+      where: { competitionId_email: { competitionId, email } },
+      select: { id: true },
+    }),
+  ]);
+  if (regAccess || regInvite) {
+    return {
+      error: "That email runs registration for this competition, so it can see the videos and cannot judge.",
+    };
   }
 
   await prisma.judgeInvite.upsert({
@@ -837,7 +877,13 @@ export async function resetCompClaim(
     prisma.compInvite.deleteMany({ where: { competitionId } }),
     prisma.competitionProfile.update({
       where: { id: competitionId },
-      data: { claimedAt: null, userId: null, judgingOpen: false },
+      data: {
+        claimedAt: null,
+        userId: null,
+        judgingOpen: false,
+        livePosition: null,
+        liveUpdatedAt: null,
+      },
     }),
   ]);
   revalidateAccessPaths();

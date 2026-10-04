@@ -3,12 +3,12 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { SubmitPacketButton } from "@/components/SubmitPacketButton";
+import { LiveTeamBanner } from "@/components/LiveTeam";
 import {
   ensureViewingSlots,
   isJudgingOpen,
   isScoreComplete,
   judgingLockMessage,
-  priorTeamsScored,
   rubricFilledCount,
   rubricTotal,
   scoreComment,
@@ -29,12 +29,12 @@ export default async function JudgePacketPage({
       status: "APPROVED",
       judge: { userId: session.user.id },
     },
-    include: { competition: true, slots: { include: { score: true } } },
+    include: { competition: true },
   });
   if (!assignment) notFound();
 
   const scoringOpen = isJudgingOpen(assignment.competition);
-  if (scoringOpen && assignment.slots.length === 0) {
+  if (scoringOpen) {
     await ensureViewingSlots(assignment.id);
   }
 
@@ -51,17 +51,20 @@ export default async function JudgePacketPage({
   const ready = fresh.slots.length > 0 && scored === fresh.slots.length;
   const locked = Boolean(fresh.submittedAt);
   const lockMessage = judgingLockMessage(fresh.competition);
+  const positions = fresh.slots.map((slot) => slot.position);
+  const livePosition = scoringOpen ? fresh.competition.livePosition : null;
 
   return (
     <div className="space-y-8">
       <div>
         <p className="text-xs uppercase tracking-wide text-muted">
-          Anonymous packet
+          Anonymous score sheet
         </p>
         <h1 className="font-heading text-4xl">{fresh.competition.name}</h1>
-        <p className="mt-2 text-muted">
-          Teams are labeled Team 1, Team 2, … in your private random order. The
-          server keeps the real mapping. You never see names.
+        <p className="mt-2 max-w-2xl text-muted">
+          Registration plays each video on a shared screen. Your sheet follows
+          the team on screen, labeled Team 1, Team 2, … in the same order for
+          every judge. You never see names.
         </p>
         {fresh.decidedAt ? (
           <p className="mt-1 text-sm text-muted">
@@ -77,37 +80,62 @@ export default async function JudgePacketPage({
         <p className="notice notice-error">{lockMessage}</p>
       ) : null}
 
+      {fresh.slots.length > 0 ? (
+        <LiveTeamBanner
+          competitionId={competitionId}
+          positions={positions}
+          locked={locked}
+          initial={{ judgingOpen: scoringOpen, livePosition }}
+        />
+      ) : null}
+
       {fresh.slots.length === 0 ? (
         <p className="text-muted">
           {scoringOpen
             ? "No applications are in this packet yet."
-            : "Your packet will appear when circuit ops opens judging."}
+            : "Your score sheet will appear when circuit ops opens judging."}
         </p>
       ) : (
         <>
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="font-heading text-2xl">All teams</h2>
+            <p className="text-sm text-muted">
+              {scored} of {fresh.slots.length} fully scored
+            </p>
+          </div>
           <ul className="divide-y divide-line rounded-xl border border-line bg-card">
-            {fresh.slots.map((slot) => (
-              <li
-                key={slot.id}
-                className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
-              >
-                <div>
-                  <p className="font-medium">Team {slot.position}</p>
-                  <p className="text-sm text-muted">
-                    {isScoreComplete(slot.score)
-                      ? `Saved · ${rubricTotal(slot.score)} / 50${
-                          scoreComment(slot.score) ? " · Note saved" : ""
-                        }`
-                      : rubricFilledCount(slot.score)
-                        ? `Autosaved · ${rubricFilledCount(slot.score)} / 5`
-                        : "Not scored"}
-                  </p>
-                </div>
-                {locked ||
-                !scoringOpen ||
-                priorTeamsScored(fresh.slots, slot.position) ? (
+            {fresh.slots.map((slot) => {
+              const isLive = slot.position === livePosition;
+              return (
+                <li
+                  key={slot.id}
+                  className={`flex flex-wrap items-center justify-between gap-3 px-4 py-3 ${
+                    isLive ? "bg-accent/5" : ""
+                  }`}
+                >
+                  <div>
+                    <p className="font-medium">
+                      Team {slot.position}
+                      {isLive ? (
+                        <span className="ml-2 rounded-full bg-accent-ember px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-white">
+                          Live
+                        </span>
+                      ) : null}
+                    </p>
+                    <p className="text-sm text-muted">
+                      {isScoreComplete(slot.score)
+                        ? `Saved · ${rubricTotal(slot.score)} / 50${
+                            scoreComment(slot.score) ? " · Note saved" : ""
+                          }`
+                        : rubricFilledCount(slot.score)
+                          ? `Autosaved · ${rubricFilledCount(slot.score)} / 5`
+                          : "Not scored"}
+                    </p>
+                  </div>
                   <Link
-                    href={`/judge/${competitionId}/team/${slot.position}`}
+                    href={`/judge/${competitionId}/team/${slot.position}${
+                      isLive ? "" : "?stay=1"
+                    }`}
                     prefetch
                     className="btn btn-ghost py-1.5"
                   >
@@ -117,18 +145,9 @@ export default async function JudgePacketPage({
                         : "Score"
                       : "Review"}
                   </Link>
-                ) : (
-                  <button
-                    type="button"
-                    className="btn btn-ghost py-1.5"
-                    disabled
-                    title={`Fill all five scores for Team ${slot.position - 1} first`}
-                  >
-                    Score
-                  </button>
-                )}
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
           {locked ? (
             <p className="text-sm text-muted">

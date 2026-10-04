@@ -10,7 +10,7 @@ export async function Nav() {
   const userId = session?.user?.id;
   const access = userId ? await getNavAccess(userId) : null;
   const ops = access?.ops ?? false;
-  const liveViewOpen = access?.liveViewOpen ?? false;
+  const registrationAccess = access?.registrationAccess ?? false;
   const teamAccess = access?.teamAccess ?? false;
   const compAccess = access?.compAccess ?? false;
   const judgeAccess = access?.judgeAccess ?? false;
@@ -38,13 +38,13 @@ export async function Nav() {
             </NavLink>
           ) : null}
           {ops ? (
-            <NavLink href="/comp/progress" match="prefix">
-              View Progress
+            <NavLink href="/ops/comps" match="prefix">
+              Comp Dashboard
             </NavLink>
           ) : null}
-          {liveViewOpen ? (
-            <NavLink href="/comp/live" match="prefix">
-              Live View
+          {registrationAccess ? (
+            <NavLink href="/reg" match="prefix">
+              Live Viewing
             </NavLink>
           ) : null}
           {judgeAccess ? (

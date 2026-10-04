@@ -1,9 +1,11 @@
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { applyPlatformAdminInvite } from "@/lib/ops-admin";
+import { applyRegistrationInvites } from "@/lib/registration";
 
 export async function hydrateEmailInvites(userId: string, email: string) {
   await applyPlatformAdminInvite(userId, email);
+  await applyRegistrationInvites(userId, email);
   if (!prisma.teamInvite || !prisma.compInvite) return;
 
   const [teamInvites, compInvites] = await Promise.all([
@@ -72,11 +74,12 @@ export async function hydrateEmailInvites(userId: string, email: string) {
 
 export const getPendingInvites = cache(async (userId: string, email: string) => {
   try {
-    const [teamInviteCount, compInviteCount] = await Promise.all([
+    const [teamInviteCount, compInviteCount, regInviteCount] = await Promise.all([
       prisma.teamInvite.count({ where: { email } }),
       prisma.compInvite.count({ where: { email } }),
+      prisma.registrationInvite.count({ where: { email } }),
     ]);
-    if (teamInviteCount + compInviteCount > 0) {
+    if (teamInviteCount + compInviteCount + regInviteCount > 0) {
       await hydrateEmailInvites(userId, email);
     }
   } catch {

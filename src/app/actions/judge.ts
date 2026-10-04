@@ -9,7 +9,6 @@ import {
   parseRubricScore,
   RUBRIC_CATEGORIES,
   isScoreComplete,
-  priorTeamsScored,
   type RubricKey,
 } from "@/lib/judging";
 
@@ -50,8 +49,17 @@ export async function saveTeamScores(
     return { error: `Comment must be ${COMMENT_MAX} characters or less.` };
   }
 
-  const parsed: Partial<Record<RubricKey, number>> = {};
+  const parsed: Record<RubricKey, number | null> = {
+    choreography: null,
+    formations: null,
+    technique: null,
+    syncCleanliness: null,
+    overallImpression: null,
+  };
   for (const category of RUBRIC_CATEGORIES) {
+    if (!formData.has(category.key)) {
+      return { error: "Score form is incomplete. Refresh and try again." };
+    }
     const raw = String(formData.get(category.key) ?? "").trim();
     if (!raw) continue;
     const value = parseRubricScore(raw);
@@ -76,26 +84,21 @@ export async function saveTeamScores(
   const lock = judgingLockMessage(assignment.competition);
   if (lock) return { error: lock };
 
-  const slots = await prisma.judgeViewingSlot.findMany({
-    where: { assignmentId },
-    include: { score: true },
-    orderBy: { position: "asc" },
-  });
-  const slot = slots.find((row) => row.position === position);
-  if (!slot) return { error: "That team slot was not found." };
-  if (!priorTeamsScored(slots, position)) {
-    return {
-      error: `Finish every score for Team ${position - 1} before Team ${position}.`,
-    };
+  if (!Number.isInteger(position) || position < 1) {
+    return { error: "That team slot was not found." };
   }
+  const slot = await prisma.judgeViewingSlot.findUnique({
+    where: { assignmentId_position: { assignmentId, position } },
+    select: { id: true },
+  });
+  if (!slot) return { error: "That team slot was not found." };
 
-  const previous = slot.score;
   const next = {
-    choreography: parsed.choreography ?? previous?.choreography ?? null,
-    formations: parsed.formations ?? previous?.formations ?? null,
-    technique: parsed.technique ?? previous?.technique ?? null,
-    syncCleanliness: parsed.syncCleanliness ?? previous?.syncCleanliness ?? null,
-    overallImpression: parsed.overallImpression ?? previous?.overallImpression ?? null,
+    choreography: parsed.choreography,
+    formations: parsed.formations,
+    technique: parsed.technique,
+    syncCleanliness: parsed.syncCleanliness,
+    overallImpression: parsed.overallImpression,
     comment,
   };
 
@@ -111,8 +114,7 @@ export async function saveTeamScores(
 
   revalidatePath(`/judge/${assignment.competitionId}`);
   revalidatePath(`/judge/${assignment.competitionId}/team/${position}`);
-  revalidatePath("/comp/progress");
-  revalidatePath("/comp/live");
+  revalidatePath("/ops/comps", "layout");
   revalidatePath("/comp/results");
   return {
     ok: true,
@@ -160,8 +162,7 @@ export async function submitJudgingPacket(
   revalidatePath(`/judge/${assignment.competitionId}`);
   revalidatePath("/comp");
   revalidatePath("/comp/results");
-  revalidatePath("/comp/progress");
-  revalidatePath("/comp/live");
+  revalidatePath("/ops/comps", "layout");
   revalidatePath("/comp/judges");
   return { ok: true };
 }

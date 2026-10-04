@@ -34,19 +34,20 @@ enum TeamMembershipStatus {
 }
 
 model User {
-  id             String   @id @default(cuid())
-  email          String   @unique
-  passwordHash   String?
-  role           Role     @default(TEAM)
-  name           String   @default("")
-  platformAdmin  Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String?
+  role          Role     @default(TEAM)
+  name          String   @default("")
+  platformAdmin Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  competition            CompetitionProfile?      @relation("CompPrimary")
+  competition            CompetitionProfile?     @relation("CompPrimary")
   judge                  JudgeProfile?
   memberships            TeamMembership[]
   competitionMemberships CompetitionMembership[]
+  registrationAccess     RegistrationAccess[]
 }
 
 model PlatformAdminInvite {
@@ -88,18 +89,18 @@ model TeamPhotoBlob {
 }
 
 model TeamMembership {
-  id          String                 @id @default(cuid())
+  id          String               @id @default(cuid())
   userId      String
-  user        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   teamId      String
-  team        TeamProfile            @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  status      TeamMembershipStatus   @default(PENDING)
-  isAdmin     Boolean                @default(false)
-  isPrimary   Boolean                @default(false)
-  requestedAt DateTime               @default(now())
+  team        TeamProfile          @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  status      TeamMembershipStatus @default(PENDING)
+  isAdmin     Boolean              @default(false)
+  isPrimary   Boolean              @default(false)
+  requestedAt DateTime             @default(now())
   decidedAt   DateTime?
-  createdAt   DateTime               @default(now())
-  updatedAt   DateTime               @updatedAt
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
 
   @@unique([userId, teamId])
   @@index([teamId, status])
@@ -127,62 +128,89 @@ model Dancer {
 }
 
 model CompetitionProfile {
-  id                   String    @id @default(cuid())
-  userId               String?   @unique
-  user                 User?     @relation("CompPrimary", fields: [userId], references: [id], onDelete: SetNull)
-  slug                 String    @unique
-  claimCode            String    @unique
-  claimedAt            DateTime?
-  name                 String
-  acceptingApps        Boolean   @default(true)
-  applicationDeadline  DateTime?
-  requiredJudgeCount   Int       @default(3)
-  resultsReleasedAt    DateTime?
-  dates                String    @default("")
-  location             String    @default("")
-  venue                String    @default("")
-  stageSize            String    @default("")
-  productionNotes      String    @default("")
-  lighting             String    @default("")
-  description          String    @default("")
-  googleSheetId        String    @default("")
-  googleSheetUrl       String    @default("")
-  eventDate            DateTime?
-  judgingOpen          Boolean   @default(false)
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  id                  String    @id @default(cuid())
+  userId              String?   @unique
+  user                User?     @relation("CompPrimary", fields: [userId], references: [id], onDelete: SetNull)
+  slug                String    @unique
+  claimCode           String    @unique
+  claimedAt           DateTime?
+  name                String
+  acceptingApps       Boolean   @default(true)
+  applicationDeadline DateTime?
+  requiredJudgeCount  Int       @default(3)
+  resultsReleasedAt   DateTime?
+  dates               String    @default("")
+  location            String    @default("")
+  venue               String    @default("")
+  stageSize           String    @default("")
+  productionNotes     String    @default("")
+  lighting            String    @default("")
+  description         String    @default("")
+  googleSheetId       String    @default("")
+  googleSheetUrl      String    @default("")
+  eventDate           DateTime?
+  judgingOpen         Boolean   @default(false)
+  livePosition        Int?
+  liveUpdatedAt       DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
-  applications      Application[]
-  judgeAssignments  JudgeAssignment[]
-  memberships       CompetitionMembership[]
-  invites           CompInvite[]
-  judgeInvites      JudgeInvite[]
+  applications        Application[]
+  judgeAssignments    JudgeAssignment[]
+  memberships         CompetitionMembership[]
+  invites             CompInvite[]
+  judgeInvites        JudgeInvite[]
+  registrationAccess  RegistrationAccess[]
+  registrationInvites RegistrationInvite[]
+}
+
+model RegistrationAccess {
+  id            String             @id @default(cuid())
+  userId        String
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  competitionId String
+  competition   CompetitionProfile @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  createdAt     DateTime           @default(now())
+
+  @@unique([userId, competitionId])
+  @@index([competitionId])
+}
+
+model RegistrationInvite {
+  id            String             @id @default(cuid())
+  competitionId String
+  competition   CompetitionProfile @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  email         String
+  createdAt     DateTime           @default(now())
+
+  @@unique([competitionId, email])
+  @@index([email])
 }
 
 model CompetitionMembership {
-  id          String                 @id @default(cuid())
-  userId      String
-  user        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String               @id @default(cuid())
+  userId        String
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   competitionId String
-  competition CompetitionProfile     @relation(fields: [competitionId], references: [id], onDelete: Cascade)
-  status      TeamMembershipStatus   @default(PENDING)
-  isAdmin     Boolean                @default(false)
-  isPrimary   Boolean                @default(false)
-  requestedAt DateTime               @default(now())
-  decidedAt   DateTime?
-  createdAt   DateTime               @default(now())
-  updatedAt   DateTime               @updatedAt
+  competition   CompetitionProfile   @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  status        TeamMembershipStatus @default(PENDING)
+  isAdmin       Boolean              @default(false)
+  isPrimary     Boolean              @default(false)
+  requestedAt   DateTime             @default(now())
+  decidedAt     DateTime?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
 
   @@unique([userId, competitionId])
   @@index([competitionId, status])
 }
 
 model CompInvite {
-  id            String              @id @default(cuid())
+  id            String             @id @default(cuid())
   competitionId String
-  competition   CompetitionProfile  @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  competition   CompetitionProfile @relation(fields: [competitionId], references: [id], onDelete: Cascade)
   email         String
-  createdAt     DateTime            @default(now())
+  createdAt     DateTime           @default(now())
 
   @@unique([competitionId, email])
   @@index([email])
@@ -200,18 +228,20 @@ model JudgeInvite {
 }
 
 model Application {
-  id            String            @id @default(cuid())
-  teamId        String
-  competitionId String
-  status        ApplicationStatus @default(PENDING)
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  id              String            @id @default(cuid())
+  teamId          String
+  competitionId   String
+  status          ApplicationStatus @default(PENDING)
+  viewingPosition Int?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
   team         TeamProfile        @relation(fields: [teamId], references: [id], onDelete: Cascade)
   competition  CompetitionProfile @relation(fields: [competitionId], references: [id], onDelete: Cascade)
   viewingSlots JudgeViewingSlot[]
 
   @@unique([teamId, competitionId])
+  @@unique([competitionId, viewingPosition])
   @@index([competitionId])
   @@index([teamId])
 }
@@ -263,17 +293,17 @@ model JudgeViewingSlot {
 }
 
 model JudgeScore {
-  id                 String           @id @default(cuid())
-  assignmentId       String
-  assignment         JudgeAssignment  @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  slotId             String           @unique
-  slot               JudgeViewingSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
-  choreography       Int?
-  formations         Int?
-  technique          Int?
-  syncCleanliness    Int?
-  overallImpression  Int?
-  comment            String           @default("")
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
+  id                String           @id @default(cuid())
+  assignmentId      String
+  assignment        JudgeAssignment  @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  slotId            String           @unique
+  slot              JudgeViewingSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  choreography      Int?
+  formations        Int?
+  technique         Int?
+  syncCleanliness   Int?
+  overallImpression Int?
+  comment           String           @default("")
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 }

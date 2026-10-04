@@ -18,10 +18,37 @@ export async function decideJudgeRequest(
 
   const assignment = await prisma.judgeAssignment.findFirst({
     where: { id: assignmentId, competitionId: competition.id },
+    include: { judge: { select: { userId: true, user: { select: { email: true } } } } },
   });
   if (!assignment) return { error: "Request not found." };
   if (assignment.status !== "PENDING") {
     return { error: "That request was already decided." };
+  }
+
+  if (decision === "APPROVED") {
+    const [regAccess, regInvite] = await Promise.all([
+      prisma.registrationAccess.findUnique({
+        where: {
+          userId_competitionId: {
+            userId: assignment.judge.userId,
+            competitionId: competition.id,
+          },
+        },
+        select: { id: true },
+      }),
+      prisma.registrationInvite.findUnique({
+        where: {
+          competitionId_email: {
+            competitionId: competition.id,
+            email: assignment.judge.user.email,
+          },
+        },
+        select: { id: true },
+      }),
+    ]);
+    if (regAccess || regInvite) {
+      return { error: "Registration staff for this competition cannot judge it." };
+    }
   }
 
   await prisma.judgeAssignment.update({
@@ -47,6 +74,9 @@ export async function setRequiredJudgeCount(
   const n = Number(formData.get("requiredJudgeCount"));
   if (!Number.isInteger(n) || n < 1 || n > 50) {
     return { error: "Judge count must be a whole number from 1 to 50." };
+  }
+  if (competition.resultsReleasedAt) {
+    return { error: "Required judges cannot change after results are released." };
   }
 
   await prisma.competitionProfile.update({

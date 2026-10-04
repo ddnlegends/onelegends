@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState } from "react";
 import { setJudgingOpen } from "@/app/actions/ops-judging";
 import { SaveNotice } from "@/components/SaveNotice";
@@ -10,13 +9,11 @@ export function JudgingControls({
   judgingOpen,
   appsOpen,
   claimed,
-  showLiveLink = false,
 }: {
   competitionId: string;
   judgingOpen: boolean;
   appsOpen: boolean;
   claimed: boolean;
-  showLiveLink?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(setJudgingOpen, undefined);
 
@@ -38,7 +35,7 @@ export function JudgingControls({
         <p className="mt-1 text-sm text-muted">
           {!claimed
             ? "A competition admin has to claim it before you can open judging or watch live scores."
-            : "Only Legends Admin can open or close judging. Judges are locked while it is closed."}
+            : "Only tech admins can open or close judging. Opening it sets the shared team order; REG and judges are locked while it is closed."}
         </p>
       </div>
       <SaveNotice state={state} />
@@ -66,11 +63,6 @@ export function JudgingControls({
               </>
             )}
           </form>
-          {judgingOpen && showLiveLink ? (
-            <Link href="/comp/live" prefetch className="btn btn-primary">
-              Live View
-            </Link>
-          ) : null}
         </div>
       ) : null}
       {claimed && appsOpen ? (

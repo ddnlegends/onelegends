@@ -18,6 +18,8 @@ async function wipeAppData() {
   await prisma.teamProfile.deleteMany();
   await prisma.compInvite.deleteMany();
   await prisma.competitionMembership.deleteMany();
+  await prisma.registrationInvite.deleteMany();
+  await prisma.registrationAccess.deleteMany();
   await prisma.platformAdminInvite.deleteMany();
   await prisma.user.deleteMany();
   await prisma.competitionProfile.deleteMany();
@@ -61,11 +63,23 @@ async function main() {
     },
   });
 
+  await prisma.user.create({
+    data: {
+      email: "legendstestreg@gmail.com",
+      passwordHash: await bcrypt.hash("Legendsreg@123", 10),
+      role: "TEAM",
+      name: "Test Registration",
+    },
+  });
+
   console.log(
     `Reset complete. ${SEASON_COMPS.length} bid listings seeded, unclaimed.`,
   );
   console.log(
     "Team circuit ops: legendstech@desidancenetwork.org (Legends Admin). No dance teams until ops creates a team and hands out a claim code.",
+  );
+  console.log(
+    "Test Registration: legendstestreg@gmail.com. Grant it REG for a competition from the circuit ops dashboard.",
   );
 }
 

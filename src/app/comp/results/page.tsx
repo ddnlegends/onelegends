@@ -2,29 +2,9 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { StatusSelect } from "@/components/StatusSelect";
-import { DriveAvPlayer } from "@/components/DriveAvPlayer";
-import { rubricTotal, zScores, type RubricScores, scoreComment, isScoreComplete } from "@/lib/judging";
+import { rankTeams } from "@/lib/results";
 import { formatDateTime } from "@/lib/utils";
 import { getActiveCompetitionId } from "@/lib/team-access";
-
-type JudgeRow = {
-  judgeName: string;
-  scores: RubricScores;
-  total: number;
-  z: number;
-  comment: string;
-};
-
-type RankedTeam = {
-  applicationId: string;
-  teamId: string;
-  name: string;
-  avDriveUrl: string;
-  status: "PENDING" | "ACCEPTED" | "WAITLISTED" | "DECLINED";
-  judges: JudgeRow[];
-  avgTotal: number;
-  avgZ: number;
-};
 
 export default async function CompResultsPage() {
   const session = await auth();
@@ -49,52 +29,7 @@ export default async function CompResultsPage() {
   const submitted = competition.judgeAssignments.filter((a) => a.submittedAt);
   const released = Boolean(competition.resultsReleasedAt);
 
-  const byApplication = new Map<string, RankedTeam>();
-  for (const app of competition.applications) {
-    byApplication.set(app.id, {
-      applicationId: app.id,
-      teamId: app.teamId,
-      name: app.team.name,
-      avDriveUrl: app.team.avDriveUrl,
-      status: app.status,
-      judges: [],
-      avgTotal: 0,
-      avgZ: 0,
-    });
-  }
-
-  for (const assignment of submitted) {
-    const scoredSlots = assignment.slots.filter(
-      (slot): slot is typeof slot & { score: RubricScores } =>
-        isScoreComplete(slot.score),
-    );
-    const totals = scoredSlots.map((slot) => rubricTotal(slot.score));
-    const zs = zScores(totals);
-    scoredSlots.forEach((slot, index) => {
-      const row = byApplication.get(slot.applicationId);
-      if (!row) return;
-      row.judges.push({
-        judgeName: assignment.judge.name,
-        scores: slot.score,
-        total: totals[index],
-        z: zs[index],
-        comment: scoreComment(slot.score),
-      });
-    });
-  }
-
-  const ranked = [...byApplication.values()]
-    .map((row) => {
-      const count = row.judges.length;
-      const avgTotal =
-        count === 0
-          ? 0
-          : row.judges.reduce((sum, j) => sum + j.total, 0) / count;
-      const avgZ =
-        count === 0 ? 0 : row.judges.reduce((sum, j) => sum + j.z, 0) / count;
-      return { ...row, avgTotal, avgZ };
-    })
-    .sort((a, b) => b.avgZ - a.avgZ || b.avgTotal - a.avgTotal);
+  const ranked = rankTeams(competition.applications, submitted);
 
   return (
     <div className="space-y-8">
@@ -173,7 +108,6 @@ export default async function CompResultsPage() {
                   Avg {row.avgTotal.toFixed(1)} · z {row.avgZ.toFixed(3)}
                 </p>
               </div>
-              <DriveAvPlayer url={row.avDriveUrl} label={`${row.name} audition video`} />
               {row.judges.some((judge) => judge.comment) ? (
                 <div className="space-y-2 rounded-lg border border-line bg-blush p-4 text-sm">
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted">

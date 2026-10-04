@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
 import {
@@ -9,17 +8,16 @@ import {
   isCompetitionClaimed,
   isCompetitionOpen,
 } from "@/lib/judging";
-import { isPlatformAdmin, setActiveCompCookie } from "@/lib/team-access";
+import { isPlatformAdmin } from "@/lib/team-access";
 
 function revalidateJudging(competitionId: string) {
   revalidatePath("/dashboard");
   revalidatePath("/comp");
-  revalidatePath("/comp/progress");
-  revalidatePath("/comp/live");
   revalidatePath("/comp/judges");
   revalidatePath("/comp/results");
+  revalidatePath("/ops/comps", "layout");
+  revalidatePath("/reg", "layout");
   revalidatePath("/judge");
-  revalidatePath(`/judge/${competitionId}`);
   revalidatePath(`/judge/${competitionId}`, "layout");
   revalidatePath("/", "layout");
 }
@@ -39,36 +37,6 @@ async function requireOpsCompetition(competitionId: string) {
   return { error: null, competition };
 }
 
-export async function openLiveView(formData: FormData) {
-  const user = await requireUser();
-  if (!user) return;
-  if (!(await isPlatformAdmin(user.id))) return;
-  const competitionId = String(formData.get("competitionId") ?? "");
-  const listing = await prisma.competitionProfile.findUnique({
-    where: { id: competitionId },
-    select: { id: true, claimedAt: true, userId: true, judgingOpen: true },
-  });
-  if (!listing || !isCompetitionClaimed(listing) || !listing.judgingOpen) return;
-  await setActiveCompCookie(competitionId);
-  revalidateJudging(competitionId);
-  redirect("/comp/live");
-}
-
-export async function openJudgingProgress(formData: FormData) {
-  const user = await requireUser();
-  if (!user) return;
-  if (!(await isPlatformAdmin(user.id))) return;
-  const competitionId = String(formData.get("competitionId") ?? "");
-  const listing = await prisma.competitionProfile.findUnique({
-    where: { id: competitionId },
-    select: { id: true, claimedAt: true, userId: true },
-  });
-  if (!listing || !isCompetitionClaimed(listing)) return;
-  await setActiveCompCookie(competitionId);
-  revalidateJudging(competitionId);
-  redirect("/comp/progress");
-}
-
 export async function setJudgingOpen(
   _prev: { error?: string; ok?: boolean; message?: string } | undefined,
   formData: FormData,
@@ -79,6 +47,9 @@ export async function setJudgingOpen(
   if (error || !competition) return { error: error ?? "Competition missing." };
 
   if (nextOpen) {
+    if (competition.resultsReleasedAt) {
+      return { error: "Judging cannot reopen after results are released." };
+    }
     if (!isCompetitionClaimed(competition)) {
       return { error: "A competition admin has to claim this listing first." };
     }
@@ -91,18 +62,21 @@ export async function setJudgingOpen(
     if (apps === 0) {
       return { error: "No applications to judge yet." };
     }
+    await ensureCompetitionJudgeSlots(competition.id);
     await prisma.competitionProfile.update({
       where: { id: competition.id },
       data: { judgingOpen: true },
     });
-    await ensureCompetitionJudgeSlots(competition.id);
     revalidateJudging(competition.id);
-    return { ok: true, message: "Judging is open. Judges can score now." };
+    return {
+      ok: true,
+      message: "Judging is open. REG can start live viewing and judges can score.",
+    };
   }
 
   await prisma.competitionProfile.update({
     where: { id: competition.id },
-    data: { judgingOpen: false },
+    data: { judgingOpen: false, livePosition: null, liveUpdatedAt: null },
   });
   revalidateJudging(competition.id);
   return { ok: true, message: "Judging is closed. Judges cannot change scores." };

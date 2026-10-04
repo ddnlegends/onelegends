@@ -6,7 +6,7 @@ import { ApplicationStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
 import { parseSheetId, syncCompetitionSheet } from "@/lib/sheets";
-import { maybeReleaseResults } from "@/lib/judging";
+import { isCompetitionOpen, maybeReleaseResults } from "@/lib/judging";
 import { requireActiveCompetition } from "@/lib/team-access";
 
 const profileSchema = z.object({
@@ -55,6 +55,9 @@ export async function saveCompProfile(
   if (!Number.isInteger(n) || n < 1 || n > 50) {
     return { error: "Required judges must be a whole number from 1 to 50." };
   }
+  if (competition.resultsReleasedAt && n !== competition.requiredJudgeCount) {
+    return { error: "Required judges cannot change after results are released." };
+  }
   const deadlineRaw = parsed.data.applicationDeadline;
   const applicationDeadline = deadlineRaw ? new Date(deadlineRaw) : null;
   if (deadlineRaw && Number.isNaN(applicationDeadline?.getTime())) {
@@ -62,6 +65,26 @@ export async function saveCompProfile(
   }
 
   const acceptingApps = parsed.data.acceptingApps === "on";
+  if (acceptingApps && competition.resultsReleasedAt) {
+    return { error: "Applications cannot reopen after results are released." };
+  }
+  if (isCompetitionOpen({ acceptingApps, applicationDeadline })) {
+    const [orderedApplication, viewingSlot] = await Promise.all([
+      prisma.application.findFirst({
+        where: { competitionId: competition.id, viewingPosition: { not: null } },
+        select: { id: true },
+      }),
+      prisma.judgeViewingSlot.findFirst({
+        where: { assignment: { competitionId: competition.id } },
+        select: { id: true },
+      }),
+    ]);
+    if (competition.judgingOpen || orderedApplication || viewingSlot) {
+      return {
+        error: "Applications cannot reopen after judging has started.",
+      };
+    }
+  }
   const updated = await prisma.competitionProfile.update({
     where: { id: competition.id },
     data: {
@@ -77,7 +100,9 @@ export async function saveCompProfile(
       acceptingApps,
       applicationDeadline,
       requiredJudgeCount: n,
-      ...(acceptingApps ? { judgingOpen: false } : {}),
+      ...(acceptingApps
+        ? { judgingOpen: false, livePosition: null, liveUpdatedAt: null }
+        : {}),
     },
   });
   await maybeReleaseResults(updated.id);
@@ -86,8 +111,8 @@ export async function saveCompProfile(
   revalidatePath("/comp/profile");
   revalidatePath("/comp/judges");
   revalidatePath("/comp/results");
-  revalidatePath("/comp/progress");
-  revalidatePath("/comp/live");
+  revalidatePath("/ops/comps", "layout");
+  revalidatePath("/reg", "layout");
   revalidatePath("/judge");
   revalidatePath("/");
   revalidatePath("/dashboard");

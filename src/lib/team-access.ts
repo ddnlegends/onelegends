@@ -96,19 +96,13 @@ export const getNavAccess = cache(async (userId: string) => {
           },
         },
       },
+      registrationAccess: { take: 1, select: { id: true } },
     },
   });
   const ops = Boolean(user?.platformAdmin);
-  const liveOpen = ops
-    ? prisma.competitionProfile.findFirst({
-        where: { judgingOpen: true, claimedAt: { not: null } },
-        select: { id: true },
-      })
-    : Promise.resolve(null);
-  const live = await liveOpen;
   return {
     ops,
-    liveViewOpen: Boolean(live),
+    registrationAccess: Boolean(user?.registrationAccess.length),
     teamAccess: Boolean(user?.memberships.length),
     compAccess:
       ops ||

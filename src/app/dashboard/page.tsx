@@ -18,9 +18,11 @@ import {
   setActiveCompAction,
   setActiveTeamAction,
 } from "@/app/actions/team-access";
-import { openJudgingProgress, openLiveView } from "@/app/actions/ops-judging";
 import {
   AcceptCompInviteForm,
+  CancelRegistrationInviteForm,
+  GrantRegistrationForm,
+  RemoveRegistrationAccessForm,
   AcceptJudgeInviteForm,
   AcceptTeamInviteForm,
   CreateCompForm,
@@ -452,7 +454,7 @@ async function OpsDashboard({
   name: string;
   userId: string;
 }) {
-  const [teams, comps, techAdmins, techInvites] = await Promise.all([
+  const [teams, comps, techAdmins, techInvites, regAccess, regInvites] = await Promise.all([
     prisma.teamProfile.findMany({
     orderBy: { name: "asc" },
     include: {
@@ -493,6 +495,17 @@ async function OpsDashboard({
     prisma.platformAdminInvite.findMany({
       orderBy: { createdAt: "desc" },
     }),
+    prisma.registrationAccess.findMany({
+      include: {
+        user: { select: { email: true } },
+        competition: { select: { name: true } },
+      },
+      orderBy: [{ competition: { name: "asc" } }, { createdAt: "asc" }],
+    }),
+    prisma.registrationInvite.findMany({
+      include: { competition: { select: { name: true } } },
+      orderBy: [{ competition: { name: "asc" } }, { createdAt: "asc" }],
+    }),
   ]);
 
   return (
@@ -500,10 +513,30 @@ async function OpsDashboard({
       <div>
         <h1 className="font-heading text-4xl">Circuit ops</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          Traffic for every listing at once. Invite other tech admins, then
-          click through for Live View or a single competition’s detail.
+          Traffic for every listing at once. Invite tech admins, grant REG
+          access, and follow live judging from Comp Dashboard.
         </p>
       </div>
+
+      <Link
+        href="/ops/comps"
+        prefetch
+        className="brand-gradient group flex flex-wrap items-center justify-between gap-4 rounded-2xl px-6 py-5 text-white shadow-sm transition hover:brightness-110"
+      >
+        <div>
+          <p className="text-xs uppercase tracking-widest text-white/80">
+            Live judging
+          </p>
+          <p className="font-heading text-2xl tracking-wide">Comp Dashboard</p>
+          <p className="mt-1 text-sm text-white/85">
+            Every competition at a glance, with the team on screen and each
+            judge’s scores as they come in.
+          </p>
+        </div>
+        <span className="rounded-full border border-white/40 px-4 py-2 text-sm font-semibold transition group-hover:bg-white group-hover:text-accent">
+          Open
+        </span>
+      </Link>
 
       <section className="rounded-xl border border-line bg-card p-6">
         <h2 className="font-heading text-xl">Your account</h2>
@@ -518,8 +551,8 @@ async function OpsDashboard({
       <section className="space-y-4">
         <h2 className="font-heading text-2xl">Competitions</h2>
         <p className="text-sm text-muted">
-          Every listing, claimed or not. Open judging and live scores stay on
-          their own pages.
+          Every listing, claimed or not. Open a row for judging controls and
+          live scores.
         </p>
         {comps.length === 0 ? (
           <p className="text-muted">No competitions yet. Add the first one below.</p>
@@ -577,36 +610,17 @@ async function OpsDashboard({
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap justify-end gap-2">
-                          {claimed ? (
-                            <form action={openJudgingProgress}>
-                              <input
-                                type="hidden"
-                                name="competitionId"
-                                value={comp.id}
-                              />
-                              <button
-                                className="btn btn-ghost py-1.5"
-                                type="submit"
-                              >
-                                Progress
-                              </button>
-                            </form>
-                          ) : null}
-                          {claimed && comp.judgingOpen ? (
-                            <form action={openLiveView}>
-                              <input
-                                type="hidden"
-                                name="competitionId"
-                                value={comp.id}
-                              />
-                              <button
-                                className="btn btn-primary py-1.5"
-                                type="submit"
-                              >
-                                Live View
-                              </button>
-                            </form>
-                          ) : null}
+                          <Link
+                            href={`/ops/comps/${comp.id}`}
+                            prefetch
+                            className={
+                              claimed && comp.judgingOpen
+                                ? "btn btn-primary py-1.5"
+                                : "btn btn-ghost py-1.5"
+                            }
+                          >
+                            {claimed && comp.judgingOpen ? "Live" : "Open"}
+                          </Link>
                         </div>
                       </td>
                     </tr>
@@ -653,6 +667,51 @@ async function OpsDashboard({
             </li>
           ))}
         </ul>
+      </section>
+
+      <section className="space-y-4 rounded-xl border border-line bg-card p-6">
+        <h2 className="font-heading text-xl">Registration (REG) access</h2>
+        <p className="text-sm text-muted">
+          REG accounts are the only ones that can play the AVs. They run live
+          viewing for one competition, share their screen with the judges
+          elsewhere, and choose which team every judge scores.
+        </p>
+        <GrantRegistrationForm
+          competitions={comps.map((comp) => ({ id: comp.id, name: comp.name }))}
+        />
+        {regAccess.length === 0 && regInvites.length === 0 ? (
+          <p className="text-sm text-muted">No REG accounts yet.</p>
+        ) : (
+          <ul className="divide-y divide-line rounded-lg border border-line">
+            {regAccess.map((row) => (
+              <li
+                key={row.id}
+                className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
+              >
+                <span className="text-sm">
+                  <span className="font-medium">{row.competition.name}</span>
+                  <span className="text-muted"> · </span>
+                  {row.user.email}
+                </span>
+                <RemoveRegistrationAccessForm accessId={row.id} />
+              </li>
+            ))}
+            {regInvites.map((invite) => (
+              <li
+                key={invite.id}
+                className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
+              >
+                <span className="text-sm">
+                  <span className="font-medium">{invite.competition.name}</span>
+                  <span className="text-muted"> · </span>
+                  {invite.email}
+                  <span className="text-muted"> · waiting to log in</span>
+                </span>
+                <CancelRegistrationInviteForm inviteId={invite.id} />
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -829,22 +888,13 @@ async function OpsDashboard({
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {comp.claimedAt ? (
-                      <form action={openJudgingProgress}>
-                        <input type="hidden" name="competitionId" value={comp.id} />
-                        <button className="btn btn-ghost py-1.5" type="submit">
-                          View progress
-                        </button>
-                      </form>
-                    ) : null}
-                    {comp.claimedAt && comp.judgingOpen ? (
-                      <form action={openLiveView}>
-                        <input type="hidden" name="competitionId" value={comp.id} />
-                        <button className="btn btn-primary py-1.5" type="submit">
-                          Live View
-                        </button>
-                      </form>
-                    ) : null}
+                    <Link
+                      href={`/ops/comps/${comp.id}`}
+                      prefetch
+                      className="btn btn-ghost py-1.5"
+                    >
+                      Comp Dashboard
+                    </Link>
                     {comp.claimedAt ? (
                       <ResetCompClaimForm
                         competitionId={comp.id}

@@ -5,7 +5,7 @@ import { isPlatformAdmin } from "@/lib/team-access";
 export default async function LegacyLiveViewingPage() {
   const session = await auth();
   if (session?.user && (await isPlatformAdmin(session.user.id))) {
-    redirect("/comp/progress");
+    redirect("/ops/comps");
   }
   redirect("/comp");
 }

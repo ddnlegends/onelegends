@@ -36,7 +36,10 @@ import {
 } from "@/app/actions/team-access";
 import {
   cancelPlatformAdminInvite,
+  cancelRegistrationInvite,
+  grantRegistrationAccess,
   invitePlatformAdmin,
+  removeRegistrationAccess,
   revokePlatformAdmin,
 } from "@/app/actions/ops-admin";
 import { SaveNotice } from "@/components/SaveNotice";
@@ -717,6 +720,93 @@ export function CancelPlatformAdminInviteForm({
 }) {
   const [state, formAction, pending] = useActionState(
     cancelPlatformAdminInvite,
+    undefined,
+  );
+  return (
+    <form action={formAction}>
+      <input type="hidden" name="inviteId" value={inviteId} />
+      <button className="btn btn-ghost py-1.5" disabled={pending} type="submit">
+        {pending ? "…" : "Cancel"}
+      </button>
+      {state?.error ? <p className="text-xs text-red-700">{state.error}</p> : null}
+    </form>
+  );
+}
+
+export function GrantRegistrationForm({
+  competitions,
+}: {
+  competitions: { id: string; name: string }[];
+}) {
+  const [state, formAction, pending] = useActionState(
+    grantRegistrationAccess,
+    undefined,
+  );
+  const [email, setEmail] = useState("");
+  const [seen, setSeen] = useState(state);
+  clearEmailAfterSuccess(state, seen, setSeen, setEmail);
+
+  return (
+    <form action={formAction} className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
+        <div className="field min-w-0">
+          <label htmlFor="reg-competition">Competition</label>
+          <select id="reg-competition" name="competitionId" required defaultValue="">
+            <option value="" disabled>
+              Pick a competition
+            </option>
+            {competitions.map((comp) => (
+              <option key={comp.id} value={comp.id}>
+                {comp.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="field min-w-0">
+          <label htmlFor="reg-email">Registration email</label>
+          <input
+            id="reg-email"
+            name="email"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="legendstestreg@gmail.com"
+          />
+        </div>
+        <button className="btn btn-primary" disabled={pending} type="submit">
+          {pending ? "Granting…" : "Grant REG"}
+        </button>
+      </div>
+      <p className="text-sm text-muted">
+        No email is sent. REG accounts play the videos and pick the team judges
+        score. If the account does not exist yet, access applies when they log
+        in or register.
+      </p>
+      <SaveNotice state={state} />
+    </form>
+  );
+}
+
+export function RemoveRegistrationAccessForm({ accessId }: { accessId: string }) {
+  const [state, formAction, pending] = useActionState(
+    removeRegistrationAccess,
+    undefined,
+  );
+  return (
+    <form action={formAction}>
+      <input type="hidden" name="accessId" value={accessId} />
+      <button className="btn btn-ghost py-1.5" disabled={pending} type="submit">
+        {pending ? "…" : "Remove"}
+      </button>
+      {state?.error ? <p className="text-xs text-red-700">{state.error}</p> : null}
+    </form>
+  );
+}
+
+export function CancelRegistrationInviteForm({ inviteId }: { inviteId: string }) {
+  const [state, formAction, pending] = useActionState(
+    cancelRegistrationInvite,
     undefined,
   );
   return (

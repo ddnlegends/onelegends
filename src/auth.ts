@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { getCachedUser } from "@/lib/cached-user";
 import { hydrateEmailInvites } from "@/lib/invites";
+import { applyRegistrationInvites } from "@/lib/registration";
 import {
   applyPlatformAdminInvite,
   googleAuthEnabled,
@@ -44,6 +45,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!matches) return null;
 
         await applyPlatformAdminInvite(user.id, user.email);
+        try {
+          await applyRegistrationInvites(user.id, user.email);
+        } catch {
+          /* Registration access can wait until the next dashboard load. */
+        }
 
         const fresh = await prisma.user.findUnique({ where: { id: user.id } });
         if (!fresh) return null;
