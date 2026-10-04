@@ -7,7 +7,8 @@ import { getActiveTeamId } from "@/lib/team-access";
 
 export default async function TeamProfilePage() {
   const session = await auth();
-  const teamId = await getActiveTeamId(session!.user.id);
+  if (!session?.user) redirect("/login");
+  const teamId = await getActiveTeamId(session.user.id);
   if (!teamId) redirect("/dashboard");
 
   const team = await prisma.teamProfile.findUnique({

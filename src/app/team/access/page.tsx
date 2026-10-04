@@ -10,7 +10,8 @@ import {
 
 export default async function TeamAccessPage() {
   const session = await auth();
-  const userId = session!.user.id;
+  if (!session?.user) redirect("/login");
+  const userId = session.user.id;
   const teamId = await getActiveTeamId(userId);
   if (!teamId) redirect("/dashboard");
 

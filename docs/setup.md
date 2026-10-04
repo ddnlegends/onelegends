@@ -12,7 +12,7 @@ Change `AUTH_SECRET` before a public deploy (`openssl rand -base64 32`). Keep `.
 
 ## Environment
 
-Login is this app’s Auth.js, not Supabase Auth. You need Postgres URIs, not the Next.js / anon `eyJ…` keys.
+Login is this app’s Auth.js, not Supabase Auth. You need Postgres URIs, not the Next.js / anon `eyJ…` keys. Email and password always work. Google is optional: create an OAuth 2.0 Web client, add `{AUTH_URL}/api/auth/callback/google` as an authorized redirect, then set `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`.
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
@@ -20,6 +20,8 @@ Login is this app’s Auth.js, not Supabase Auth. You need Postgres URIs, not th
 | `DIRECT_URL` | yes | Migrations. Direct or session pooler, port **5432**. |
 | `AUTH_SECRET` | yes | Signs the login cookie. |
 | `AUTH_URL` | yes | Site origin (`http://localhost:3000` locally). |
+| `AUTH_GOOGLE_ID` | no | Google OAuth client ID. Shows Continue with Google when set with the secret. |
+| `AUTH_GOOGLE_SECRET` | no | Google OAuth client secret. Redirect URI is `{AUTH_URL}/api/auth/callback/google`. |
 | `GOOGLE_SERVICE_ACCOUNT_EMAIL` | no | Optional applicant Sheet export. |
 | `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` | no | Optional Sheet export. Keep `\n` as in the JSON key. |
 

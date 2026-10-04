@@ -7,8 +7,9 @@ import { isCompetitionOpen, isJudgingOpen } from "@/lib/judging";
 
 export default async function JudgeDashboardPage() {
   const session = await auth();
+  if (!session?.user) redirect("/login");
   const judge = await prisma.judgeProfile.findUnique({
-    where: { userId: session!.user.id },
+    where: { userId: session.user.id },
     include: {
       assignments: {
         include: { competition: true },
@@ -59,7 +60,15 @@ export default async function JudgeDashboardPage() {
                         : " · Waiting for judging to open"}
                   </p>
                 </div>
-                {isCompetitionOpen(row.competition) ? (
+                {isJudgingOpen(row.competition) ? (
+                  <Link
+                    href={`/judge/${row.competitionId}`}
+                    prefetch
+                    className="btn btn-primary py-1.5"
+                  >
+                    Open Packet
+                  </Link>
+                ) : isCompetitionOpen(row.competition) ? (
                   <button className="btn btn-primary py-1.5" disabled type="button">
                     Open Packet
                   </button>
@@ -67,9 +76,9 @@ export default async function JudgeDashboardPage() {
                   <Link
                     href={`/judge/${row.competitionId}`}
                     prefetch
-                    className="btn btn-primary py-1.5"
+                    className="btn btn-ghost py-1.5"
                   >
-                    Open Packet
+                    View packet
                   </Link>
                 )}
               </li>

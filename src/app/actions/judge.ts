@@ -9,6 +9,7 @@ import {
   parseRubricScore,
   RUBRIC_CATEGORIES,
   isScoreComplete,
+  priorTeamsScored,
   type RubricKey,
 } from "@/lib/judging";
 
@@ -75,13 +76,18 @@ export async function saveTeamScores(
   const lock = judgingLockMessage(assignment.competition);
   if (lock) return { error: lock };
 
-  const slot = await prisma.judgeViewingSlot.findUnique({
-    where: {
-      assignmentId_position: { assignmentId, position },
-    },
+  const slots = await prisma.judgeViewingSlot.findMany({
+    where: { assignmentId },
     include: { score: true },
+    orderBy: { position: "asc" },
   });
+  const slot = slots.find((row) => row.position === position);
   if (!slot) return { error: "That team slot was not found." };
+  if (!priorTeamsScored(slots, position)) {
+    return {
+      error: `Finish every score for Team ${position - 1} before Team ${position}.`,
+    };
+  }
 
   const previous = slot.score;
   const next = {

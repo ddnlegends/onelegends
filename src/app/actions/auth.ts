@@ -113,6 +113,10 @@ export async function loginAction(
   return {};
 }
 
+export async function googleSignInAction() {
+  await signIn("google", { redirectTo: dashboardPath() });
+}
+
 export async function signOutAction() {
   await signOut({ redirectTo: "/" });
 }
@@ -225,6 +229,9 @@ export async function changePasswordAction(
   });
   if (!user) {
     return { error: "Account not found." };
+  }
+  if (!user.passwordHash) {
+    return { error: "This login uses Google. There is no password to change." };
   }
 
   const matches = await bcrypt.compare(

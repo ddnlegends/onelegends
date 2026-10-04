@@ -59,6 +59,22 @@ export function TeamProfileForm({ profile }: { profile: Profile }) {
   const [pickedName, setPickedName] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [rosterSize, setRosterSize] = useState(String(profile.rosterSize ?? ""));
+  const [rosterFromServer, setRosterFromServer] = useState(profile.rosterSize);
+  if (profile.rosterSize !== rosterFromServer) {
+    setRosterFromServer(profile.rosterSize);
+    setRosterSize(String(profile.rosterSize ?? ""));
+  }
+  const [seenSave, setSeenSave] = useState<SaveState | undefined>(state);
+  if (state !== seenSave) {
+    setSeenSave(state);
+    if (state?.ok) {
+      setPickedName(null);
+      setPreview((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+    }
+  }
   const photoInput = useRef<HTMLInputElement>(null);
   const savedPhoto = hasTeamPhoto(state?.photoUrl ?? profile.photoUrl)
     ? (state?.photoUrl ?? profile.photoUrl)
@@ -67,19 +83,9 @@ export function TeamProfileForm({ profile }: { profile: Profile }) {
   const notice = photoError ? { error: photoError } : state;
 
   useEffect(() => {
-    setRosterSize(String(profile.rosterSize ?? ""));
-  }, [profile.rosterSize]);
-
-  useEffect(() => {
-    if (state?.ok) {
-      setPickedName(null);
-      setPreview((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
-        return null;
-      });
-      if (photoInput.current) photoInput.current.value = "";
-    }
-  }, [state?.ok]);
+    if (!state?.ok || !photoInput.current) return;
+    photoInput.current.value = "";
+  }, [state]);
 
   function clearPickedFile() {
     setPreview((prev) => {

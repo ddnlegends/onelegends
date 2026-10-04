@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPendingInvites } from "@/lib/invites";
@@ -26,6 +27,9 @@ import {
   CreateTeamForm,
   InviteCompAdminForm,
   InviteTeamAdminForm,
+  InvitePlatformAdminForm,
+  CancelPlatformAdminInviteForm,
+  RevokePlatformAdminForm,
   ResetCompClaimForm,
   ResetTeamClaimForm,
   SetTeamApplyBlockForm,
@@ -40,9 +44,10 @@ import { TeamPhoto } from "@/components/TeamPhoto";
 
 export default async function DashboardPage() {
   const session = await auth();
-  const userId = session!.user.id;
-  const email = session!.user.email ?? "";
-  const name = session!.user.name ?? "";
+  if (!session?.user) redirect("/login");
+  const userId = session.user.id;
+  const email = session.user.email ?? "";
+  const name = session.user.name ?? "";
   const ops = await isPlatformAdmin(userId);
   if (ops) {
     return <OpsDashboard email={email} name={name} userId={userId} />;
@@ -447,7 +452,7 @@ async function OpsDashboard({
   name: string;
   userId: string;
 }) {
-  const [teams, comps] = await Promise.all([
+  const [teams, comps, techAdmins, techInvites] = await Promise.all([
     prisma.teamProfile.findMany({
     orderBy: { name: "asc" },
     include: {
@@ -474,7 +479,19 @@ async function OpsDashboard({
         include: { team: { select: { name: true } } },
         orderBy: { createdAt: "desc" },
       },
+      judgeAssignments: {
+        where: { status: "APPROVED" },
+        select: { submittedAt: true },
+      },
     },
+    }),
+    prisma.user.findMany({
+      where: { platformAdmin: true },
+      select: { id: true, email: true, name: true },
+      orderBy: { email: "asc" },
+    }),
+    prisma.platformAdminInvite.findMany({
+      orderBy: { createdAt: "desc" },
     }),
   ]);
 
@@ -483,9 +500,8 @@ async function OpsDashboard({
       <div>
         <h1 className="font-heading text-4xl">Circuit ops</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          This login does not claim a team or competition. Create teams and
-          competitions, hand out claim codes, and oversee every listing’s
-          admins and application statuses.
+          Traffic for every listing at once. Invite other tech admins, then
+          click through for Live View or a single competition’s detail.
         </p>
       </div>
 
@@ -493,10 +509,150 @@ async function OpsDashboard({
         <h2 className="font-heading text-xl">Your account</h2>
         <p className="mt-2">{name || email}</p>
         {name ? <p className="text-sm text-muted">{email}</p> : null}
-        <p className="text-sm text-muted">Legends Admin · platform access</p>
+        <p className="text-sm text-muted">Tech admin · platform access</p>
         <Link href="/profile" className="btn btn-ghost mt-4">
           Profile
         </Link>
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="font-heading text-2xl">Competitions</h2>
+        <p className="text-sm text-muted">
+          Every listing, claimed or not. Open judging and live scores stay on
+          their own pages.
+        </p>
+        {comps.length === 0 ? (
+          <p className="text-muted">No competitions yet. Add the first one below.</p>
+        ) : (
+          <div className="overflow-x-auto rounded-xl border border-line bg-card">
+            <table className="w-full min-w-[48rem] text-left text-sm">
+              <thead className="border-b border-line bg-blush text-xs uppercase tracking-wide text-muted">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Competition</th>
+                  <th className="px-4 py-3 font-medium">Claim</th>
+                  <th className="px-4 py-3 font-medium">Apps</th>
+                  <th className="px-4 py-3 font-medium">Judging</th>
+                  <th className="px-4 py-3 font-medium">Teams</th>
+                  <th className="px-4 py-3 font-medium">Packets</th>
+                  <th className="px-4 py-3 font-medium"> </th>
+                </tr>
+              </thead>
+              <tbody>
+                {comps.map((comp) => {
+                  const claimed = Boolean(comp.claimedAt);
+                  const appsOpen = isCompetitionOpen(comp);
+                  const packetsIn = comp.judgeAssignments.filter(
+                    (row) => row.submittedAt,
+                  ).length;
+                  return (
+                    <tr
+                      key={comp.id}
+                      className="border-b border-line last:border-0"
+                    >
+                      <th className="px-4 py-3 text-left font-semibold">
+                        {comp.name}
+                      </th>
+                      <td className="px-4 py-3">
+                        {claimed ? "Claimed" : "Unclaimed"}
+                      </td>
+                      <td className="px-4 py-3">
+                        {!claimed
+                          ? "—"
+                          : appsOpen
+                            ? "Open"
+                            : "Closed"}
+                      </td>
+                      <td className="px-4 py-3">
+                        {!claimed
+                          ? "—"
+                          : comp.judgingOpen
+                            ? "Open"
+                            : "Closed"}
+                      </td>
+                      <td className="px-4 py-3 tabular-nums">
+                        {comp.applications.length}
+                      </td>
+                      <td className="px-4 py-3 tabular-nums">
+                        {packetsIn} / {comp.requiredJudgeCount}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap justify-end gap-2">
+                          {claimed ? (
+                            <form action={openJudgingProgress}>
+                              <input
+                                type="hidden"
+                                name="competitionId"
+                                value={comp.id}
+                              />
+                              <button
+                                className="btn btn-ghost py-1.5"
+                                type="submit"
+                              >
+                                Progress
+                              </button>
+                            </form>
+                          ) : null}
+                          {claimed && comp.judgingOpen ? (
+                            <form action={openLiveView}>
+                              <input
+                                type="hidden"
+                                name="competitionId"
+                                value={comp.id}
+                              />
+                              <button
+                                className="btn btn-primary py-1.5"
+                                type="submit"
+                              >
+                                Live View
+                              </button>
+                            </form>
+                          ) : null}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="space-y-4 rounded-xl border border-line bg-card p-6">
+        <h2 className="font-heading text-xl">Tech admins</h2>
+        <p className="text-sm text-muted">
+          Everyone here has the same circuit-ops access. Invite by email.
+        </p>
+        <InvitePlatformAdminForm />
+        <ul className="divide-y divide-line rounded-lg border border-line">
+          {techAdmins.map((admin) => (
+            <li
+              key={admin.id}
+              className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
+            >
+              <span className="text-sm">
+                {admin.name ? `${admin.name} · ` : ""}
+                {admin.email}
+                {admin.id === userId ? " · You" : ""}
+              </span>
+              {admin.id !== userId ? (
+                <RevokePlatformAdminForm userId={admin.id} />
+              ) : null}
+            </li>
+          ))}
+          {techInvites.map((invite) => (
+            <li
+              key={invite.id}
+              className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
+            >
+              <span className="text-sm">
+                {invite.email}
+                <span className="text-muted"> · waiting to log in</span>
+              </span>
+              <CancelPlatformAdminInviteForm inviteId={invite.id} />
+            </li>
+          ))}
+        </ul>
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -638,7 +794,7 @@ async function OpsDashboard({
       </section>
 
       <section className="space-y-4">
-        <h2 className="font-heading text-2xl">Competitions</h2>
+        <h2 className="font-heading text-2xl">Competition listings</h2>
         {comps.length === 0 ? (
           <p className="text-muted">No competitions yet. Add the first one above.</p>
         ) : (

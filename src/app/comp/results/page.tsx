@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { StatusSelect } from "@/components/StatusSelect";
@@ -27,7 +28,8 @@ type RankedTeam = {
 
 export default async function CompResultsPage() {
   const session = await auth();
-  const competitionId = await getActiveCompetitionId(session!.user.id);
+  if (!session?.user) redirect("/login");
+  const competitionId = await getActiveCompetitionId(session.user.id);
   if (!competitionId) return null;
   const competition = await prisma.competitionProfile.findUnique({
     where: { id: competitionId },

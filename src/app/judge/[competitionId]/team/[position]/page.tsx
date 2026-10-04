@@ -21,11 +21,12 @@ export default async function JudgeTeamPage({
   if (!Number.isInteger(position) || position < 1) notFound();
 
   const session = await auth();
+  if (!session?.user) redirect("/login");
   const assignment = await prisma.judgeAssignment.findFirst({
     where: {
       competitionId,
       status: "APPROVED",
-      judge: { userId: session!.user.id },
+      judge: { userId: session.user.id },
     },
     include: {
       competition: true,

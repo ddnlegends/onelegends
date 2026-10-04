@@ -1,6 +1,17 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+
+function clearEmailAfterSuccess(
+  state: { ok?: boolean } | undefined,
+  seen: { ok?: boolean } | undefined,
+  setSeen: (next: { ok?: boolean } | undefined) => void,
+  setEmail: (value: string) => void,
+) {
+  if (state === seen) return;
+  setSeen(state);
+  if (state?.ok) setEmail("");
+}
 import {
   acceptCompInvite,
   acceptJudgeInvite,
@@ -23,6 +34,11 @@ import {
   revokeCompAccess,
   revokeTeamAccess,
 } from "@/app/actions/team-access";
+import {
+  cancelPlatformAdminInvite,
+  invitePlatformAdmin,
+  revokePlatformAdmin,
+} from "@/app/actions/ops-admin";
 import { SaveNotice } from "@/components/SaveNotice";
 
 export function ClaimTeamForm() {
@@ -256,10 +272,8 @@ export function AcceptJudgeInviteForm({
 export function InviteTeamAdminForm({ teamId }: { teamId: string }) {
   const [state, formAction, pending] = useActionState(inviteTeamAdmin, undefined);
   const [email, setEmail] = useState("");
-
-  useEffect(() => {
-    if (state?.ok) setEmail("");
-  }, [state?.ok]);
+  const [seen, setSeen] = useState(state);
+  clearEmailAfterSuccess(state, seen, setSeen, setEmail);
 
   return (
     <form action={formAction} className="space-y-3">
@@ -291,10 +305,8 @@ export function InviteTeamAdminForm({ teamId }: { teamId: string }) {
 export function InviteCompAdminForm({ competitionId }: { competitionId: string }) {
   const [state, formAction, pending] = useActionState(inviteCompAdmin, undefined);
   const [email, setEmail] = useState("");
-
-  useEffect(() => {
-    if (state?.ok) setEmail("");
-  }, [state?.ok]);
+  const [seen, setSeen] = useState(state);
+  clearEmailAfterSuccess(state, seen, setSeen, setEmail);
 
   return (
     <form action={formAction} className="space-y-3">
@@ -326,10 +338,8 @@ export function InviteCompAdminForm({ competitionId }: { competitionId: string }
 export function InviteJudgeForm({ competitionId }: { competitionId: string }) {
   const [state, formAction, pending] = useActionState(inviteJudge, undefined);
   const [email, setEmail] = useState("");
-
-  useEffect(() => {
-    if (state?.ok) setEmail("");
-  }, [state?.ok]);
+  const [seen, setSeen] = useState(state);
+  clearEmailAfterSuccess(state, seen, setSeen, setEmail);
 
   return (
     <form
@@ -658,6 +668,79 @@ export function ResetCompClaimForm({
           Cancel
         </button>
       </div>
+      {state?.error ? <p className="text-xs text-red-700">{state.error}</p> : null}
+    </form>
+  );
+}
+
+export function InvitePlatformAdminForm() {
+  const [state, formAction, pending] = useActionState(
+    invitePlatformAdmin,
+    undefined,
+  );
+  const [email, setEmail] = useState("");
+  const [seen, setSeen] = useState(state);
+  clearEmailAfterSuccess(state, seen, setSeen, setEmail);
+
+  return (
+    <form action={formAction} className="space-y-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <div className="field min-w-0 flex-1">
+          <label htmlFor="ops-admin-email">Invite a tech admin</label>
+          <input
+            id="ops-admin-email"
+            name="email"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="legendstech@desidancenetwork.org"
+          />
+        </div>
+        <button className="btn btn-primary" disabled={pending} type="submit">
+          {pending ? "Sending…" : "Send invite"}
+        </button>
+      </div>
+      <p className="text-sm text-muted">
+        No email is sent. They become tech admin as soon as they log in or
+        register with this address.
+      </p>
+      <SaveNotice state={state} />
+    </form>
+  );
+}
+
+export function CancelPlatformAdminInviteForm({
+  inviteId,
+}: {
+  inviteId: string;
+}) {
+  const [state, formAction, pending] = useActionState(
+    cancelPlatformAdminInvite,
+    undefined,
+  );
+  return (
+    <form action={formAction}>
+      <input type="hidden" name="inviteId" value={inviteId} />
+      <button className="btn btn-ghost py-1.5" disabled={pending} type="submit">
+        {pending ? "…" : "Cancel"}
+      </button>
+      {state?.error ? <p className="text-xs text-red-700">{state.error}</p> : null}
+    </form>
+  );
+}
+
+export function RevokePlatformAdminForm({ userId }: { userId: string }) {
+  const [state, formAction, pending] = useActionState(
+    revokePlatformAdmin,
+    undefined,
+  );
+  return (
+    <form action={formAction}>
+      <input type="hidden" name="userId" value={userId} />
+      <button className="btn btn-ghost py-1.5" disabled={pending} type="submit">
+        {pending ? "…" : "Remove"}
+      </button>
       {state?.error ? <p className="text-xs text-red-700">{state.error}</p> : null}
     </form>
   );

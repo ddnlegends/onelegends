@@ -20,7 +20,8 @@ import {
 
 export default async function LiveViewPage() {
   const session = await auth();
-  const userId = session!.user.id;
+  if (!session?.user) redirect("/login");
+  const userId = session.user.id;
   if (!(await isPlatformAdmin(userId))) redirect("/comp");
 
   const competitionId = await getActiveCompetitionId(userId);

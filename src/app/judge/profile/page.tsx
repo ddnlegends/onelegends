@@ -1,11 +1,13 @@
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { JudgeProfileForm } from "@/components/JudgeProfileForm";
 
 export default async function JudgeProfilePage() {
   const session = await auth();
+  if (!session?.user) redirect("/login");
   const judge = await prisma.judgeProfile.findUnique({
-    where: { userId: session!.user.id },
+    where: { userId: session.user.id },
     include: { user: { select: { email: true } } },
   });
   if (!judge) return null;

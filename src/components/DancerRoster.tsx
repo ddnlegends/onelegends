@@ -88,6 +88,9 @@ export function DancerRoster({ initial }: { initial: Dancer[] }) {
                   <input
                     type="checkbox"
                     checked={dancer.inAV}
+                    aria-label={
+                      dancer.name ? `In AV: ${dancer.name}` : "In AV"
+                    }
                     onChange={(e) => update(index, { inAV: e.target.checked })}
                   />
                 </td>

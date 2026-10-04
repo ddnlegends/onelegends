@@ -1,7 +1,9 @@
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
+import { applyPlatformAdminInvite } from "@/lib/ops-admin";
 
 export async function hydrateEmailInvites(userId: string, email: string) {
+  await applyPlatformAdminInvite(userId, email);
   if (!prisma.teamInvite || !prisma.compInvite) return;
 
   const [teamInvites, compInvites] = await Promise.all([

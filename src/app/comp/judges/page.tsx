@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { JudgeDecisionButtons } from "@/components/JudgeDecisionButtons";
@@ -10,7 +11,8 @@ import { isScoreComplete } from "@/lib/judging";
 
 export default async function CompJudgesPage() {
   const session = await auth();
-  const competitionId = await getActiveCompetitionId(session!.user.id);
+  if (!session?.user) redirect("/login");
+  const competitionId = await getActiveCompetitionId(session.user.id);
   if (!competitionId) return null;
   const competition = await prisma.competitionProfile.findUnique({
     where: { id: competitionId },

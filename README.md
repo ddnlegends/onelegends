@@ -1,11 +1,15 @@
 # OneLegends
 
-The Legends circuit runs many competitions each season. Until now, teams rebuilt the same application for every host, and judging lived in spreadsheets and copied Drive folders. Names leaked. Harsh judges and generous judges could not be compared fairly. Hosts spent more time wrangling files than watching dance.
+OneLegends is the Legends circuit’s internal platform for COMP applications, AV viewing, and judging. It brings all three into one place, so a team can apply, hosts can run the viewing, and judges can score without splitting the season across separate tools.
 
-**OneLegends is the circuit’s application and judging desk.** One login. One team profile. Apply to every bid from a single screen. Each competition still sets its own details and deadline. Payment stays off this site.
+**One profile. Every competition.** A team creates one account, fills one team profile, and adds one AV. From that profile they send COMP applications to the competitions they want. Each host still sets its own dates, venue, stage, and application deadline. Payment stays with the competition.
 
-Judging is anonymous on purpose. Judges see Team 1, Team 2, and a standard audition video — never a team name. Circuit ops opens and closes scoring, and can watch live scores as they come in. When enough judges finish, the competition sees ranked names and can accept, waitlist, or decline. Until then, even the host only sees counts.
+The first person to claim a team or competition becomes its primary admin and can invite the other admins on that account. Rosters, captains, and those users all live on the same profile, so the dancer list and who runs the team stay together. When leadership changes, the primary admin invites the next lead as a secondary admin, then transfers primary ownership to them. The roster and profile stay in place, so the handoff across years stays on the same team or competition.
 
-That is the product: less admin, a fairer viewing, and one place the circuit actually runs.
+**AV viewing and judging stay anonymous while scores are open.** Judges watch the AV and score a private packet labeled Team 1, Team 2, and so on. They never see a team name. Each judge gets their own shuffled order. The rubric is the same for everyone: choreography, formations, technique, sync and cleanliness, and overall impression.
+
+**The circuit controls the viewing.** Legends staff open and close scoring, and can follow scores as they come in. When the required number of judges have submitted, the competition sees the ranked list, with names, scores, and notes, and can accept, waitlist, or decline.
+
+OneLegends is for the people who run the season: teams, competition hosts, judges, and Legends staff.
 
 For install and judging rules, see [`docs/`](docs/). Logins and claim codes stay in local `docs/CREDENTIALS.md` and are not committed.

@@ -28,10 +28,24 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
       <p className="text-sm text-muted">
         One application, many comps. Check the ones you want — your complete
         team profile, AV Drive link, roster, dietary notes, and shirt sizes go
-        with it. Payment is handled off this site.
+        with it.{" "}
+        <a
+          href="https://www.paypal.com/paypalme/"
+          className="text-accent underline"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Pay on PayPal
+        </a>
+        .
       </p>
 
-      <ul className="divide-y divide-line rounded-xl border border-line bg-card">
+      {open.length === 0 ? (
+        <p className="text-sm text-muted">
+          No competitions are accepting applications right now.
+        </p>
+      ) : (
+        <ul className="divide-y divide-line rounded-xl border border-line bg-card">
         {open.map((comp) => (
           <li key={comp.id} className="flex items-start gap-3 px-4 py-3">
             <input
@@ -65,7 +79,8 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
             </label>
           </li>
         ))}
-      </ul>
+        </ul>
+      )}
 
       {closed.length ? (
         <div>
@@ -87,9 +102,11 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
       {state?.error ? <p className="notice notice-error">{state.error}</p> : null}
       {state?.ok ? <p className="notice notice-ok">{state.message}</p> : null}
 
-      <button className="btn btn-primary" disabled={pending} type="submit">
-        {pending ? "Sending…" : "Apply to selected comps"}
-      </button>
+      {open.length > 0 ? (
+        <button className="btn btn-primary" disabled={pending} type="submit">
+          {pending ? "Sending…" : "Apply to selected comps"}
+        </button>
+      ) : null}
     </form>
   );
 }

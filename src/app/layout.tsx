@@ -41,8 +41,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 rel="noreferrer"
               >
                 Legends Dance Championship
-              </a>
-              . #journeytothecrown · Payment is external.
+              </a>{". #journeytothecrown · Payment is external."}
             </p>
           </div>
         </footer>

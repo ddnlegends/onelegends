@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { isCompetitionOpen } from "@/lib/judging";
@@ -25,7 +26,8 @@ function shuffle<T>(items: T[], seed: string): T[] {
 
 export default async function CompDashboardPage() {
   const session = await auth();
-  const userId = session!.user.id;
+  if (!session?.user) redirect("/login");
+  const userId = session.user.id;
   const competitionId = await getActiveCompetitionId(userId);
   if (!competitionId) return null;
   const ops = await isPlatformAdmin(userId);

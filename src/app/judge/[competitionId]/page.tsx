@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { SubmitPacketButton } from "@/components/SubmitPacketButton";
@@ -22,11 +22,12 @@ export default async function JudgePacketPage({
 }) {
   const { competitionId } = await params;
   const session = await auth();
+  if (!session?.user) redirect("/login");
   const assignment = await prisma.judgeAssignment.findFirst({
     where: {
       competitionId,
       status: "APPROVED",
-      judge: { userId: session!.user.id },
+      judge: { userId: session.user.id },
     },
     include: { competition: true, slots: { include: { score: true } } },
   });
@@ -110,7 +111,11 @@ export default async function JudgePacketPage({
                     prefetch
                     className="btn btn-ghost py-1.5"
                   >
-                    {isScoreComplete(slot.score) ? "Edit / Review" : "Score"}
+                    {scoringOpen && !locked
+                      ? isScoreComplete(slot.score)
+                        ? "Edit / Review"
+                        : "Score"
+                      : "Review"}
                   </Link>
                 ) : (
                   <button

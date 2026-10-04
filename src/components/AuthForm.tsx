@@ -2,12 +2,22 @@
 
 import { useActionState, useMemo, useState } from "react";
 import Link from "next/link";
-import { loginAction, registerAction } from "@/app/actions/auth";
+import {
+  googleSignInAction,
+  loginAction,
+  registerAction,
+} from "@/app/actions/auth";
 import { PASSWORD_RULES, passwordMeetsRules } from "@/lib/password";
 
 type Mode = "login" | "register";
 
-export function AuthForm({ mode }: { mode: Mode }) {
+export function AuthForm({
+  mode,
+  googleEnabled = false,
+}: {
+  mode: Mode;
+  googleEnabled?: boolean;
+}) {
   const action = mode === "login" ? loginAction : registerAction;
   const [state, formAction, pending] = useActionState(action, undefined);
   const [password, setPassword] = useState("");
@@ -18,11 +28,30 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const canRegister = allRulesMet && passwordsMatch;
 
   return (
-    <form action={formAction} className="mx-auto max-w-md space-y-4 rounded-xl border border-line bg-card p-6">
+    <div className="mx-auto max-w-md space-y-4 rounded-xl border border-line bg-card p-6">
       <p className="text-xs text-muted">
         One login for the whole circuit. After you sign in you land on your
         dashboard. Use Code Claim to attach a team or competition with a code.
       </p>
+
+      {googleEnabled ? (
+        <>
+          <form action={googleSignInAction}>
+            <button
+              className="btn btn-ghost w-full"
+              disabled={pending}
+              type="submit"
+            >
+              Continue with Google
+            </button>
+          </form>
+          <p className="text-center text-xs uppercase tracking-wide text-muted">
+            or
+          </p>
+        </>
+      ) : null}
+
+      <form action={formAction} className="space-y-4">
 
       <div className="field">
         <label htmlFor="email">Email</label>
@@ -132,5 +161,6 @@ export function AuthForm({ mode }: { mode: Mode }) {
         )}
       </p>
     </form>
+    </div>
   );
 }

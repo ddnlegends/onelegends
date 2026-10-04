@@ -1,5 +1,3 @@
-import type { Role } from "@prisma/client";
-
-export function dashboardPath(_role?: Role): string {
+export function dashboardPath(): string {
   return "/dashboard";
 }

@@ -1,9 +1,20 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { getCachedUser } from "@/lib/cached-user";
+import { hydrateEmailInvites } from "@/lib/invites";
+import {
+  applyPlatformAdminInvite,
+  googleAuthEnabled,
+  upsertGoogleUser,
+} from "@/lib/ops-admin";
 import type { Role } from "@prisma/client";
+
+const googleId = process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID;
+const googleSecret =
+  process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET;
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
@@ -27,23 +38,61 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         const user = await prisma.user.findUnique({ where: { email } });
-        if (!user) return null;
+        if (!user?.passwordHash) return null;
 
         const matches = await bcrypt.compare(password, user.passwordHash);
         if (!matches) return null;
 
+        await applyPlatformAdminInvite(user.id, user.email);
+
+        const fresh = await prisma.user.findUnique({ where: { id: user.id } });
+        if (!fresh) return null;
+
         return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          platformAdmin: user.platformAdmin,
+          id: fresh.id,
+          email: fresh.email,
+          name: fresh.name,
+          role: fresh.role,
+          platformAdmin: fresh.platformAdmin,
         };
       },
     }),
+    ...(googleAuthEnabled() && googleId && googleSecret
+      ? [
+          Google({
+            clientId: googleId,
+            clientSecret: googleSecret,
+            allowDangerousEmailAccountLinking: true,
+          }),
+        ]
+      : []),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
+      if (account?.provider === "google") {
+        const email = user?.email?.trim().toLowerCase();
+        if (!email) return null;
+        const dbUser = await upsertGoogleUser({
+          email,
+          name: user.name,
+        });
+        try {
+          await hydrateEmailInvites(dbUser.id, dbUser.email);
+        } catch {
+          /* Invites can wait until the next dashboard load. */
+        }
+        const fresh = await prisma.user.findUnique({
+          where: { id: dbUser.id },
+        });
+        if (!fresh) return null;
+        token.id = fresh.id;
+        token.role = fresh.role;
+        token.email = fresh.email;
+        token.name = fresh.name ?? "";
+        token.platformAdmin = fresh.platformAdmin;
+        return token;
+      }
+
       if (user) {
         token.id = user.id;
         token.role = user.role;

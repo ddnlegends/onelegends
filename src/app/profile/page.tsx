@@ -8,9 +8,10 @@ import { redirect } from "next/navigation";
 
 export default async function ProfilePage() {
   const session = await auth();
+  if (!session?.user) redirect("/login");
   const user = await prisma.user.findUnique({
-    where: { id: session!.user.id },
-    select: { name: true, email: true },
+    where: { id: session.user.id },
+    select: { name: true, email: true, passwordHash: true },
   });
   if (!user) redirect("/login");
 
@@ -25,7 +26,16 @@ export default async function ProfilePage() {
       </div>
       <section className="grid gap-4 lg:grid-cols-2">
         <ProfileDetailsForm name={user.name} email={user.email} />
-        <ChangePasswordForm />
+        {user.passwordHash ? (
+          <ChangePasswordForm />
+        ) : (
+          <div className="space-y-4 rounded-xl border border-line bg-card p-6">
+            <h2 className="font-heading text-xl">Password</h2>
+            <p className="text-sm text-muted">
+              This login uses Google. There is no password on file.
+            </p>
+          </div>
+        )}
       </section>
     </div>
   );

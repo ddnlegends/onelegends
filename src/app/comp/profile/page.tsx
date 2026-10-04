@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { CompProfileForm } from "@/components/CompProfileForm";
@@ -6,7 +7,8 @@ import { getActiveCompetitionId } from "@/lib/team-access";
 
 export default async function CompProfilePage() {
   const session = await auth();
-  const competitionId = await getActiveCompetitionId(session!.user.id);
+  if (!session?.user) redirect("/login");
+  const competitionId = await getActiveCompetitionId(session.user.id);
   if (!competitionId) return null;
   const competition = await prisma.competitionProfile.findUnique({
     where: { id: competitionId },

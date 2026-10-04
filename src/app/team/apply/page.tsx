@@ -10,7 +10,8 @@ import { formatDateTime } from "@/lib/utils";
 
 export default async function TeamApplyPage() {
   const session = await auth();
-  const teamId = await getActiveTeamId(session!.user.id);
+  if (!session?.user) redirect("/login");
+  const teamId = await getActiveTeamId(session.user.id);
   if (!teamId) redirect("/dashboard");
 
   const team = await prisma.teamProfile.findUnique({

@@ -13,7 +13,8 @@ import {
 
 export default async function CompAccessPage() {
   const session = await auth();
-  const userId = session!.user.id;
+  if (!session?.user) redirect("/login");
+  const userId = session.user.id;
   const competitionId = await getActiveCompetitionId(userId);
   if (!competitionId) redirect("/dashboard");
 

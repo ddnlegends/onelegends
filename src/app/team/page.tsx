@@ -14,7 +14,8 @@ import { TeamPhoto } from "@/components/TeamPhoto";
 
 export default async function TeamDashboardPage() {
   const session = await auth();
-  const userId = session!.user.id;
+  if (!session?.user) redirect("/login");
+  const userId = session.user.id;
   const memberships = await getApprovedTeamMemberships(userId);
   const activeTeamId = await getActiveTeamId(userId);
   if (!activeTeamId) redirect("/dashboard");

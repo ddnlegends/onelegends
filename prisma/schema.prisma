@@ -36,7 +36,7 @@ enum TeamMembershipStatus {
 model User {
   id             String   @id @default(cuid())
   email          String   @unique
-  passwordHash   String
+  passwordHash   String?
   role           Role     @default(TEAM)
   name           String   @default("")
   platformAdmin  Boolean  @default(false)
@@ -47,6 +47,12 @@ model User {
   judge                  JudgeProfile?
   memberships            TeamMembership[]
   competitionMemberships CompetitionMembership[]
+}
+
+model PlatformAdminInvite {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
 }
 
 model TeamProfile {
