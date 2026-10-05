@@ -98,6 +98,19 @@ export default async function TeamDashboardPage() {
         </p>
       ) : null}
 
+      <section className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-line bg-blush p-5">
+        <div>
+          <h2 className="font-heading text-xl">Payment instructions</h2>
+          <p className="mt-1 text-sm text-muted">
+            Include <strong>{team.name}&apos;s OneLegends Payment</strong> in the
+            memo. Payment confirmation is handled manually.
+          </p>
+        </div>
+        <Link href="/payments" className="btn btn-ghost">
+          View instructions
+        </Link>
+      </section>
+
       <dl className="grid gap-4 rounded-xl border border-line bg-card p-6 sm:grid-cols-3">
         <div>
           <dt className="text-xs uppercase tracking-wide text-muted">Captains</dt>

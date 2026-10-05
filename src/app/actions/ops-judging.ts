@@ -65,7 +65,7 @@ export async function setJudgingOpen(
     await ensureCompetitionJudgeSlots(competition.id);
     await prisma.competitionProfile.update({
       where: { id: competition.id },
-      data: { judgingOpen: true },
+      data: { judgingOpen: true, acceptingApps: false },
     });
     revalidateJudging(competition.id);
     return {

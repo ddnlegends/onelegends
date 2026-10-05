@@ -4,6 +4,7 @@ import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { getCachedUser } from "@/lib/cached-user";
+import { isLegacyTestLogin } from "@/lib/auth-policy";
 import { hydrateEmailInvites } from "@/lib/invites";
 import { applyRegistrationInvites } from "@/lib/registration";
 import {
@@ -34,7 +35,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           .toLowerCase();
         const password = String(credentials?.password ?? "");
 
-        if (!email || !password) {
+        if (!email || !password || !isLegacyTestLogin(email)) {
           return null;
         }
 

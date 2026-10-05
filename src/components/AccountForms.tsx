@@ -530,22 +530,38 @@ export function SetTeamApplyBlockForm({
   teamId,
   teamName,
   blocked,
+  reason,
 }: {
   teamId: string;
   teamName: string;
   blocked: boolean;
+  reason: string;
 }) {
   const [confirming, setConfirming] = useState(false);
   const [state, formAction, pending] = useActionState(setTeamApplyBlock, undefined);
 
   if (blocked) {
     return (
-      <form action={formAction} className="space-y-2">
+      <form action={formAction} className="space-y-3 rounded-md border border-line bg-blush p-3">
         <input type="hidden" name="teamId" value={teamId} />
-        <input type="hidden" name="blocked" value="0" />
-        <button className="btn btn-ghost py-1.5" disabled={pending} type="submit">
-          {pending ? "Unblocking…" : "Unblock applying"}
-        </button>
+        <div className="field">
+          <label htmlFor={`block-reason-${teamId}`}>Reason visible to circuit admins</label>
+          <textarea
+            id={`block-reason-${teamId}`}
+            name="reason"
+            maxLength={500}
+            defaultValue={reason}
+            placeholder="Unpaid dues, MOU pending, or another circuit issue"
+          />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button className="btn btn-primary py-1.5" disabled={pending} type="submit" name="blocked" value="1">
+            {pending ? "Saving…" : "Save reason"}
+          </button>
+          <button className="btn btn-ghost py-1.5" disabled={pending} type="submit" name="blocked" value="0">
+            Unblock applying
+          </button>
+        </div>
         <SaveNotice state={state} />
       </form>
     );
@@ -575,6 +591,16 @@ export function SetTeamApplyBlockForm({
         dues or a rules issue. They will see that circuit ops blocked them.
         Existing applications stay on file.
       </p>
+      <div className="field">
+        <label htmlFor={`new-block-reason-${teamId}`}>Reason visible to circuit admins</label>
+        <textarea
+          id={`new-block-reason-${teamId}`}
+          name="reason"
+          required
+          maxLength={500}
+          placeholder="Explain the dues, MOU, or rules issue"
+        />
+      </div>
       <div className="flex gap-2">
         <button className="btn btn-primary py-1.5" disabled={pending} type="submit">
           {pending ? "Blocking…" : "Yes, block applying"}

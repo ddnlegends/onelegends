@@ -113,6 +113,9 @@ export default async function CompDashboardPage() {
           <Link href="/comp/results" prefetch className="btn btn-primary">
             Viewing Results
           </Link>
+          <Link href="/comp/applicants" prefetch className="btn btn-ghost">
+            Applied Teams
+          </Link>
           <Link href="/comp/access" prefetch className="btn btn-ghost">
             Admins
           </Link>

@@ -70,6 +70,7 @@ model TeamProfile {
   yearsEstablished Int?
   rosterSize       Int?
   applyBlocked     Boolean   @default(false)
+  applyBlockReason String    @default("")
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 

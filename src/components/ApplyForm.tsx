@@ -37,7 +37,11 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
         >
           Pay on PayPal
         </a>
-        .
+        {" "}(placeholder link). See the{" "}
+        <Link href="/payments" className="text-accent underline">
+          payment instructions
+        </Link>{" "}
+        before sending money.
       </p>
 
       {open.length === 0 ? (

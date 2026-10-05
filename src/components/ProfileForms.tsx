@@ -29,7 +29,7 @@ export function ProfileDetailsForm({
         <h2 className="font-heading text-xl">Details</h2>
         <p className="mt-1 text-sm text-muted">
           This is your personal login, separate from a team or competition
-          listing.
+          listing. Login email cannot be changed here.
         </p>
       </div>
       <div className="field">
@@ -50,6 +50,7 @@ export function ProfileDetailsForm({
           type="email"
           required
           defaultValue={email}
+          readOnly
           autoComplete="email"
         />
       </div>

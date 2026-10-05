@@ -742,12 +742,18 @@ async function OpsDashboard({
                       {team.claimedAt ? "Claimed" : "Unclaimed"}
                       {team.applyBlocked ? " · Blocked from applying" : ""}
                     </p>
+                    {team.applyBlocked ? (
+                      <p className="mt-1 max-w-xl text-sm text-muted">
+                        Circuit ops reason: {team.applyBlockReason || "No reason recorded for this earlier block."}
+                      </p>
+                    ) : null}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <SetTeamApplyBlockForm
                       teamId={team.id}
                       teamName={team.name}
                       blocked={team.applyBlocked}
+                      reason={team.applyBlockReason}
                     />
                     {team.claimedAt ? (
                       <ResetTeamClaimForm teamId={team.id} teamName={team.name} />

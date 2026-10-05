@@ -840,19 +840,27 @@ export async function setTeamApplyBlock(
   }
   const teamId = String(formData.get("teamId") ?? "");
   const blocked = String(formData.get("blocked") ?? "") === "1";
+  const reason = String(formData.get("reason") ?? "").trim();
+  if (blocked && !reason) {
+    return { error: "Explain why this team is blocked before saving." };
+  }
+  if (reason.length > 500) {
+    return { error: "Block reason must be 500 characters or less." };
+  }
   const team = await prisma.teamProfile.findUnique({ where: { id: teamId } });
   if (!team) return { error: "Team not found." };
 
   await prisma.teamProfile.update({
     where: { id: teamId },
-    data: { applyBlocked: blocked },
+    data: { applyBlocked: blocked, applyBlockReason: blocked ? reason : "" },
   });
   revalidateAccessPaths();
+  revalidatePath("/ops/teams", "layout");
   revalidatePath("/comps", "layout");
   return {
     ok: true,
     message: blocked
-      ? `${team.name} cannot apply until you unblock them.`
+      ? `${team.name} cannot apply until you unblock them. Reason saved for circuit ops.`
       : `${team.name} can apply again.`,
   };
 }

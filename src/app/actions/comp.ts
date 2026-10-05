@@ -6,7 +6,7 @@ import { ApplicationStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
 import { parseSheetId, syncCompetitionSheet } from "@/lib/sheets";
-import { isCompetitionOpen, maybeReleaseResults } from "@/lib/judging";
+import { maybeReleaseResults } from "@/lib/judging";
 import { requireActiveCompetition } from "@/lib/team-access";
 
 const profileSchema = z.object({
@@ -68,7 +68,7 @@ export async function saveCompProfile(
   if (acceptingApps && competition.resultsReleasedAt) {
     return { error: "Applications cannot reopen after results are released." };
   }
-  if (isCompetitionOpen({ acceptingApps, applicationDeadline })) {
+  if (acceptingApps) {
     const [orderedApplication, viewingSlot] = await Promise.all([
       prisma.application.findFirst({
         where: { competitionId: competition.id, viewingPosition: { not: null } },

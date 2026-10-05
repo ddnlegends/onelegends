@@ -23,11 +23,11 @@ const GUIDES: Guide[] = [
     kicker: "One login · claim code",
     title: "How teams apply",
     intro:
-      "Everyone uses the same login — Google or email and password. Circuit ops creates the team listing and a claim code. The first person to enter that code becomes the primary admin. Payment stays off this site.",
+      "Everyone signs in with Google. Existing test accounts retain password login. Circuit ops creates the team listing and a claim code. The first person to enter that code becomes the primary admin. Payment stays off this site.",
     steps: [
       {
         title: "Register once",
-        body: "Create an account with Google or email and password. That does not create a team. After you log in, you land on your dashboard. Open Code Claim with the team code.",
+        body: "Sign in with Google. That does not create a team. After you log in, you land on your dashboard. Open Code Claim with the team code.",
       },
       {
         title: "Claim the team with the code",
@@ -87,7 +87,7 @@ const GUIDES: Guide[] = [
     kicker: "Bid code · then invite",
     title: "How competitions run apps",
     intro:
-      "Everyone uses the same login — Google or email and password. Circuit ops creates the competition listing and a bid code. The first person to enter that code becomes the primary admin. You see counts until anonymous judging is done.",
+      "Everyone signs in with Google. Existing test accounts retain password login. Circuit ops creates the competition listing and a bid code. The first person to enter that code becomes the primary admin. You see counts until anonymous judging is done.",
     steps: [
       {
         title: "Register, then claim with the bid code",

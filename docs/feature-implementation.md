@@ -28,6 +28,6 @@ Find a way to carry a partner competition for the year it belongs to, and leave 
 
 ## Payments
 
-The site does not take money yet. The apply form only links out to a placeholder PayPal page.
+The site does not take money yet. The home, team, apply, and Payments pages explain the manual process. The PayPal link is a generic placeholder, so teams must confirm the real recipient before paying. The memo is `{Team}'s OneLegends Payment`.
 
 A free path is a Zelle or PayPal link, with circuit ops still marking dues paid by unblocking the team. A minimal-cost path is a bank debit or card link that can confirm the payment in the app later. Each competition would keep its own link. Circuit dues stay separate from a host’s application fee.

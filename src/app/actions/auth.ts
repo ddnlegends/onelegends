@@ -8,30 +8,7 @@ import { auth, signIn, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { passwordMeetsRules, passwordRuleMessage } from "@/lib/password";
 import { dashboardPath } from "@/lib/roles";
-import { hydrateEmailInvites } from "@/lib/invites";
-
-const registerSchema = z
-  .object({
-    email: z.string().email("Enter a valid email."),
-    password: z.string(),
-    confirmPassword: z.string(),
-  })
-  .superRefine((data, ctx) => {
-    if (!passwordMeetsRules(data.password)) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["password"],
-        message: passwordRuleMessage(),
-      });
-    }
-    if (data.password !== data.confirmPassword) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["confirmPassword"],
-        message: "Passwords must match.",
-      });
-    }
-  });
+import { isLegacyTestLogin } from "@/lib/auth-policy";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -40,48 +17,11 @@ const loginSchema = z.object({
 
 export async function registerAction(
   _prev: { error?: string } | undefined,
-  formData: FormData,
+  _formData: FormData,
 ): Promise<{ error?: string }> {
-  const parsed = registerSchema.safeParse({
-    email: String(formData.get("email") ?? "").trim().toLowerCase(),
-    password: String(formData.get("password") ?? ""),
-    confirmPassword: String(formData.get("confirmPassword") ?? ""),
-  });
-
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid form." };
-  }
-
-  const { email, password } = parsed.data;
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    return { error: "An account with that email already exists." };
-  }
-
-  const passwordHash = await bcrypt.hash(password, 10);
-  const created = await prisma.user.create({
-    data: { email, passwordHash, role: "TEAM" },
-  });
-  try {
-    await hydrateEmailInvites(created.id, created.email);
-  } catch {
-    /* Invites can wait until the next Account load. */
-  }
-
-  try {
-    await signIn("credentials", {
-      email,
-      password,
-      redirectTo: dashboardPath(),
-    });
-  } catch (error) {
-    if (error instanceof AuthError) {
-      return { error: "Account created, but sign-in failed. Try logging in." };
-    }
-    throw error;
-  }
-
-  return {};
+  void _prev;
+  void _formData;
+  return { error: "New accounts use Google sign-in." };
 }
 
 export async function loginAction(
@@ -95,6 +35,9 @@ export async function loginAction(
 
   if (!parsed.success) {
     return { error: "Enter email and password." };
+  }
+  if (!isLegacyTestLogin(parsed.data.email)) {
+    return { error: "Use Google to sign in. Password login is only for existing test accounts." };
   }
 
   try {
@@ -172,14 +115,6 @@ export async function updateProfileAction(
   }
 
   const { name, email } = parsed.data;
-  const taken = await prisma.user.findFirst({
-    where: { email, NOT: { id: session.user.id } },
-    select: { id: true },
-  });
-  if (taken) {
-    return { error: "An account with that email already exists." };
-  }
-
   const previous = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { email: true },
@@ -187,19 +122,14 @@ export async function updateProfileAction(
   if (!previous) {
     return { error: "Account not found." };
   }
+  if (email !== previous.email) {
+    return { error: "Login email cannot be changed here. Sign in with your Google account email." };
+  }
 
   await prisma.user.update({
     where: { id: session.user.id },
-    data: { name, email },
+    data: { name },
   });
-
-  if (email !== previous.email) {
-    try {
-      await hydrateEmailInvites(session.user.id, email);
-    } catch {
-      /* Invites can wait until the next dashboard load. */
-    }
-  }
 
   revalidateProfile();
   return { ok: true, message: "Changes saved." };
@@ -225,10 +155,13 @@ export async function changePasswordAction(
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { passwordHash: true },
+    select: { email: true, passwordHash: true },
   });
   if (!user) {
     return { error: "Account not found." };
+  }
+  if (!isLegacyTestLogin(user.email)) {
+    return { error: "Password changes are only available for existing test accounts." };
   }
   if (!user.passwordHash) {
     return { error: "This login uses Google. There is no password to change." };

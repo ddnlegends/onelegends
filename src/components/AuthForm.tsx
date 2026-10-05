@@ -1,166 +1,82 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  googleSignInAction,
-  loginAction,
-  registerAction,
-} from "@/app/actions/auth";
-import { PASSWORD_RULES, passwordMeetsRules } from "@/lib/password";
-
-type Mode = "login" | "register";
+import { useActionState } from "react";
+import { googleSignInAction, loginAction } from "@/app/actions/auth";
 
 export function AuthForm({
   mode,
-  googleEnabled = false,
+  googleEnabled,
 }: {
-  mode: Mode;
-  googleEnabled?: boolean;
+  mode: "login" | "register";
+  googleEnabled: boolean;
 }) {
-  const action = mode === "login" ? loginAction : registerAction;
-  const [state, formAction, pending] = useActionState(action, undefined);
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-
-  const allRulesMet = useMemo(() => passwordMeetsRules(password), [password]);
-  const passwordsMatch = confirm.length > 0 && password === confirm;
-  const canRegister = allRulesMet && passwordsMatch;
+  const [state, testLoginAction, pending] = useActionState(loginAction, undefined);
 
   return (
-    <div className="mx-auto max-w-md space-y-4 rounded-xl border border-line bg-card p-6">
-      <p className="text-xs text-muted">
-        One login for the whole circuit. After you sign in you land on your
-        dashboard. Use Code Claim to attach a team or competition with a code.
+    <div className="mx-auto max-w-md space-y-5 rounded-xl border border-line bg-card p-6">
+      <p className="text-sm text-muted">
+        {mode === "register"
+          ? "Sign in with Google to create your OneLegends account. Then use a claim code or accept an invitation to access your team or competition."
+          : "Sign in with Google to open your OneLegends dashboard."}
       </p>
 
       {googleEnabled ? (
-        <>
-          <form action={googleSignInAction}>
-            <button
-              className="btn btn-ghost w-full"
-              disabled={pending}
-              type="submit"
-            >
-              Continue with Google
+        <form action={googleSignInAction}>
+          <button className="btn btn-primary w-full" type="submit">
+            Continue with Google
+          </button>
+        </form>
+      ) : (
+        <p className="notice notice-error">
+          Google sign-in is not configured yet. Ask a Legends tech chair to
+          finish the OAuth setup.
+        </p>
+      )}
+
+      {mode === "login" ? (
+        <details className="rounded-lg border border-line p-4">
+          <summary className="cursor-pointer text-sm font-medium">
+            Existing test account login
+          </summary>
+          <form action={testLoginAction} className="mt-4 space-y-4">
+            <p className="text-xs text-muted">
+              Password sign-in is kept only for the existing demonstration accounts.
+            </p>
+            <div className="field">
+              <label htmlFor="test-email">Email</label>
+              <input
+                id="test-email"
+                name="email"
+                type="email"
+                required
+                autoComplete="email"
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="test-password">Password</label>
+              <input
+                id="test-password"
+                name="password"
+                type="password"
+                required
+                autoComplete="current-password"
+              />
+            </div>
+            {state?.error ? <p className="notice notice-error">{state.error}</p> : null}
+            <button className="btn btn-ghost w-full" disabled={pending} type="submit">
+              {pending ? "Signing in…" : "Sign in to test account"}
             </button>
           </form>
-          <p className="text-center text-xs uppercase tracking-wide text-muted">
-            or
-          </p>
-        </>
-      ) : null}
-
-      <form action={formAction} className="space-y-4">
-
-      <div className="field">
-        <label htmlFor="email">Email</label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          required
-          autoComplete="email"
-          placeholder="shoutoutdukerhydhun@gmail.com"
-        />
-      </div>
-      <div className="field">
-        <label htmlFor="password">Password</label>
-        {mode === "register" ? (
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-            minLength={10}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="new-password"
-          />
-        ) : (
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-            autoComplete="current-password"
-          />
-        )}
-      </div>
-
-      {mode === "register" ? (
-        <>
-          <ul className="space-y-1 text-sm">
-            {PASSWORD_RULES.map((rule) => {
-              const ok = rule.test(password);
-              return (
-                <li
-                  key={rule.id}
-                  className={ok ? "font-medium text-emerald-700" : "text-red-600"}
-                >
-                  {ok ? "✓" : "✕"} {rule.label}
-                </li>
-              );
-            })}
-          </ul>
-          <div className="field">
-            <label htmlFor="confirmPassword">Verify Password</label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              required
-              minLength={10}
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              autoComplete="new-password"
-            />
-          </div>
-          <p className={passwordsMatch ? "text-sm font-medium text-emerald-700" : "text-sm text-red-600"}>
-            {passwordsMatch ? "✓ Passwords match" : "✕ Passwords must match"}
-          </p>
-        </>
-      ) : null}
-
-      {state?.error ? <p className="notice notice-error">{state.error}</p> : null}
-
-      <button
-        className="btn btn-primary w-full"
-        disabled={pending || (mode === "register" && !canRegister)}
-        type="submit"
-        onClick={() => {
-          try {
-            sessionStorage.removeItem("onelegends-invites-seen");
-          } catch {
-            /* ignore */
-          }
-        }}
-      >
-        {pending
-          ? "Working…"
-          : mode === "login"
-            ? "Log In"
-            : "Create Account"}
-      </button>
-
-      <p className="text-center text-sm text-muted">
-        {mode === "login" ? (
-          <>
-            New here?{" "}
-            <Link href="/register" prefetch className="text-ink underline">
-              Register
-            </Link>
-          </>
-        ) : (
-          <>
-            Already have an account?{" "}
-            <Link href="/login" prefetch className="text-ink underline">
-              Log In
-            </Link>
-          </>
-        )}
-      </p>
-    </form>
+        </details>
+      ) : (
+        <p className="text-center text-sm text-muted">
+          Already have an account?{" "}
+          <Link href="/login" prefetch className="text-ink underline">
+            Log in
+          </Link>
+        </p>
+      )}
     </div>
   );
 }

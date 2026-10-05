@@ -10,9 +10,8 @@ export default function LoginPage() {
         <div className="text-center">
           <h1 className="mt-2 font-heading text-3xl tracking-[0.08em]">Log In</h1>
           <p className="mt-2 text-sm text-muted">
-            {googleEnabled
-              ? "Google or email and password. After you sign in you land on your dashboard."
-              : "Email and password. After you sign in you land on your dashboard."}
+            Google is the sign-in method for new and regular accounts. Existing
+            test accounts retain a separate password login.
           </p>
         </div>
         <AuthForm mode="login" googleEnabled={googleEnabled} />

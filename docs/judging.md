@@ -30,4 +30,4 @@ Team 1 refers to the same application for every judge. The UI never sends team n
 
 Releasing results ends the live session and locks further scoring. Applications and the required judge count cannot change after release.
 
-Until that moment, the competition login does not list which teams applied.
+Until that moment, the competition login does not list which teams applied. After release, **Applied Teams** shows full profiles and rosters only for that competition's applicants; circuit tech admins use **Teams** to inspect every registered team.

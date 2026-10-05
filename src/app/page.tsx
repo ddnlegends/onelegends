@@ -57,6 +57,21 @@ export default async function HomePage() {
 
       <RoleGuide signedIn={false} />
 
+      <section className="border-y border-line bg-blush px-4 py-10">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-5">
+          <div>
+            <h2 className="font-heading text-2xl">How payments work</h2>
+            <p className="mt-2 max-w-2xl text-sm text-muted">
+              Payments happen outside OneLegends for now. Confirm the recipient
+              and amount, then include your team’s OneLegends payment memo.
+            </p>
+          </div>
+          <Link href="/payments" className="btn btn-primary">
+            Payment instructions
+          </Link>
+        </div>
+      </section>
+
       <section className="mx-auto max-w-6xl space-y-6 px-4 py-10">
         <div>
           <h2 className="font-heading text-2xl tracking-[0.12em]">

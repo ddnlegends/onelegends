@@ -27,6 +27,7 @@ export async function Nav() {
             <NavLink href="/">Home</NavLink>
           )}
           {session ? <NavLink href="/profile">Profile</NavLink> : null}
+          <NavLink href="/payments">Payments</NavLink>
           {teamAccess ? (
             <NavLink href="/team/profile" match="prefix">
               Team Profile
@@ -42,6 +43,7 @@ export async function Nav() {
               Comp Dashboard
             </NavLink>
           ) : null}
+          {ops ? <NavLink href="/ops/teams" match="prefix">Teams</NavLink> : null}
           {registrationAccess ? (
             <NavLink href="/reg" match="prefix">
               Live Viewing

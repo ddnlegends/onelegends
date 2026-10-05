@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { StatusSelect } from "@/components/StatusSelect";
@@ -59,9 +60,13 @@ export default async function CompResultsPage() {
           stay on Application Stats.
         </p>
       ) : ranked.length === 0 ? (
-        <p className="text-muted">No applications to rank.</p>
+        <div className="space-y-4">
+          <p className="text-muted">No applications to rank.</p>
+          <Link href="/comp/applicants" className="btn btn-primary inline-flex">View applied teams</Link>
+        </div>
       ) : (
         <div className="space-y-6">
+          <Link href="/comp/applicants" className="btn btn-primary inline-flex">View applied teams and full rosters</Link>
           <div className="overflow-x-auto rounded-xl border border-line bg-card">
             <table className="w-full min-w-[48rem] text-left text-sm">
               <thead className="border-b border-line bg-blush text-xs uppercase tracking-wide text-muted">

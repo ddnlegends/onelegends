@@ -5,6 +5,7 @@ import {
   ProfileDetailsForm,
 } from "@/components/ProfileForms";
 import { redirect } from "next/navigation";
+import { isLegacyTestLogin } from "@/lib/auth-policy";
 
 export default async function ProfilePage() {
   const session = await auth();
@@ -20,13 +21,13 @@ export default async function ProfilePage() {
       <div>
         <h1 className="font-heading text-4xl">Profile</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          Update the name, email, and password on this login. Team Profile and
-          Comp Details stay on their own pages.
+          Update your display name. Your login email stays tied to Google or
+          the existing test account. Team and competition details have their own pages.
         </p>
       </div>
       <section className="grid gap-4 lg:grid-cols-2">
         <ProfileDetailsForm name={user.name} email={user.email} />
-        {user.passwordHash ? (
+        {user.passwordHash && isLegacyTestLogin(user.email) ? (
           <ChangePasswordForm />
         ) : (
           <div className="space-y-4 rounded-xl border border-line bg-card p-6">
