@@ -2,9 +2,14 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getCachedUser } from "@/lib/cached-user";
-import { isLegacyTestLogin } from "@/lib/auth-policy";
+import {
+  AUTH_INTENT_COOKIE,
+  isLegacyTestLogin,
+  parseAuthIntent,
+} from "@/lib/auth-policy";
 import { hydrateEmailInvites } from "@/lib/invites";
 import { applyRegistrationInvites } from "@/lib/registration";
 import {
@@ -75,6 +80,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       : []),
   ],
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider !== "google") return true;
+      const email = user.email?.trim().toLowerCase();
+      if (!email) return false;
+
+      const cookieStore = await cookies();
+      const intent = parseAuthIntent(cookieStore.get(AUTH_INTENT_COOKIE)?.value);
+      cookieStore.delete(AUTH_INTENT_COOKIE);
+      if (intent === "register") return true;
+
+      const existing = await prisma.user.findUnique({
+        where: { email },
+        select: { id: true },
+      });
+      return existing ? true : "/register?error=no-account";
+    },
     async jwt({ token, user, account }) {
       if (account?.provider === "google") {
         const email = user?.email?.trim().toLowerCase();

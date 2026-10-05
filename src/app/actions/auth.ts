@@ -3,12 +3,17 @@
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { z } from "zod";
 import { auth, signIn, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { passwordMeetsRules, passwordRuleMessage } from "@/lib/password";
 import { dashboardPath } from "@/lib/roles";
-import { isLegacyTestLogin } from "@/lib/auth-policy";
+import {
+  AUTH_INTENT_COOKIE,
+  isLegacyTestLogin,
+  parseAuthIntent,
+} from "@/lib/auth-policy";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -56,7 +61,15 @@ export async function loginAction(
   return {};
 }
 
-export async function googleSignInAction() {
+export async function googleSignInAction(formData: FormData) {
+  const intent = parseAuthIntent(formData.get("intent"));
+  (await cookies()).set(AUTH_INTENT_COOKIE, intent, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 600,
+  });
   await signIn("google", { redirectTo: dashboardPath() });
 }
 

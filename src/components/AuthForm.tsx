@@ -18,11 +18,12 @@ export function AuthForm({
       <p className="text-sm text-muted">
         {mode === "register"
           ? "Sign in with Google to create your OneLegends account. Then use a claim code or accept an invitation to access your team or competition."
-          : "Sign in with Google to open your OneLegends dashboard."}
+          : "Sign in with the Google account you registered with."}
       </p>
 
       {googleEnabled ? (
         <form action={googleSignInAction}>
+          <input type="hidden" name="intent" value={mode} />
           <button className="btn btn-primary w-full" type="submit">
             Continue with Google
           </button>
@@ -33,6 +34,15 @@ export function AuthForm({
           finish the OAuth setup.
         </p>
       )}
+
+      {mode === "login" ? (
+        <p className="text-center text-sm text-muted">
+          New to OneLegends?{" "}
+          <Link href="/register" prefetch className="text-ink underline">
+            Create an account
+          </Link>
+        </p>
+      ) : null}
 
       {mode === "login" ? (
         <details className="rounded-lg border border-line p-4">

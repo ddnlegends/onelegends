@@ -2,7 +2,12 @@ import { AuthForm } from "@/components/AuthForm";
 import { PageShell } from "@/components/PageShell";
 import { googleAuthEnabled } from "@/lib/ops-admin";
 
-export default function RegisterPage() {
+export default async function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
   const googleEnabled = googleAuthEnabled();
   return (
     <PageShell>
@@ -14,6 +19,12 @@ export default function RegisterPage() {
             with its code. Payment instructions are separate from sign-in.
           </p>
         </div>
+        {error === "no-account" ? (
+          <p className="notice notice-error mx-auto max-w-md">
+            There is no OneLegends account for that Google email yet. Create
+            one below, then you can log in with it any time.
+          </p>
+        ) : null}
         <AuthForm mode="register" googleEnabled={googleEnabled} />
       </div>
     </PageShell>
