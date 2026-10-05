@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { requirePlatformAdminPage } from "@/lib/page-guards";
 import { EXPORT_DATASETS } from "@/lib/ops-export";
 import { ExportDownloadForm } from "@/components/ExportDownloadForm";
 
@@ -8,6 +9,7 @@ export default async function OpsExportPage({
 }: {
   searchParams: Promise<{ competitionId?: string }>;
 }) {
+  await requirePlatformAdminPage();
   const { competitionId } = await searchParams;
   const competitions = await prisma.competitionProfile.findMany({
     select: { id: true, name: true },

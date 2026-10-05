@@ -20,7 +20,13 @@ export type DetailedTeam = {
   }>;
 };
 
-export function TeamDetails({ team }: { team: DetailedTeam }) {
+export function TeamDetails({
+  team,
+  hideHeading = false,
+}: {
+  team: DetailedTeam;
+  hideHeading?: boolean;
+}) {
   const wikiUrl = /^https?:\/\//i.test(team.wikiUrl) ? team.wikiUrl : "";
   return (
     <div className="space-y-8">
@@ -33,8 +39,10 @@ export function TeamDetails({ team }: { team: DetailedTeam }) {
           <TeamPhoto src={team.photoUrl} name={team.name} size="wide" />
         ) : null}
         <div>
-          <h1 className="font-heading text-3xl">{team.name}</h1>
-          {team.blurb ? <p className="mt-2 text-muted">{team.blurb}</p> : null}
+          {hideHeading ? null : <h1 className="font-heading text-3xl">{team.name}</h1>}
+          {team.blurb ? (
+            <p className={`${hideHeading ? "" : "mt-2 "}text-muted`}>{team.blurb}</p>
+          ) : null}
           <dl className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
             <div><dt className="text-muted">Captains</dt><dd>{team.captains || "—"}</dd></div>
             <div><dt className="text-muted">Years established</dt><dd>{team.yearsEstablished ?? "—"}</dd></div>

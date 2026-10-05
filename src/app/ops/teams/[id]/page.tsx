@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { requirePlatformAdminPage } from "@/lib/page-guards";
 import { TeamDetails } from "@/components/TeamDetails";
 
 export default async function OpsTeamDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  await requirePlatformAdminPage();
   const { id } = await params;
   const team = await prisma.teamProfile.findUnique({
     where: { id },
