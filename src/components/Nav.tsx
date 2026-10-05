@@ -61,7 +61,7 @@ export async function Nav() {
           ) : (
             <>
               <NavLink href="/login">Log In</NavLink>
-              <Link href="/register" prefetch className="btn btn-primary py-1.5">
+              <Link href="/register" className="btn btn-primary py-1.5">
                 Create account
               </Link>
             </>

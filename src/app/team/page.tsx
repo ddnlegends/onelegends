@@ -53,14 +53,14 @@ export default async function TeamDashboardPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Link href="/team/profile" prefetch className="btn btn-ghost">
+          <Link href="/team/profile" className="btn btn-ghost">
             Edit Team Profile
           </Link>
-          <Link href="/team/access" prefetch className="btn btn-ghost">
+          <Link href="/team/access" className="btn btn-ghost">
             Admins
           </Link>
           {team.applyBlocked ? null : (
-            <Link href={applyHref} prefetch className="btn btn-primary">
+            <Link href={applyHref} className="btn btn-primary">
               {gaps.length ? "Finish profile to apply" : "Apply"}
             </Link>
           )}

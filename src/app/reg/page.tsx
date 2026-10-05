@@ -46,7 +46,6 @@ export default async function RegHomePage() {
                 </div>
                 <Link
                   href={`/reg/${comp.id}`}
-                  prefetch
                   className={
                     status === "LIVE" || status === "READY"
                       ? "btn btn-primary"

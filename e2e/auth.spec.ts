@@ -3,7 +3,9 @@ import { E2E, login, password } from "./helpers";
 
 test("a test account signs in with its password", async ({ page }) => {
   await login(page, "team");
-  await expect(page.getByRole("link", { name: "Team Profile" })).toBeVisible();
+  await expect(
+    page.getByRole("navigation").getByRole("link", { name: "Team Profile" }),
+  ).toBeVisible();
 });
 
 test("password login refuses emails outside the test allowlist", async ({ page }) => {

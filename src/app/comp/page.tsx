@@ -107,20 +107,20 @@ export default async function CompDashboardPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Link href="/comp/judges" prefetch className="btn btn-ghost">
+          <Link href="/comp/judges" className="btn btn-ghost">
             Judges
           </Link>
-          <Link href="/comp/results" prefetch className="btn btn-primary">
+          <Link href="/comp/results" className="btn btn-primary">
             Viewing Results
           </Link>
-          <Link href="/comp/applicants" prefetch className="btn btn-ghost">
+          <Link href="/comp/applicants" className="btn btn-ghost">
             Applied Teams
           </Link>
-          <Link href="/comp/access" prefetch className="btn btn-ghost">
+          <Link href="/comp/access" className="btn btn-ghost">
             Admins
           </Link>
           {!ops ? (
-            <Link href="/comp/profile" prefetch className="btn btn-ghost">
+            <Link href="/comp/profile" className="btn btn-ghost">
               Edit Details
             </Link>
           ) : null}

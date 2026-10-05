@@ -19,7 +19,7 @@ Step-by-step recipes for the changes maintainers make most often. Read [setup.md
 3. Validate input on the server. Return `{ ok?: boolean; error?: string; message?: string }` so `SaveNotice` can show it, and call it from the client with `useActionState`.
 4. If two people can change the same row at once (judging, release, admin counts), do the check and the write in one `prisma.$transaction`: lock the row with `SELECT ... FOR UPDATE`, or use a conditional `updateMany` and check `count`. See `src/app/actions/judge.ts` and `src/lib/release.ts`.
 5. `revalidatePath` every route that shows the changed data.
-6. Server-only libraries (`googleapis`, `node:crypto`, `exceljs`) must not end up in a module that a client component imports. `src/lib/judging.ts` is imported by client components; keep it pure.
+6. Server-only libraries (`googleapis`, `node:crypto`, `exceljs`) must not end up in a module that a client component imports. Client components import judging helpers from `src/lib/judging-rules.ts` and photo helpers from `src/lib/team-photo-rules.ts`; keep both free of Prisma and server-only imports. Prefer the default `<Link>` prefetch: a bare `prefetch` renders the whole target page in the background for every visible link.
 
 ## Add a database change
 

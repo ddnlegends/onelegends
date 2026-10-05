@@ -106,7 +106,7 @@ export default async function CompDashboardDetailPage({
       <AutoRefresh active={status === "LIVE" || status === "READY"} intervalMs={4000} />
 
       <div className="space-y-3">
-        <Link href="/ops/comps" prefetch className="text-sm text-muted underline">
+        <Link href="/ops/comps" className="text-sm text-muted underline">
           Comp Dashboard
         </Link>
         <div className="flex flex-wrap items-center gap-3">
@@ -114,7 +114,6 @@ export default async function CompDashboardDetailPage({
           <CompStatusPill status={status} />
           <Link
             href={`/ops/export?competitionId=${competition.id}`}
-            prefetch
             className="btn btn-ghost ml-auto py-1.5 text-sm"
           >
             Export

@@ -4,9 +4,9 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { saveTeamProfile } from "@/app/actions/team";
 import { TeamPhoto } from "@/components/TeamPhoto";
 import { SaveNotice } from "@/components/SaveNotice";
-import { hasTeamPhoto } from "@/lib/team-photo";
 import {
   TEAM_PHOTO_TOO_LARGE,
+  hasTeamPhoto,
   isBodyLimitError,
   teamPhotoFileError,
 } from "@/lib/team-photo-rules";

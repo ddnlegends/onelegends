@@ -4,7 +4,19 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
-- Google sign-in now shows the account chooser every time (`prompt=select_account`), so you can switch Google accounts after logging out instead of being signed straight back in to the previous one.
+- Performance pass with no behavior changes:
+  - Auto-refresh (REG, ops live pages) and the judge live poll pause while the tab is hidden or the phone is locked, and catch up immediately when it is visible again (`usePollWhileVisible`).
+  - Links no longer force a full background render of their target page; they prefetch the loading skeleton (the Next default). The judge's previous/next and live-team links keep full prefetch.
+  - Indexes on `Dancer.teamId`, `JudgeScore.assignmentId`, and `JudgeViewingSlot.applicationId` (migration `20261005230000_foreign_key_indexes`).
+  - Prisma no longer ships to the browser: pure judging helpers moved to `src/lib/judging-rules.ts` (re-exported from `judging.ts`), photo helpers to `team-photo-rules.ts`.
+  - The applicant sheet sync checks release and sheet ID before loading every team and dancer, and reuses one Google client.
+  - `/api/live` answers each judge poll in one parallel round of queries instead of three sequential ones.
+  - Header and landing crown served from resized copies (21 KB and 142 KB instead of 249 KB); team photos load lazily.
+- Fixed a flaky browser test that matched two "Team Profile" links on the dashboard.
+
+## 2026-10-05: Google account chooser
+
+- Google sign-in now shows the account chooser every time (`prompt=select_account`), so you can switch Google accounts after logging out instead of being signed straight back in to the previous one. (`56a1f99`)
 
 ## 2026-10-05: audit fixes, tests, and documentation
 

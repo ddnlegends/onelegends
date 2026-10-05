@@ -134,7 +134,6 @@ export default async function JudgePacketPage({
                     href={`/judge/${competitionId}/team/${slot.position}${
                       isLive ? "" : "?stay=1"
                     }`}
-                    prefetch
                     className="btn btn-ghost py-1.5"
                   >
                     {scoringOpen && !locked

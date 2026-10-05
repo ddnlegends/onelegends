@@ -10,6 +10,22 @@ const ALLOWED_TYPES = new Set([
   "image/gif",
 ]);
 
+export function teamPhotoSrc(teamId: string, version?: number | string): string {
+  return `/api/teams/${teamId}/photo?v=${version ?? Date.now()}`;
+}
+
+export function hasTeamPhoto(value: string): boolean {
+  const photo = value.trim();
+  if (!photo) return false;
+  if (photo.startsWith("/api/teams/") && photo.includes("/photo")) return true;
+  try {
+    const url = new URL(photo);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export function teamPhotoFileError(file: File): string | null {
   if (file.size > TEAM_PHOTO_MAX_BYTES) return TEAM_PHOTO_TOO_LARGE;
   if (file.type && !ALLOWED_TYPES.has(file.type)) return TEAM_PHOTO_BAD_TYPE;

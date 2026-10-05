@@ -15,7 +15,7 @@ import {
   isScoreComplete,
   rubricTotal,
   type RubricKey,
-} from "@/lib/judging";
+} from "@/lib/judging-rules";
 import { SaveNotice } from "@/components/SaveNotice";
 
 const SCORE_OPTIONS = Array.from({ length: 11 }, (_, i) => i);

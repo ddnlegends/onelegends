@@ -229,7 +229,6 @@ export default async function DashboardPage() {
               <Link
                 key={competition.id}
                 href={`/reg/${competition.id}`}
-                prefetch
                 className="brand-gradient group flex min-h-44 flex-col justify-between rounded-2xl p-6 text-white shadow-sm transition hover:brightness-110"
               >
                 <span
@@ -276,10 +275,10 @@ export default async function DashboardPage() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Link href="/team/profile" prefetch className="btn btn-ghost">
+              <Link href="/team/profile" className="btn btn-ghost">
                 Team Profile
               </Link>
-              <Link href="/team/access" prefetch className="btn btn-ghost">
+              <Link href="/team/access" className="btn btn-ghost">
                 Admins
               </Link>
             </div>
@@ -380,16 +379,16 @@ export default async function DashboardPage() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Link href="/comp/profile" prefetch className="btn btn-ghost">
+              <Link href="/comp/profile" className="btn btn-ghost">
                 Comp Details
               </Link>
-              <Link href="/comp/judges" prefetch className="btn btn-ghost">
+              <Link href="/comp/judges" className="btn btn-ghost">
                 Judges
               </Link>
-              <Link href="/comp/results" prefetch className="btn btn-primary">
+              <Link href="/comp/results" className="btn btn-primary">
                 Viewing Results
               </Link>
-              <Link href="/comp/access" prefetch className="btn btn-ghost">
+              <Link href="/comp/access" className="btn btn-ghost">
                 Admins
               </Link>
             </div>
@@ -528,7 +527,7 @@ async function OpsDashboard({
         </p>
       </div>
 
-      <Link href="/ops/comps" prefetch className="brand-gradient group flex flex-wrap items-center justify-between gap-4 rounded-2xl px-6 py-5 text-white shadow-sm transition hover:brightness-110">
+      <Link href="/ops/comps" className="brand-gradient group flex flex-wrap items-center justify-between gap-4 rounded-2xl px-6 py-5 text-white shadow-sm transition hover:brightness-110">
         <div><p className="text-xs uppercase tracking-widest text-white/80">Live judging</p><p className="font-heading text-2xl tracking-wide">Comp Dashboard</p><p className="mt-1 text-sm text-white/85">Follow every live viewing session and judge score.</p></div>
         <span className="rounded-full border border-white/40 px-4 py-2 text-sm font-semibold transition group-hover:bg-white group-hover:text-accent">Open</span>
       </Link>
@@ -555,9 +554,9 @@ async function OpsDashboard({
       </section>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <Link href="/ops/teams" prefetch className="group rounded-2xl border border-line bg-card p-6 transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md"><p className="text-xs uppercase tracking-widest text-muted">Circuit management</p><h2 className="mt-1 font-heading text-2xl group-hover:text-accent">Teams</h2><p className="mt-2 text-sm text-muted">Claim codes, owners, profiles, rosters, applications, and application blocks.</p><span className="mt-5 inline-flex text-sm font-semibold text-accent">Manage teams →</span></Link>
-        <Link href="/ops/competitions" prefetch className="group rounded-2xl border border-line bg-card p-6 transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md"><p className="text-xs uppercase tracking-widest text-muted">Circuit management</p><h2 className="mt-1 font-heading text-2xl group-hover:text-accent">Competitions</h2><p className="mt-2 text-sm text-muted">Claim codes, owners, event details, REG access, applications, and live-dashboard links.</p><span className="mt-5 inline-flex text-sm font-semibold text-accent">Manage competitions →</span></Link>
-        <Link href="/ops/export" prefetch className="group rounded-2xl border border-line bg-card p-6 transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md"><p className="text-xs uppercase tracking-widest text-muted">Reports</p><h2 className="mt-1 font-heading text-2xl group-hover:text-accent">Export data</h2><p className="mt-2 text-sm text-muted">Download judging scores, results, lineups, rosters, details, and access lists as .xlsx or CSV.</p><span className="mt-5 inline-flex text-sm font-semibold text-accent">Open exports →</span></Link>
+        <Link href="/ops/teams" className="group rounded-2xl border border-line bg-card p-6 transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md"><p className="text-xs uppercase tracking-widest text-muted">Circuit management</p><h2 className="mt-1 font-heading text-2xl group-hover:text-accent">Teams</h2><p className="mt-2 text-sm text-muted">Claim codes, owners, profiles, rosters, applications, and application blocks.</p><span className="mt-5 inline-flex text-sm font-semibold text-accent">Manage teams →</span></Link>
+        <Link href="/ops/competitions" className="group rounded-2xl border border-line bg-card p-6 transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md"><p className="text-xs uppercase tracking-widest text-muted">Circuit management</p><h2 className="mt-1 font-heading text-2xl group-hover:text-accent">Competitions</h2><p className="mt-2 text-sm text-muted">Claim codes, owners, event details, REG access, applications, and live-dashboard links.</p><span className="mt-5 inline-flex text-sm font-semibold text-accent">Manage competitions →</span></Link>
+        <Link href="/ops/export" className="group rounded-2xl border border-line bg-card p-6 transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md"><p className="text-xs uppercase tracking-widest text-muted">Reports</p><h2 className="mt-1 font-heading text-2xl group-hover:text-accent">Export data</h2><p className="mt-2 text-sm text-muted">Download judging scores, results, lineups, rosters, details, and access lists as .xlsx or CSV.</p><span className="mt-5 inline-flex text-sm font-semibold text-accent">Open exports →</span></Link>
       </div>
 
       <section className="space-y-4 rounded-xl border border-line bg-card p-6">

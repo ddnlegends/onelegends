@@ -22,7 +22,6 @@ export function NavLink({
   return (
     <Link
       href={href}
-      prefetch
       className={
         active
           ? "font-semibold text-accent"

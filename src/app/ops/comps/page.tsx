@@ -80,7 +80,7 @@ export default async function CompDashboardPage() {
             on screen. Open a box for each judge’s scores by Team number.
           </p>
         </div>
-        <Link href="/dashboard" prefetch className="btn btn-ghost">
+        <Link href="/dashboard" className="btn btn-ghost">
           Circuit ops home
         </Link>
       </div>
@@ -124,7 +124,6 @@ export default async function CompDashboardPage() {
               <li key={comp.id}>
                 <Link
                   href={`/ops/comps/${comp.id}`}
-                  prefetch
                   className={`group flex h-full flex-col gap-4 rounded-2xl border bg-card p-5 transition hover:-translate-y-0.5 hover:shadow-md ${
                     live
                       ? "border-accent-ember/50 shadow-sm ring-1 ring-accent-ember/20"

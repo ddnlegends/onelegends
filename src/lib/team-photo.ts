@@ -3,7 +3,10 @@ import {
   TEAM_PHOTO_BAD_TYPE,
   TEAM_PHOTO_MAX_BYTES,
   TEAM_PHOTO_TOO_LARGE,
+  teamPhotoSrc,
 } from "@/lib/team-photo-rules";
+
+export { hasTeamPhoto, teamPhotoSrc } from "@/lib/team-photo-rules";
 
 const MIME: Record<string, string> = {
   jpg: "image/jpeg",
@@ -11,22 +14,6 @@ const MIME: Record<string, string> = {
   webp: "image/webp",
   gif: "image/gif",
 };
-
-export function teamPhotoSrc(teamId: string, version?: number | string): string {
-  return `/api/teams/${teamId}/photo?v=${version ?? Date.now()}`;
-}
-
-export function hasTeamPhoto(value: string): boolean {
-  const photo = value.trim();
-  if (!photo) return false;
-  if (photo.startsWith("/api/teams/") && photo.includes("/photo")) return true;
-  try {
-    const url = new URL(photo);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
 
 function kindFor(file: File, bytes: Uint8Array): keyof typeof MIME | null {
   if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {

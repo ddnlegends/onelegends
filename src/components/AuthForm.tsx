@@ -38,7 +38,7 @@ export function AuthForm({
       {mode === "login" ? (
         <p className="text-center text-sm text-muted">
           New to OneLegends?{" "}
-          <Link href="/register" prefetch className="text-ink underline">
+          <Link href="/register" className="text-ink underline">
             Create an account
           </Link>
         </p>
@@ -82,7 +82,7 @@ export function AuthForm({
       ) : (
         <p className="text-center text-sm text-muted">
           Already have an account?{" "}
-          <Link href="/login" prefetch className="text-ink underline">
+          <Link href="/login" className="text-ink underline">
             Log in
           </Link>
         </p>

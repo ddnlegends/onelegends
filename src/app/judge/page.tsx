@@ -64,7 +64,6 @@ export default async function JudgeDashboardPage() {
                 {isJudgingOpen(row.competition) ? (
                   <Link
                     href={`/judge/${row.competitionId}`}
-                    prefetch
                     className="btn btn-primary py-1.5"
                   >
                     Open Packet
@@ -76,7 +75,6 @@ export default async function JudgeDashboardPage() {
                 ) : (
                   <Link
                     href={`/judge/${row.competitionId}`}
-                    prefetch
                     className="btn btn-ghost py-1.5"
                   >
                     View packet
@@ -107,7 +105,6 @@ export default async function JudgeDashboardPage() {
                 </div>
                 <Link
                   href={`/judge/${row.competitionId}`}
-                  prefetch
                   className="btn btn-ghost py-1.5"
                 >
                   Review Packet
@@ -121,7 +118,7 @@ export default async function JudgeDashboardPage() {
       {!judge.phone ? (
         <p className="text-sm text-muted">
           Add a phone number on{" "}
-          <Link href="/judge/profile" prefetch className="underline">
+          <Link href="/judge/profile" className="underline">
             Judge Profile
           </Link>{" "}
           so competitions can reach you.

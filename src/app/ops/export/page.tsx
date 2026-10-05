@@ -22,7 +22,7 @@ export default async function OpsExportPage({
   return (
     <div className="space-y-8">
       <div className="space-y-3">
-        <Link href="/dashboard" prefetch className="text-sm text-muted underline">
+        <Link href="/dashboard" className="text-sm text-muted underline">
           Circuit ops
         </Link>
         <h1 className="font-heading text-4xl">Export data</h1>

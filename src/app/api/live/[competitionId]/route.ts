@@ -8,9 +8,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { isJudgingOpen } from "@/lib/judging";
-import { hasRegistrationAccess } from "@/lib/registration";
-import { isPlatformAdmin } from "@/lib/team-access";
+import { isJudgingOpen } from "@/lib/judging-rules";
 
 export async function GET(
   _request: Request,
@@ -23,31 +21,41 @@ export async function GET(
     return NextResponse.json({ error: "Sign in first." }, { status: 401 });
   }
 
-  const [judge, reg, ops] = await Promise.all([
-    prisma.judgeAssignment.findFirst({
-      where: { competitionId, status: "APPROVED", judge: { userId } },
-      select: { id: true },
+  // Polled every few seconds by every judge, so all reads run in one round.
+  // The competition row is only returned after the access check passes.
+  // `platformAdmin` on the session is re-read from the database by the jwt
+  // callback on every request.
+  const ops = Boolean(session.user.platformAdmin);
+  const [judge, reg, competition] = await Promise.all([
+    ops
+      ? null
+      : prisma.judgeAssignment.findFirst({
+          where: { competitionId, status: "APPROVED", judge: { userId } },
+          select: { id: true },
+        }),
+    ops
+      ? null
+      : prisma.registrationAccess.findUnique({
+          where: { userId_competitionId: { userId, competitionId } },
+          select: { id: true },
+        }),
+    prisma.competitionProfile.findUnique({
+      where: { id: competitionId },
+      select: {
+        livePosition: true,
+        liveUpdatedAt: true,
+        judgingOpen: true,
+        acceptingApps: true,
+        applicationDeadline: true,
+        resultsReleasedAt: true,
+        claimedAt: true,
+        userId: true,
+      },
     }),
-    hasRegistrationAccess(userId, competitionId),
-    isPlatformAdmin(userId),
   ]);
   if (!judge && !reg && !ops) {
     return NextResponse.json({ error: "Not allowed." }, { status: 403 });
   }
-
-  const competition = await prisma.competitionProfile.findUnique({
-    where: { id: competitionId },
-    select: {
-      livePosition: true,
-      liveUpdatedAt: true,
-      judgingOpen: true,
-      acceptingApps: true,
-      applicationDeadline: true,
-      resultsReleasedAt: true,
-      claimedAt: true,
-      userId: true,
-    },
-  });
   if (!competition) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }

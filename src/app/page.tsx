@@ -21,7 +21,8 @@ export default async function HomePage() {
         <Lattice />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/brand/legends-crown.png"
+          src="/brand/legends-crown-md.png"
+          loading="lazy"
           alt=""
           className="pointer-events-none absolute -right-16 top-8 hidden w-[28rem] opacity-[0.12] lg:block"
         />

@@ -30,6 +30,8 @@ export function TeamPhoto({
     <img
       src={src}
       alt={name}
+      loading="lazy"
+      decoding="async"
       className={`${box} shrink-0 rounded-xl object-cover`}
       onError={() => setFailed(true)}
     />

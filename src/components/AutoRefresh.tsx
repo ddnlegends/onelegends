@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { usePollWhileVisible } from "@/components/usePollWhileVisible";
 
+/**
+ * Re-renders the current page on the server every `intervalMs` while `active`.
+ * Pauses while the tab is hidden and refreshes as soon as it is visible again.
+ */
 export function AutoRefresh({
   active,
   intervalMs = 5000,
@@ -11,24 +16,7 @@ export function AutoRefresh({
   intervalMs?: number;
 }) {
   const router = useRouter();
-
-  useEffect(() => {
-    if (!active) return;
-    let cancelled = false;
-    let timeoutId = 0;
-
-    const tick = () => {
-      if (cancelled) return;
-      router.refresh();
-      timeoutId = window.setTimeout(tick, intervalMs);
-    };
-
-    timeoutId = window.setTimeout(tick, intervalMs);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timeoutId);
-    };
-  }, [active, intervalMs, router]);
-
+  const refresh = useCallback(() => router.refresh(), [router]);
+  usePollWhileVisible(refresh, intervalMs, active);
   return null;
 }

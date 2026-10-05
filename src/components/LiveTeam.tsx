@@ -2,15 +2,17 @@
 
 /**
  * Keeps judge pages in step with REG. Both components poll
- * `/api/live/[competitionId]` until the judge submits their packet.
+ * `/api/live/[competitionId]` until the judge submits their packet, pausing
+ * while the tab is hidden.
  * `LiveTeamFollower` moves an open score sheet to the team on screen unless the
  * judge pinned another team (`?stay=1`); `LiveTeamBanner` shows the live team
  * on the packet list. When judging opens, pauses, or ends, the page refreshes
  * so its server-rendered lock state is current.
  */
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { usePollWhileVisible } from "@/components/usePollWhileVisible";
 
 const POLL_MS = 3000;
 
@@ -28,47 +30,38 @@ function useLiveState(
   const router = useRouter();
   const [state, setState] = useState(initial);
 
+  const lastOpen = useRef(initial.judgingOpen);
+
   useEffect(() => {
-    if (!enabled) return;
-    let cancelled = false;
-    let timeoutId = 0;
-    let lastOpen = initial.judgingOpen;
+    lastOpen.current = initial.judgingOpen;
+  }, [initial.judgingOpen]);
 
-    const tick = async () => {
-      try {
-        const res = await fetch(`/api/live/${competitionId}`, {
-          cache: "no-store",
-        });
-        if (res.ok) {
-          const data = (await res.json()) as LiveState;
-          if (!cancelled) {
-            setState((current) =>
-              current.judgingOpen === data.judgingOpen &&
-              current.livePosition === data.livePosition
-                ? current
-                : {
-                    judgingOpen: data.judgingOpen,
-                    livePosition: data.livePosition,
-                  },
-            );
-            if (data.judgingOpen !== lastOpen) {
-              lastOpen = data.judgingOpen;
-              router.refresh();
-            }
-          }
-        }
-      } catch {
-        /* Network blip. Try again on the next tick. */
+  const tick = useCallback(
+    async (isCurrent: () => boolean) => {
+      const res = await fetch(`/api/live/${competitionId}`, {
+        cache: "no-store",
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as LiveState;
+      if (!isCurrent()) return;
+      setState((current) =>
+        current.judgingOpen === data.judgingOpen &&
+        current.livePosition === data.livePosition
+          ? current
+          : {
+              judgingOpen: data.judgingOpen,
+              livePosition: data.livePosition,
+            },
+      );
+      if (data.judgingOpen !== lastOpen.current) {
+        lastOpen.current = data.judgingOpen;
+        router.refresh();
       }
-      if (!cancelled) timeoutId = window.setTimeout(tick, POLL_MS);
-    };
+    },
+    [competitionId, router],
+  );
 
-    timeoutId = window.setTimeout(tick, POLL_MS);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timeoutId);
-    };
-  }, [competitionId, enabled, initial.judgingOpen, router]);
+  usePollWhileVisible(tick, POLL_MS, enabled);
 
   return state;
 }

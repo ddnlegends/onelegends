@@ -11,7 +11,7 @@ export function BrandMark({
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src="/brand/legends-crown.png"
+        src="/brand/legends-crown-md.png"
         alt=""
         className="mx-auto h-24 w-auto sm:h-28 md:h-32"
       />
@@ -21,12 +21,11 @@ export function BrandMark({
   return (
     <Link
       href={href}
-      prefetch
       className="inline-flex items-center gap-2"
       aria-label="OneLegends home"
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/brand/legends-crown.png" alt="" className="h-9 w-auto" />
+      <img src="/brand/legends-crown-sm.png" alt="" className="h-9 w-auto" />
       <span className="font-heading text-sm tracking-[0.08em] text-ink sm:text-base">
         OneLegends
       </span>

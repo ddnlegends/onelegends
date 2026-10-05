@@ -41,7 +41,11 @@ export function parseSheetId(input: string): string {
   return "";
 }
 
+let cachedClient: ReturnType<typeof google.sheets> | null = null;
+
+/** One client per server instance, so its access token is reused between syncs. */
 function getSheetsClient() {
+  if (cachedClient) return cachedClient;
   const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
   const key = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(
     /\\n/g,
@@ -57,7 +61,8 @@ function getSheetsClient() {
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });
 
-  return google.sheets({ version: "v4", auth });
+  cachedClient = google.sheets({ version: "v4", auth });
+  return cachedClient;
 }
 
 function dietaryCell(
@@ -86,16 +91,11 @@ export async function syncCompetitionSheet(
     };
   }
 
+  // Most calls happen before release, so check the cheap gates before loading
+  // every application, team, and dancer.
   const competition = await prisma.competitionProfile.findUnique({
     where: { id: competitionId },
-    include: {
-      applications: {
-        include: {
-          team: { include: { dancers: { orderBy: { name: "asc" } } } },
-        },
-        orderBy: { createdAt: "asc" },
-      },
-    },
+    select: { resultsReleasedAt: true, googleSheetId: true, googleSheetUrl: true },
   });
 
   if (!competition) {
@@ -121,7 +121,15 @@ export async function syncCompetitionSheet(
     return { ok: false, message: "Could not create a Google Sheets client." };
   }
 
-  const rows = competition.applications.map((app) => {
+  const applications = await prisma.application.findMany({
+    where: { competitionId },
+    include: {
+      team: { include: { dancers: { orderBy: { name: "asc" } } } },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
+  const rows = applications.map((app) => {
     const avNames = app.team.dancers
       .filter((d) => d.inAV)
       .map((d) => d.name)
