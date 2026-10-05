@@ -43,6 +43,11 @@ export async function Nav() {
             </NavLink>
           ) : null}
           {ops ? <NavLink href="/ops/teams" match="prefix">Teams</NavLink> : null}
+          {ops ? (
+            <NavLink href="/ops/competitions" match="prefix">
+              Competitions
+            </NavLink>
+          ) : null}
           {judgeAccess ? (
             <NavLink href="/judge" match="prefix">
               Judging
