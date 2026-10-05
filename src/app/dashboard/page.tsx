@@ -554,9 +554,10 @@ async function OpsDashboard({
         )}
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-3">
         <Link href="/ops/teams" prefetch className="group rounded-2xl border border-line bg-card p-6 transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md"><p className="text-xs uppercase tracking-widest text-muted">Circuit management</p><h2 className="mt-1 font-heading text-2xl group-hover:text-accent">Teams</h2><p className="mt-2 text-sm text-muted">Claim codes, owners, profiles, rosters, applications, and application blocks.</p><span className="mt-5 inline-flex text-sm font-semibold text-accent">Manage teams →</span></Link>
         <Link href="/ops/competitions" prefetch className="group rounded-2xl border border-line bg-card p-6 transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md"><p className="text-xs uppercase tracking-widest text-muted">Circuit management</p><h2 className="mt-1 font-heading text-2xl group-hover:text-accent">Competitions</h2><p className="mt-2 text-sm text-muted">Claim codes, owners, event details, REG access, applications, and live-dashboard links.</p><span className="mt-5 inline-flex text-sm font-semibold text-accent">Manage competitions →</span></Link>
+        <Link href="/ops/export" prefetch className="group rounded-2xl border border-line bg-card p-6 transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md"><p className="text-xs uppercase tracking-widest text-muted">Reports</p><h2 className="mt-1 font-heading text-2xl group-hover:text-accent">Export data</h2><p className="mt-2 text-sm text-muted">Download judging scores, results, lineups, rosters, details, and access lists as .xlsx or CSV.</p><span className="mt-5 inline-flex text-sm font-semibold text-accent">Open exports →</span></Link>
       </div>
 
       <section className="space-y-4 rounded-xl border border-line bg-card p-6">

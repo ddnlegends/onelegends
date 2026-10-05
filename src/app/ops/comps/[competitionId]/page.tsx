@@ -112,6 +112,13 @@ export default async function CompDashboardDetailPage({
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="font-heading text-4xl">{competition.name}</h1>
           <CompStatusPill status={status} />
+          <Link
+            href={`/ops/export?competitionId=${competition.id}`}
+            prefetch
+            className="btn btn-ghost ml-auto py-1.5 text-sm"
+          >
+            Export
+          </Link>
         </div>
         <p className="max-w-2xl text-sm text-muted">
           {released
