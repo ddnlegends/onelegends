@@ -1,3 +1,10 @@
+/**
+ * Live viewing state that judge and REG pages poll every few seconds.
+ *
+ * Only that competition's approved judges, its REG staff, and platform admins
+ * may read it. Returns anonymous data only: whether judging is open and which
+ * Team number is on screen.
+ */
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";

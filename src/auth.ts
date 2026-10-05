@@ -1,3 +1,12 @@
+/**
+ * Auth.js configuration (JWT sessions; separate from Supabase Auth).
+ *
+ * Google is the normal sign-in. Password sign-in exists only for the legacy
+ * test emails in `src/lib/auth-policy.ts`. The `signIn` callback creates new
+ * Google users only when the intent cookie says Register; from Log In an
+ * unknown email is sent to `/register?error=no-account`. The session carries
+ * `id`, `role`, and `platformAdmin`, kept in sync with the user row.
+ */
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";

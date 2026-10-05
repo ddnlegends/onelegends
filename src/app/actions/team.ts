@@ -1,5 +1,13 @@
 "use server";
 
+/**
+ * Team-admin actions: profile, roster, and applying to competitions.
+ *
+ * Callers must be an admin of their active team. Applying needs a complete
+ * profile (`teamProfileGaps`), no circuit block, and an open competition. The
+ * AV link is locked while any application sits in an unreleased viewing order,
+ * so the video judges see cannot change mid-judging.
+ */
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -103,9 +111,28 @@ export async function saveTeamProfile(
 
   const existing = await prisma.teamProfile.findUnique({
     where: { id: teamId },
-    select: { photoUrl: true },
+    select: {
+      photoUrl: true,
+      avDriveUrl: true,
+      applications: {
+        select: {
+          viewingPosition: true,
+          competition: { select: { name: true, resultsReleasedAt: true } },
+        },
+      },
+    },
   });
   if (!existing) return { error: "Team profile missing." };
+  if (parsed.data.avDriveUrl !== existing.avDriveUrl) {
+    const judging = existing.applications.find(
+      (app) => app.viewingPosition != null && !app.competition.resultsReleasedAt,
+    );
+    if (judging) {
+      return {
+        error: `Your audition video is locked until ${judging.competition.name} releases results. Contact circuit ops if the link is broken.`,
+      };
+    }
+  }
 
   let photoUrl = existing.photoUrl;
   const photo = formData.get("photo");

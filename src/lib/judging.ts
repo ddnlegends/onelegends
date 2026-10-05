@@ -1,3 +1,12 @@
+/**
+ * Judging rules shared by every role: the rubric, competition lifecycle gates
+ * (`isCompetitionOpen`, `isJudgingOpen`, `competitionStatus`), score helpers,
+ * z-scores, and the shared anonymous viewing order.
+ *
+ * Client components import the pure helpers here, so this file must not import
+ * server-only libraries (googleapis, node:fs, ...); the build fails if it does.
+ * Release logic lives in `src/lib/release.ts` for that reason.
+ */
 import { prisma } from "@/lib/prisma";
 
 export const RUBRIC_CATEGORIES = [
@@ -196,40 +205,6 @@ export function zScores(totals: number[]): number[] {
   const stdev = Math.sqrt(variance);
   if (stdev === 0) return totals.map(() => 0);
   return totals.map((n) => (n - mean) / stdev);
-}
-
-export function toDatetimeLocalValue(date: Date | null | undefined): string {
-  if (!date) return "";
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
-
-export async function maybeReleaseResults(competitionId: string) {
-  const competition = await prisma.competitionProfile.findUnique({
-    where: { id: competitionId },
-    include: {
-      judgeAssignments: {
-        where: { status: "APPROVED", submittedAt: { not: null } },
-        select: { id: true },
-      },
-    },
-  });
-  if (!competition) return false;
-  if (competition.resultsReleasedAt) return true;
-
-  const completed = competition.judgeAssignments.length;
-  if (completed < competition.requiredJudgeCount) return false;
-
-  await prisma.competitionProfile.update({
-    where: { id: competitionId },
-    data: {
-      resultsReleasedAt: new Date(),
-      judgingOpen: false,
-      livePosition: null,
-      liveUpdatedAt: null,
-    },
-  });
-  return true;
 }
 
 type OrderRow = { id: string; viewingPosition: number | null };

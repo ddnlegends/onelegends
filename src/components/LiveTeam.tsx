@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * Keeps judge pages in step with REG. Both components poll
+ * `/api/live/[competitionId]` until the judge submits their packet.
+ * `LiveTeamFollower` moves an open score sheet to the team on screen unless the
+ * judge pinned another team (`?stay=1`); `LiveTeamBanner` shows the live team
+ * on the packet list. When judging opens, pauses, or ends, the page refreshes
+ * so its server-rendered lock state is current.
+ */
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -8,12 +16,23 @@ const POLL_MS = 3000;
 
 type LiveState = { judgingOpen: boolean; livePosition: number | null };
 
-function useLiveState(competitionId: string, initial: LiveState): LiveState {
+/**
+ * Polls the live pointer while `enabled`. When judging opens, pauses, or ends,
+ * the server-rendered page (slots, lock state, packet button) is refreshed too.
+ */
+function useLiveState(
+  competitionId: string,
+  initial: LiveState,
+  enabled: boolean,
+): LiveState {
+  const router = useRouter();
   const [state, setState] = useState(initial);
 
   useEffect(() => {
+    if (!enabled) return;
     let cancelled = false;
     let timeoutId = 0;
+    let lastOpen = initial.judgingOpen;
 
     const tick = async () => {
       try {
@@ -32,6 +51,10 @@ function useLiveState(competitionId: string, initial: LiveState): LiveState {
                     livePosition: data.livePosition,
                   },
             );
+            if (data.judgingOpen !== lastOpen) {
+              lastOpen = data.judgingOpen;
+              router.refresh();
+            }
           }
         }
       } catch {
@@ -45,7 +68,7 @@ function useLiveState(competitionId: string, initial: LiveState): LiveState {
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [competitionId]);
+  }, [competitionId, enabled, initial.judgingOpen, router]);
 
   return state;
 }
@@ -57,6 +80,7 @@ export function LiveTeamFollower({
   pinned,
   initial,
   locked,
+  submitted,
 }: {
   competitionId: string;
   position: number;
@@ -64,9 +88,10 @@ export function LiveTeamFollower({
   pinned: boolean;
   initial: LiveState;
   locked: boolean;
+  submitted: boolean;
 }) {
   const router = useRouter();
-  const live = useLiveState(competitionId, initial);
+  const live = useLiveState(competitionId, initial, !submitted);
   const livePosition =
     live.judgingOpen &&
     live.livePosition != null &&
@@ -156,7 +181,7 @@ export function LiveTeamBanner({
   initial: LiveState;
   locked: boolean;
 }) {
-  const live = useLiveState(competitionId, initial);
+  const live = useLiveState(competitionId, initial, !locked);
   const livePosition =
     live.judgingOpen &&
     live.livePosition != null &&
@@ -164,7 +189,7 @@ export function LiveTeamBanner({
       ? live.livePosition
       : null;
 
-  if (locked || !live.judgingOpen) return null;
+  if (locked || !live.judgingOpen || positions.length === 0) return null;
 
   if (livePosition == null) {
     return (

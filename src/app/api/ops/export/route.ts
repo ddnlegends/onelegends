@@ -1,3 +1,10 @@
+/**
+ * Tech-admin data download: `GET /api/ops/export?dataset=...&format=xlsx|csv`
+ * with an optional `competitionId`.
+ *
+ * 401 when signed out, 403 for anyone but a platform admin. `dataset` may
+ * repeat for .xlsx (one tab each); CSV holds exactly one dataset.
+ */
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";

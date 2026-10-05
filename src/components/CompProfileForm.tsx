@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState, useSyncExternalStore } from "react";
 import { saveCompProfile } from "@/app/actions/comp";
 
 type Profile = {
@@ -17,6 +17,50 @@ type Profile = {
   applicationDeadline: string;
   requiredJudgeCount: number;
 };
+
+const noopSubscribe = () => () => {};
+
+function isoToLocalInput(iso: string): string {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/**
+ * datetime-local has no timezone, so the browser converts it to an ISO instant
+ * before submit; the server would otherwise read it in its own (UTC) zone.
+ */
+function DeadlineField({ iso }: { iso: string }) {
+  const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false);
+  const [edited, setEdited] = useState<string | null>(null);
+  const local = edited ?? (hydrated ? isoToLocalInput(iso) : null);
+  const submitted =
+    local === null ? iso : local ? new Date(local).toISOString() : "";
+  const zone = hydrated
+    ? Intl.DateTimeFormat().resolvedOptions().timeZone.replace(/_/g, " ")
+    : "";
+
+  return (
+    <div className="field">
+      <label htmlFor="applicationDeadline">Application deadline</label>
+      <input
+        key={hydrated ? "client" : "server"}
+        id="applicationDeadline"
+        type="datetime-local"
+        defaultValue={local ?? ""}
+        onChange={(event) => setEdited(event.target.value)}
+      />
+      <input type="hidden" name="applicationDeadline" value={submitted} />
+      <p className="text-xs text-muted">
+        {zone ? `In your time zone (${zone}). ` : ""}Shown as Apps close on
+        Home. After this time, Open becomes Closed even if Accepting
+        Applications is still checked. Clear the field for no clock deadline.
+      </p>
+    </div>
+  );
+}
 
 export function CompProfileForm({ profile }: { profile: Profile }) {
   const [state, formAction, pending] = useActionState(saveCompProfile, undefined);
@@ -51,20 +95,7 @@ export function CompProfileForm({ profile }: { profile: Profile }) {
           <label htmlFor="location">Location (city)</label>
           <input id="location" name="location" defaultValue={profile.location} />
         </div>
-        <div className="field">
-          <label htmlFor="applicationDeadline">Application deadline</label>
-          <input
-            id="applicationDeadline"
-            name="applicationDeadline"
-            type="datetime-local"
-            defaultValue={profile.applicationDeadline}
-          />
-          <p className="text-xs text-muted">
-            Shown as Apps close on Home. After this time, Open becomes Closed
-            even if Accepting Applications is still checked. Clear the field for
-            no clock deadline.
-          </p>
-        </div>
+        <DeadlineField iso={profile.applicationDeadline} />
         <div className="field">
           <label htmlFor="requiredJudgeCount">Required judges (N)</label>
           <input

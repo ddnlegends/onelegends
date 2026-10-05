@@ -82,6 +82,7 @@ export default async function JudgeTeamPage({
         positions={positions}
         pinned={pinned}
         locked={locked}
+        submitted={Boolean(assignment.submittedAt)}
         initial={{
           judgingOpen: scoringOpen,
           livePosition: scoringOpen ? assignment.competition.livePosition : null,

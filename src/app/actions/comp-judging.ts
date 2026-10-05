@@ -1,9 +1,17 @@
 "use server";
 
+/**
+ * Competition-admin judging settings: approve or deny judge requests and set
+ * the required judge count N.
+ *
+ * Callers must be an admin of their active competition. REG staff for a
+ * competition can never be approved to judge it. Lowering N can release
+ * results immediately, so it goes through `maybeReleaseResults`.
+ */
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
-import { maybeReleaseResults } from "@/lib/judging";
+import { maybeReleaseResults } from "@/lib/release";
 import { requireActiveCompetition } from "@/lib/team-access";
 
 export async function decideJudgeRequest(

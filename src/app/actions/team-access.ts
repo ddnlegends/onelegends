@@ -1,5 +1,15 @@
 "use server";
 
+/**
+ * Who belongs to which team or competition: claim codes, admin invites, judge
+ * invites, active team/competition selection, and circuit-ops listing tools
+ * (create, reset claim, block from applying).
+ *
+ * Claiming makes the first user the primary admin. Only primaries invite and
+ * remove admins; the primary cannot be removed. Creating, resetting, and
+ * blocking require `platformAdmin`. A reset issues a new claim code and clears
+ * access; a competition reset keeps judges once results are released.
+ */
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -816,18 +826,19 @@ export async function resetTeamClaim(
   const team = await prisma.teamProfile.findUnique({ where: { id: teamId } });
   if (!team) return { error: "Team not found." };
 
+  const claimCode = await uniqueTeamClaimCode();
   await prisma.$transaction([
     prisma.teamMembership.deleteMany({ where: { teamId } }),
     prisma.teamInvite.deleteMany({ where: { teamId } }),
     prisma.teamProfile.update({
       where: { id: teamId },
-      data: { claimedAt: null },
+      data: { claimedAt: null, claimCode },
     }),
   ]);
   revalidateAccessPaths();
   return {
     ok: true,
-    message: `${team.name} is unclaimed again. The claim code is still ${team.claimCode}.`,
+    message: `${team.name} is unclaimed again. New claim code: ${claimCode}.`,
   };
 }
 
@@ -882,13 +893,21 @@ export async function resetCompClaim(
   });
   if (!competition) return { error: "Competition not found." };
 
+  const claimCode = await uniqueCompClaimCode();
   await prisma.$transaction([
     prisma.competitionMembership.deleteMany({ where: { competitionId } }),
     prisma.compInvite.deleteMany({ where: { competitionId } }),
+    prisma.judgeInvite.deleteMany({ where: { competitionId } }),
+    prisma.registrationAccess.deleteMany({ where: { competitionId } }),
+    prisma.registrationInvite.deleteMany({ where: { competitionId } }),
+    ...(competition.resultsReleasedAt
+      ? []
+      : [prisma.judgeAssignment.deleteMany({ where: { competitionId } })]),
     prisma.competitionProfile.update({
       where: { id: competitionId },
       data: {
         claimedAt: null,
+        claimCode,
         userId: null,
         judgingOpen: false,
         livePosition: null,
@@ -899,6 +918,6 @@ export async function resetCompClaim(
   revalidateAccessPaths();
   return {
     ok: true,
-    message: `${competition.name} is unclaimed again. The claim code is still ${competition.claimCode}.`,
+    message: `${competition.name} is unclaimed again. New claim code: ${claimCode}.`,
   };
 }

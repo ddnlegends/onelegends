@@ -1,13 +1,14 @@
 "use client";
 
+/**
+ * One judge's rubric sheet for one anonymous team. Scores save the moment a
+ * number is picked; comments save after a short pause, on blur, and when the
+ * sheet unmounts (for example when it follows REG to the next team). All saves
+ * for a sheet go through one ordered queue so an older save never overwrites a
+ * newer one. The form never receives a team name.
+ */
 import Link from "next/link";
-import {
-  startTransition,
-  useActionState,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 import { saveTeamScores } from "@/app/actions/judge";
 import {
   RUBRIC_CATEGORIES,
@@ -44,6 +45,34 @@ function toDraft(saved: Saved | null): Draft {
   };
 }
 
+type SaveState = Awaited<ReturnType<typeof saveTeamScores>> | undefined;
+
+/**
+ * Each save writes every field, so saves for one sheet must land in order.
+ * The queue lives at module scope so an unmount flush still waits its turn.
+ */
+const saveQueues = new Map<string, Promise<unknown>>();
+
+function queueKey(assignmentId: string, position: number): string {
+  return `${assignmentId}:${position}`;
+}
+
+function enqueueSave(key: string, data: FormData): Promise<SaveState> {
+  const previous = saveQueues.get(key) ?? Promise.resolve();
+  const next = previous.then(
+    () => saveTeamScores(undefined, data),
+    () => saveTeamScores(undefined, data),
+  );
+  const result = next.catch(() => ({
+    error: "Could not save. Check your connection and pick the score again.",
+  }));
+  saveQueues.set(key, result);
+  void result.then(() => {
+    if (saveQueues.get(key) === result) saveQueues.delete(key);
+  });
+  return result;
+}
+
 function filledFromDraft(draft: Draft): number {
   return RUBRIC_CATEGORIES.filter((category) => draft[category.key] !== "")
     .length;
@@ -66,7 +95,9 @@ export function JudgeScoreForm({
   saved: Saved | null;
   locked: boolean;
 }) {
-  const [state, formAction, pending] = useActionState(saveTeamScores, undefined);
+  const [state, setState] = useState<SaveState>(undefined);
+  const [inFlight, setInFlight] = useState(0);
+  const pending = inFlight > 0;
   const [draft, setDraft] = useState(() => toDraft(saved));
   const commentTimer = useRef<number | null>(null);
   const pendingComment = useRef<Draft | null>(null);
@@ -99,10 +130,13 @@ export function JudgeScoreForm({
       commentTimer.current = null;
     }
     pendingComment.current = null;
-    const data = toFormData(draftToSave);
-    startTransition(() => {
-      formAction(data);
-    });
+    setInFlight((n) => n + 1);
+    void enqueueSave(queueKey(assignmentId, position), toFormData(draftToSave)).then(
+      (result) => {
+        setState(result);
+        setInFlight((n) => n - 1);
+      },
+    );
   }
 
   useEffect(() => {
@@ -112,9 +146,9 @@ export function JudgeScoreForm({
       }
       const unsaved = pendingComment.current;
       if (unsaved && !locked) {
-        // The sheet can unmount when it follows the live team; save the last
-        // typed comment instead of dropping it.
-        void saveTeamScores(undefined, toFormData(unsaved));
+        // The sheet can unmount when it follows the live team; queue the last
+        // typed comment behind earlier saves instead of dropping it.
+        void enqueueSave(queueKey(assignmentId, position), toFormData(unsaved));
       }
     };
     // toFormData only reads props that are fixed for this keyed instance.

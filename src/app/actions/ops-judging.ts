@@ -1,5 +1,13 @@
 "use server";
 
+/**
+ * Circuit ops opens and closes judging for a competition.
+ *
+ * Requires `platformAdmin`. Opening needs a claimed listing, closed
+ * applications, at least one application, and no released results; it builds
+ * the shared viewing order and forces `acceptingApps` off (a database CHECK
+ * also forbids both flags being true). Closing clears the live team.
+ */
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";

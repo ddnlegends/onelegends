@@ -1,3 +1,10 @@
+/**
+ * Page-level access checks.
+ *
+ * Layouts and pages render in parallel in this Next.js version, so a redirect
+ * in a layout does not stop the page from querying and streaming its data.
+ * Every page that reads private data must call a guard itself.
+ */
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { isPlatformAdmin } from "@/lib/team-access";

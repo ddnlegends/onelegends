@@ -1,5 +1,14 @@
 "use server";
 
+/**
+ * Sign-in, sign-out, and account settings.
+ *
+ * Password login only works for emails in the legacy allowlist
+ * (`src/lib/auth-policy.ts`); everyone else uses Google. `googleSignInAction`
+ * records whether the user pressed Google on Log In or Register so the
+ * `signIn` callback in `src/auth.ts` can refuse to create accounts from Log In.
+ * `requireUser` is the session check every other action starts with.
+ */
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
 import { revalidatePath } from "next/cache";

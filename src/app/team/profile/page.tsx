@@ -13,7 +13,16 @@ export default async function TeamProfilePage() {
 
   const team = await prisma.teamProfile.findUnique({
     where: { id: teamId },
-    include: { dancers: { orderBy: { name: "asc" } } },
+    select: {
+      name: true,
+      photoUrl: true,
+      blurb: true,
+      avDriveUrl: true,
+      captains: true,
+      yearsEstablished: true,
+      rosterSize: true,
+      dancers: { orderBy: { name: "asc" } },
+    },
   });
   if (!team) redirect("/team");
 

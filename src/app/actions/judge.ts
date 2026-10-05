@@ -1,16 +1,26 @@
 "use server";
 
+/**
+ * Judge actions: profile, autosaving rubric scores, and submitting a packet.
+ *
+ * Callers must own an APPROVED assignment for the competition. Saves and
+ * submits lock the assignment row (`SELECT ... FOR UPDATE`) and re-check the
+ * submitted and judging-open state inside the transaction, so a save can never
+ * land after submit and a packet can never submit with missing scores. A
+ * submit may release results via `maybeReleaseResults`.
+ */
 import { revalidatePath } from "next/cache";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
 import {
   judgingLockMessage,
-  maybeReleaseResults,
   parseRubricScore,
   RUBRIC_CATEGORIES,
   isScoreComplete,
   type RubricKey,
 } from "@/lib/judging";
+import { maybeReleaseResults } from "@/lib/release";
 
 export async function saveJudgeProfile(
   _prev: { error?: string; ok?: boolean } | undefined,
@@ -34,6 +44,11 @@ export async function saveJudgeProfile(
 }
 
 const COMMENT_MAX = 1000;
+
+/** Serializes score saves and packet submission for one judge so no write lands after submit. */
+async function lockAssignment(tx: Prisma.TransactionClient, assignmentId: string) {
+  await tx.$queryRaw`SELECT id FROM "JudgeAssignment" WHERE id = ${assignmentId} FOR UPDATE`;
+}
 
 export async function saveTeamScores(
   _prev: { error?: string; ok?: boolean; message?: string } | undefined,
@@ -102,15 +117,28 @@ export async function saveTeamScores(
     comment,
   };
 
-  await prisma.judgeScore.upsert({
-    where: { slotId: slot.id },
-    update: next,
-    create: {
-      assignmentId,
-      slotId: slot.id,
-      ...next,
-    },
+  const saved = await prisma.$transaction(async (tx) => {
+    await lockAssignment(tx, assignmentId);
+    const fresh = await tx.judgeAssignment.findUnique({
+      where: { id: assignmentId },
+      select: { submittedAt: true, competition: true },
+    });
+    if (!fresh) return "Assignment not found.";
+    if (fresh.submittedAt) return "This packet is already submitted.";
+    const freshLock = judgingLockMessage(fresh.competition);
+    if (freshLock) return freshLock;
+    await tx.judgeScore.upsert({
+      where: { slotId: slot.id },
+      update: next,
+      create: {
+        assignmentId,
+        slotId: slot.id,
+        ...next,
+      },
+    });
+    return null;
   });
+  if (saved) return { error: saved };
 
   revalidatePath(`/judge/${assignment.competitionId}`);
   revalidatePath(`/judge/${assignment.competitionId}/team/${position}`);
@@ -145,17 +173,25 @@ export async function submitJudgingPacket(
   if (assignment.submittedAt) return { ok: true };
   const lock = judgingLockMessage(assignment.competition);
   if (lock) return { error: lock };
-  if (assignment.slots.length === 0) {
-    return { error: "No teams in this packet yet." };
-  }
-  if (assignment.slots.some((slot) => !isScoreComplete(slot.score))) {
-    return { error: "Score every team before submitting the packet." };
-  }
-
-  await prisma.judgeAssignment.update({
-    where: { id: assignment.id },
-    data: { submittedAt: new Date() },
+  const failed = await prisma.$transaction(async (tx) => {
+    await lockAssignment(tx, assignment.id);
+    const fresh = await tx.judgeAssignment.findUnique({
+      where: { id: assignment.id },
+      select: { submittedAt: true, slots: { include: { score: true } } },
+    });
+    if (!fresh) return "Assignment not found.";
+    if (fresh.submittedAt) return null;
+    if (fresh.slots.length === 0) return "No teams in this packet yet.";
+    if (fresh.slots.some((slot) => !isScoreComplete(slot.score))) {
+      return "Score every team before submitting the packet.";
+    }
+    await tx.judgeAssignment.update({
+      where: { id: assignment.id },
+      data: { submittedAt: new Date() },
+    });
+    return null;
   });
+  if (failed) return { error: failed };
   await maybeReleaseResults(assignment.competitionId);
 
   revalidatePath("/judge");

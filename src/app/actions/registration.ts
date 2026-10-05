@@ -1,5 +1,11 @@
 "use server";
 
+/**
+ * REG puts a team on screen. Every judge's sheet follows `livePosition`.
+ *
+ * Requires registration access to the competition (and not being one of its
+ * judges) while judging is open. Positions are anonymous Team numbers.
+ */
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";

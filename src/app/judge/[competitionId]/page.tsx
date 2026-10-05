@@ -80,14 +80,12 @@ export default async function JudgePacketPage({
         <p className="notice notice-error">{lockMessage}</p>
       ) : null}
 
-      {fresh.slots.length > 0 ? (
-        <LiveTeamBanner
-          competitionId={competitionId}
-          positions={positions}
-          locked={locked}
-          initial={{ judgingOpen: scoringOpen, livePosition }}
-        />
-      ) : null}
+      <LiveTeamBanner
+        competitionId={competitionId}
+        positions={positions}
+        locked={locked}
+        initial={{ judgingOpen: scoringOpen, livePosition }}
+      />
 
       {fresh.slots.length === 0 ? (
         <p className="text-muted">

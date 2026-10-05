@@ -1,3 +1,11 @@
+/**
+ * Permission lookups used by pages and actions: platform admin, team and
+ * competition admin/primary checks, nav visibility, and the active team or
+ * competition (stored in HTTP-only cookies and re-checked against approved
+ * membership on every request).
+ *
+ * Lookups are wrapped in React `cache` so one request asks the database once.
+ */
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";

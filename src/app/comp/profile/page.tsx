@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { CompProfileForm } from "@/components/CompProfileForm";
-import { toDatetimeLocalValue } from "@/lib/judging";
 import { getActiveCompetitionId, isPlatformAdmin } from "@/lib/team-access";
 
 export default async function CompProfilePage() {
@@ -38,9 +37,7 @@ export default async function CompProfilePage() {
           description: competition.description,
           googleSheetUrl: competition.googleSheetUrl,
           acceptingApps: competition.acceptingApps,
-          applicationDeadline: toDatetimeLocalValue(
-            competition.applicationDeadline,
-          ),
+          applicationDeadline: competition.applicationDeadline?.toISOString() ?? "",
           requiredJudgeCount: competition.requiredJudgeCount,
         }}
       />

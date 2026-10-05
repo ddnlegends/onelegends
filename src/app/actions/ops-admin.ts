@@ -1,5 +1,12 @@
 "use server";
 
+/**
+ * Circuit tech-admin access controls: REG grants and invites, and platform
+ * admin invites and removal.
+ *
+ * Every action requires `platformAdmin`. Removing an admin takes an advisory
+ * lock so the circuit can never drop to zero platform admins.
+ */
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -233,23 +240,22 @@ export async function revokePlatformAdmin(
   if (userId === user.id) {
     return { error: "You cannot remove your own tech admin access." };
   }
-  const remaining = await prisma.user.count({
-    where: { platformAdmin: true },
+  const result = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('platform-admins'))`;
+    const remaining = await tx.user.count({ where: { platformAdmin: true } });
+    if (remaining <= 1) return { error: "Keep at least one tech admin." };
+    const target = await tx.user.findUnique({
+      where: { id: userId },
+      select: { id: true, platformAdmin: true, email: true },
+    });
+    if (!target?.platformAdmin) return { error: "That account is not a tech admin." };
+    await tx.user.update({
+      where: { id: target.id },
+      data: { platformAdmin: false },
+    });
+    return { email: target.email };
   });
-  if (remaining <= 1) {
-    return { error: "Keep at least one tech admin." };
-  }
-  const target = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true, platformAdmin: true, email: true },
-  });
-  if (!target?.platformAdmin) {
-    return { error: "That account is not a tech admin." };
-  }
-  await prisma.user.update({
-    where: { id: target.id },
-    data: { platformAdmin: false },
-  });
+  if ("error" in result) return { error: result.error };
   revalidateOps();
-  return { ok: true, message: `Removed tech admin access for ${target.email}.` };
+  return { ok: true, message: `Removed tech admin access for ${result.email}.` };
 }

@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * REG's live viewing console: Show / Next / Clear controls, the anonymous
+ * viewing order, and a checkmark per judge per team. It receives Team numbers
+ * and judge names only, never team names; the video player is passed in as
+ * `children` by the REG page.
+ */
 import type { ReactNode } from "react";
 import { useActionState } from "react";
 import { setLiveTeam } from "@/app/actions/registration";

@@ -1,3 +1,7 @@
+/**
+ * Ranks applications from submitted judge packets. Pure; callers decide who may
+ * see the result (names only after `resultsReleasedAt`).
+ */
 import {
   isScoreComplete,
   rubricTotal,

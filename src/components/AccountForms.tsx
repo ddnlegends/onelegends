@@ -645,7 +645,8 @@ export function ResetTeamClaimForm({
       <input type="hidden" name="teamId" value={teamId} />
       <p className="text-sm">
         Are you sure? This removes every admin from <strong>{teamName}</strong>{" "}
-        and re-opens the claim code. Someone else can become the new primary.
+        and issues a new claim code (the old one stops working). Whoever uses
+        the new code becomes the primary.
       </p>
       <div className="flex gap-2">
         <button className="btn btn-primary py-1.5" disabled={pending} type="submit">
@@ -687,7 +688,8 @@ export function ResetCompClaimForm({
       <input type="hidden" name="competitionId" value={competitionId} />
       <p className="text-sm">
         Are you sure? This removes every admin from{" "}
-        <strong>{competitionName}</strong> and re-opens the bid code.
+        <strong>{competitionName}</strong>, its judges, and REG access, then
+        issues a new bid code (the old one stops working).
       </p>
       <div className="flex gap-2">
         <button className="btn btn-primary py-1.5" disabled={pending} type="submit">

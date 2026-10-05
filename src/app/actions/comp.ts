@@ -1,12 +1,20 @@
 "use server";
 
+/**
+ * Competition-admin actions: edit the listing, accept/waitlist/decline
+ * applicants after release, and sync the optional applicant Google Sheet.
+ *
+ * Callers must be an admin of their active competition; circuit ops cannot edit
+ * a competition's details. The applicant sheet refuses to sync before
+ * `resultsReleasedAt`, because it contains team names.
+ */
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ApplicationStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
 import { parseSheetId, syncCompetitionSheet } from "@/lib/sheets";
-import { maybeReleaseResults } from "@/lib/judging";
+import { maybeReleaseResults } from "@/lib/release";
 import { isPlatformAdmin, requireActiveCompetition } from "@/lib/team-access";
 
 const profileSchema = z.object({

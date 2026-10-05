@@ -1,3 +1,11 @@
+/**
+ * Optional applicant Google Sheet per competition, written with a service
+ * account (`GOOGLE_SERVICE_ACCOUNT_*`).
+ *
+ * Server-only. `syncCompetitionSheet` refuses to run before results release,
+ * because the sheet lists team names. It runs automatically at release and
+ * when a competition changes an application status.
+ */
 import { google } from "googleapis";
 import { prisma } from "@/lib/prisma";
 
@@ -92,6 +100,12 @@ export async function syncCompetitionSheet(
 
   if (!competition) {
     return { ok: false, message: "Competition not found." };
+  }
+  if (!competition.resultsReleasedAt) {
+    return {
+      ok: false,
+      message: "The applicant sheet fills in once results release and team identities unseal.",
+    };
   }
 
   const sheetId = competition.googleSheetId || parseSheetId(competition.googleSheetUrl);

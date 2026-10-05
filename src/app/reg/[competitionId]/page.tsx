@@ -75,7 +75,7 @@ export default async function RegCompetitionPage({
 
   return (
     <div className="space-y-8">
-      <AutoRefresh active={open} intervalMs={6000} />
+      <AutoRefresh active={!competition.resultsReleasedAt} intervalMs={6000} />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-2">
           <Link href="/reg" prefetch className="text-sm text-muted underline">

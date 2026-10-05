@@ -1,3 +1,11 @@
+/**
+ * Builds the tech-admin data exports served by `/api/ops/export`.
+ *
+ * Only call this after checking `platformAdmin`. Exports keep the anonymity
+ * gate: before a competition releases results, scores show Team N instead of
+ * names and lineups hide the viewing order. To add a dataset, add it to
+ * `EXPORT_DATASETS` and `BUILDERS`; the page and route pick it up.
+ */
 import ExcelJS from "exceljs";
 import { prisma } from "@/lib/prisma";
 import {
