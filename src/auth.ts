@@ -84,6 +84,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             clientId: googleId,
             clientSecret: googleSecret,
             allowDangerousEmailAccountLinking: true,
+            // Shared/club devices: without this Google silently reuses the
+            // browser's signed-in account, so you can't switch accounts.
+            authorization: { params: { prompt: "select_account" } },
           }),
         ]
       : []),

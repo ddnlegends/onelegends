@@ -4,7 +4,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
-Nothing yet.
+- Google sign-in now shows the account chooser every time (`prompt=select_account`), so you can switch Google accounts after logging out instead of being signed straight back in to the previous one.
 
 ## 2026-10-05: audit fixes, tests, and documentation
 
