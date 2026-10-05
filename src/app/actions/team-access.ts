@@ -33,6 +33,8 @@ function revalidateAccessPaths() {
   revalidatePath("/comp/judges");
   revalidatePath("/comp/results");
   revalidatePath("/ops/comps", "layout");
+  revalidatePath("/ops/competitions", "layout");
+  revalidatePath("/ops/teams", "layout");
   revalidatePath("/reg", "layout");
   revalidatePath("/judge");
   revalidatePath("/teams");

@@ -10,7 +10,6 @@ export async function Nav() {
   const userId = session?.user?.id;
   const access = userId ? await getNavAccess(userId) : null;
   const ops = access?.ops ?? false;
-  const registrationAccess = access?.registrationAccess ?? false;
   const teamAccess = access?.teamAccess ?? false;
   const compAccess = access?.compAccess ?? false;
   const judgeAccess = access?.judgeAccess ?? false;
@@ -33,7 +32,7 @@ export async function Nav() {
               Team Profile
             </NavLink>
           ) : null}
-          {compAccess ? (
+          {compAccess && !ops ? (
             <NavLink href="/comp/profile" match="prefix">
               Comp Details
             </NavLink>
@@ -44,11 +43,6 @@ export async function Nav() {
             </NavLink>
           ) : null}
           {ops ? <NavLink href="/ops/teams" match="prefix">Teams</NavLink> : null}
-          {registrationAccess ? (
-            <NavLink href="/reg" match="prefix">
-              Live Viewing
-            </NavLink>
-          ) : null}
           {judgeAccess ? (
             <NavLink href="/judge" match="prefix">
               Judging

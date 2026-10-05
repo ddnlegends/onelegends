@@ -464,8 +464,8 @@ export function CreateTeamForm() {
       <div>
         <h2 className="font-heading text-xl">Add a team</h2>
         <p className="mt-1 text-sm text-muted">
-          Creating a team generates a claim code. It shows on that team in the
-          list below. This app does not email anyone.
+          Creating a team generates a claim code. Manage it from the Teams
+          page. This app does not email anyone.
         </p>
       </div>
       <div className="field">
@@ -503,9 +503,9 @@ export function CreateCompForm() {
       <div>
         <h2 className="font-heading text-xl">Add a competition</h2>
         <p className="mt-1 text-sm text-muted">
-          Creating a competition generates a bid code. It shows on that listing
-          below. Teams cannot apply until someone claims it. This app does not
-          email anyone.
+          Creating a competition generates a bid code. Manage it from the
+          Competitions page. Teams cannot apply until someone claims it. This
+          app does not email anyone.
         </p>
       </div>
       <div className="field">

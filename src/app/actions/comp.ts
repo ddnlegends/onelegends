@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
 import { parseSheetId, syncCompetitionSheet } from "@/lib/sheets";
 import { maybeReleaseResults } from "@/lib/judging";
-import { requireActiveCompetition } from "@/lib/team-access";
+import { isPlatformAdmin, requireActiveCompetition } from "@/lib/team-access";
 
 const profileSchema = z.object({
   dates: z.string(),
@@ -29,6 +29,9 @@ export async function saveCompProfile(
 ): Promise<{ error?: string; ok?: boolean }> {
   const user = await requireUser();
   if (!user) return { error: "You must be signed in." };
+  if (await isPlatformAdmin(user.id)) {
+    return { error: "Competition details can only be edited by that competition’s account." };
+  }
   const competition = await requireActiveCompetition(user.id);
   if (!competition) return { error: "You don’t have access to a competition." };
 

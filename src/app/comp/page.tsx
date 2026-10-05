@@ -119,9 +119,11 @@ export default async function CompDashboardPage() {
           <Link href="/comp/access" prefetch className="btn btn-ghost">
             Admins
           </Link>
-          <Link href="/comp/profile" prefetch className="btn btn-ghost">
-            Edit Details
-          </Link>
+          {!ops ? (
+            <Link href="/comp/profile" prefetch className="btn btn-ghost">
+              Edit Details
+            </Link>
+          ) : null}
         </div>
       </div>
 

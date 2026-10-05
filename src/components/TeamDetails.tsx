@@ -3,6 +3,7 @@ import { TeamPhoto } from "@/components/TeamPhoto";
 
 export type DetailedTeam = {
   name: string;
+  claimedAt: Date | null;
   photoUrl: string;
   blurb: string;
   wikiUrl: string;
@@ -23,8 +24,14 @@ export function TeamDetails({ team }: { team: DetailedTeam }) {
   const wikiUrl = /^https?:\/\//i.test(team.wikiUrl) ? team.wikiUrl : "";
   return (
     <div className="space-y-8">
-      <section className="grid gap-6 rounded-xl border border-line bg-card p-6 sm:grid-cols-[12rem_1fr]">
-        <TeamPhoto src={team.photoUrl} name={team.name} size="wide" />
+      <section
+        className={`rounded-xl border border-line bg-card p-6 ${
+          team.claimedAt ? "grid gap-6 sm:grid-cols-[12rem_1fr]" : ""
+        }`}
+      >
+        {team.claimedAt ? (
+          <TeamPhoto src={team.photoUrl} name={team.name} size="wide" />
+        ) : null}
         <div>
           <h1 className="font-heading text-3xl">{team.name}</h1>
           {team.blurb ? <p className="mt-2 text-muted">{team.blurb}</p> : null}

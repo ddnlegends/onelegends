@@ -16,9 +16,9 @@ export default async function RegHomePage() {
         <p className="text-xs uppercase tracking-wide text-muted">Registration</p>
         <h1 className="font-heading text-4xl">Live Viewing</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          You run the videos. Open the video-only presentation tab from a
-          competition and share that tab with judges. Pick the live team from
-          your private REG console; every judge’s sheet follows it.
+          You run the videos from the competition page. Pick the live team by
+          number; every judge’s sheet follows it while team identities stay
+          hidden during judging.
         </p>
       </div>
 

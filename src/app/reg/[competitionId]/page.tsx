@@ -42,12 +42,14 @@ export default async function RegCompetitionPage({
         select: {
           id: true,
           viewingPosition: true,
-          team: { select: { name: true, avDriveUrl: true } },
+          team: { select: { avDriveUrl: true } },
         },
       },
       judgeAssignments: {
         where: { status: "APPROVED" },
         select: {
+          id: true,
+          judge: { select: { name: true } },
           slots: { select: { applicationId: true, score: true } },
         },
       },
@@ -56,20 +58,16 @@ export default async function RegCompetitionPage({
   if (!competition) notFound();
 
   const status = competitionStatus(competition);
-  const judgeCount = competition.judgeAssignments.length;
-  const doneByApp = new Map<string, number>();
-  for (const assignment of competition.judgeAssignments) {
-    for (const slot of assignment.slots) {
-      if (isScoreComplete(slot.score)) {
-        doneByApp.set(slot.applicationId, (doneByApp.get(slot.applicationId) ?? 0) + 1);
-      }
-    }
-  }
   const teams = competition.applications.map((app) => ({
     position: app.viewingPosition as number,
-    name: app.team.name,
     avDriveUrl: app.team.avDriveUrl,
-    judgesDone: doneByApp.get(app.id) ?? 0,
+    judges: competition.judgeAssignments.map((assignment) => ({
+      id: assignment.id,
+      name: assignment.judge.name,
+      complete: isScoreComplete(
+        assignment.slots.find((slot) => slot.applicationId === app.id)?.score,
+      ),
+    })),
   }));
   const livePosition = open ? competition.livePosition : null;
   const live = teams.find((team) => team.position === livePosition) ?? null;
@@ -88,9 +86,8 @@ export default async function RegCompetitionPage({
             <CompStatusPill status={status} />
           </div>
           <p className="max-w-2xl text-sm text-muted">
-            Keep this console private: it shows team names. Share the video-only
-            presentation tab with judges, and check that the Drive file title
-            does not identify the team.
+            Teams stay anonymous while judging is open. This page shows team
+            numbers, videos, and each judge’s completion check only.
           </p>
         </div>
         {open && teams.length ? (
@@ -118,19 +115,18 @@ export default async function RegCompetitionPage({
       ) : (
         <RegLiveConsole
           competitionId={competition.id}
-          teams={teams.map(({ position, name, judgesDone }) => ({
+          teams={teams.map(({ position, judges }) => ({
             position,
-            name,
-            judgesDone,
+            judges,
           }))}
           livePosition={livePosition}
-          judgeCount={judgeCount}
         >
           {live ? (
             <DriveAvPlayer
               key={live.position}
               url={live.avDriveUrl}
               label={`Team ${live.position} audition video`}
+              hideOpenLink
             />
           ) : (
             <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-dashed border-line bg-blush text-sm text-muted">

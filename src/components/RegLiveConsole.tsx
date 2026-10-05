@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { useActionState } from "react";
 import { setLiveTeam } from "@/app/actions/registration";
@@ -8,8 +7,7 @@ import { SaveNotice } from "@/components/SaveNotice";
 
 type TeamRow = {
   position: number;
-  name: string;
-  judgesDone: number;
+  judges: { id: string; name: string; complete: boolean }[];
 };
 
 function ShowButton({
@@ -46,13 +44,11 @@ export function RegLiveConsole({
   competitionId,
   teams,
   livePosition,
-  judgeCount,
   children,
 }: {
   competitionId: string;
   teams: TeamRow[];
   livePosition: number | null;
-  judgeCount: number;
   children: ReactNode;
 }) {
   const [state, formAction, pending] = useActionState(setLiveTeam, undefined);
@@ -66,25 +62,14 @@ export function RegLiveConsole({
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <section className="space-y-4">
-        <Link
-          href={`/reg/${competitionId}/present`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-primary"
-        >
-          Open video-only presentation tab
-        </Link>
         {live ? (
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <p className="text-xs uppercase tracking-widest text-muted">
-                On screen · judges see “Team {live.position}”
+                Now showing
               </p>
-              <h2 className="font-heading text-3xl">{live.name}</h2>
+              <h2 className="font-heading text-3xl">Team {live.position}</h2>
             </div>
-            <p className="rounded-full border border-line bg-blush px-3 py-1 text-sm tabular-nums">
-              {live.judgesDone} / {judgeCount} judges fully scored
-            </p>
           </div>
         ) : (
           <div>
@@ -148,15 +133,40 @@ export function RegLiveConsole({
                 }`}
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">
-                    <span className="mr-1.5 tabular-nums text-muted">
-                      {team.position}.
-                    </span>
-                    {team.name}
-                  </p>
-                  <p className="text-xs text-muted">
-                    {team.judgesDone} / {judgeCount} scored
-                  </p>
+                  <p className="text-sm font-semibold">Team {team.position}</p>
+                  {team.judges.length ? (
+                    <ul
+                      className="mt-2 space-y-1"
+                      aria-label={`Team ${team.position} judge completion`}
+                    >
+                      {team.judges.map((judge) => (
+                        <li
+                          key={judge.id}
+                          className="flex items-center justify-between gap-3 text-xs text-muted"
+                        >
+                          <span className="truncate">{judge.name}</span>
+                          <span
+                            aria-label={
+                              judge.complete
+                                ? `${judge.name} completed Team ${team.position}`
+                                : `${judge.name} has not completed Team ${team.position}`
+                            }
+                            className={`grid size-5 shrink-0 place-items-center rounded-full border text-xs font-bold ${
+                              judge.complete
+                                ? "border-emerald-600 bg-emerald-50 text-emerald-700"
+                                : "border-line bg-blush text-transparent"
+                            }`}
+                          >
+                            ✓
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-1 text-xs text-muted">
+                      No judges approved yet.
+                    </p>
+                  )}
                 </div>
                 {isLive ? (
                   <span className="rounded-full bg-accent-ember px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-white">

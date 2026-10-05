@@ -14,6 +14,7 @@ import {
   isPlatformAdmin,
   userHasJudgeAccess,
 } from "@/lib/team-access";
+import { getRegistrationCompetitions } from "@/lib/registration";
 import {
   setActiveCompAction,
   setActiveTeamAction,
@@ -27,18 +28,9 @@ import {
   AcceptTeamInviteForm,
   CreateCompForm,
   CreateTeamForm,
-  InviteCompAdminForm,
-  InviteTeamAdminForm,
   InvitePlatformAdminForm,
   CancelPlatformAdminInviteForm,
   RevokePlatformAdminForm,
-  ResetCompClaimForm,
-  ResetTeamClaimForm,
-  SetTeamApplyBlockForm,
-  RevokeCompAccessForm,
-  RevokeTeamAccessForm,
-  CancelCompInviteForm,
-  CancelTeamInviteForm,
 } from "@/components/AccountForms";
 import { ApplyForm } from "@/components/ApplyForm";
 import { InstantSelect } from "@/components/InstantSelect";
@@ -55,11 +47,18 @@ export default async function DashboardPage() {
     return <OpsDashboard email={email} name={name} userId={userId} />;
   }
 
-  const [pending, teamMemberships, compMemberships, judging] = await Promise.all([
+  const [
+    pending,
+    teamMemberships,
+    compMemberships,
+    judging,
+    registrationCompetitions,
+  ] = await Promise.all([
     getPendingInvites(userId, email),
     getApprovedTeamMemberships(userId),
     getApprovedCompMemberships(userId),
     userHasJudgeAccess(userId),
+    getRegistrationCompetitions(userId),
   ]);
   const [activeTeamId, activeCompId] = await Promise.all([
     getActiveTeamId(userId),
@@ -153,6 +152,7 @@ export default async function DashboardPage() {
                 team ? `Team · ${team.name}` : null,
                 competition ? `Competition · ${competition.name}` : null,
                 judging ? "Judge" : null,
+                registrationCompetitions.length ? "REG" : null,
               ]
                 .filter(Boolean)
                 .join(" · ") || "None yet"}
@@ -163,7 +163,7 @@ export default async function DashboardPage() {
           <Link href="/profile" className="btn btn-ghost">
             Profile
           </Link>
-          {!team && !competition && !judging ? (
+          {!team && !competition && !judging && !registrationCompetitions.length ? (
             <Link href="/claim" className="btn btn-primary">
               Code Claim
             </Link>
@@ -173,7 +173,7 @@ export default async function DashboardPage() {
             </Link>
           )}
         </div>
-        {!team && !competition && !judging ? (
+        {!team && !competition && !judging && !registrationCompetitions.length ? (
           <p className="mt-3 text-sm text-muted">
             You are not on a team or competition yet. Use Code Claim, or wait
             for an invite on this email.
@@ -213,6 +213,49 @@ export default async function DashboardPage() {
               <AcceptJudgeInviteForm inviteId={row.id} />
             </div>
           ))}
+        </section>
+      ) : null}
+
+      {registrationCompetitions.length ? (
+        <section className="space-y-4">
+          <div>
+            <h2 className="font-heading text-2xl">Live Viewing</h2>
+            <p className="mt-1 text-sm text-muted">
+              Select a competition to run its live viewing session.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {registrationCompetitions.map((competition) => (
+              <Link
+                key={competition.id}
+                href={`/reg/${competition.id}`}
+                prefetch
+                className="brand-gradient group flex min-h-44 flex-col justify-between rounded-2xl p-6 text-white shadow-sm transition hover:brightness-110"
+              >
+                <span
+                  className="grid size-12 place-items-center rounded-xl border border-white/35 bg-white/10"
+                  aria-hidden
+                >
+                  <svg viewBox="0 0 24 24" className="size-6 fill-none stroke-current" strokeWidth="1.8">
+                    <rect x="3" y="5" width="13" height="14" rx="2" />
+                    <path d="m16 10 5-3v10l-5-3" />
+                    <path d="m9 10 4 2-4 2Z" className="fill-current stroke-none" />
+                  </svg>
+                </span>
+                <span>
+                  <span className="block text-xs uppercase tracking-widest text-white/80">
+                    REG access
+                  </span>
+                  <span className="mt-1 block font-heading text-2xl tracking-wide">
+                    {competition.name}
+                  </span>
+                  <span className="mt-4 inline-flex rounded-full border border-white/40 px-4 py-2 text-sm font-semibold transition group-hover:bg-white group-hover:text-accent">
+                    Open Live Viewing
+                  </span>
+                </span>
+              </Link>
+            ))}
+          </div>
         </section>
       ) : null}
 
@@ -454,557 +497,75 @@ async function OpsDashboard({
   name: string;
   userId: string;
 }) {
-  const [teams, comps, techAdmins, techInvites, regAccess, regInvites] = await Promise.all([
-    prisma.teamProfile.findMany({
-    orderBy: { name: "asc" },
-    include: {
-      memberships: {
-        include: { user: { select: { id: true, email: true } } },
-        orderBy: { createdAt: "asc" },
-      },
-      invites: { orderBy: { createdAt: "desc" } },
-      applications: {
+  const [competitions, techAdmins, techInvites, regAccess, regInvites] =
+    await Promise.all([
+      prisma.competitionProfile.findMany({
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      }),
+      prisma.user.findMany({
+        where: { platformAdmin: true },
+        select: { id: true, email: true, name: true },
+        orderBy: { email: "asc" },
+      }),
+      prisma.platformAdminInvite.findMany({ orderBy: { createdAt: "desc" } }),
+      prisma.registrationAccess.findMany({
+        include: { user: { select: { email: true } }, competition: { select: { name: true } } },
+        orderBy: [{ competition: { name: "asc" } }, { createdAt: "asc" }],
+      }),
+      prisma.registrationInvite.findMany({
         include: { competition: { select: { name: true } } },
-        orderBy: { createdAt: "desc" },
-      },
-    },
-    }),
-    prisma.competitionProfile.findMany({
-    orderBy: { name: "asc" },
-    include: {
-      memberships: {
-        include: { user: { select: { id: true, email: true } } },
-        orderBy: { createdAt: "asc" },
-      },
-      invites: { orderBy: { createdAt: "desc" } },
-      applications: {
-        include: { team: { select: { name: true } } },
-        orderBy: { createdAt: "desc" },
-      },
-      judgeAssignments: {
-        where: { status: "APPROVED" },
-        select: { submittedAt: true },
-      },
-    },
-    }),
-    prisma.user.findMany({
-      where: { platformAdmin: true },
-      select: { id: true, email: true, name: true },
-      orderBy: { email: "asc" },
-    }),
-    prisma.platformAdminInvite.findMany({
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.registrationAccess.findMany({
-      include: {
-        user: { select: { email: true } },
-        competition: { select: { name: true } },
-      },
-      orderBy: [{ competition: { name: "asc" } }, { createdAt: "asc" }],
-    }),
-    prisma.registrationInvite.findMany({
-      include: { competition: { select: { name: true } } },
-      orderBy: [{ competition: { name: "asc" } }, { createdAt: "asc" }],
-    }),
-  ]);
+        orderBy: [{ competition: { name: "asc" } }, { createdAt: "asc" }],
+      }),
+    ]);
 
   return (
     <div className="space-y-10">
       <div>
         <h1 className="font-heading text-4xl">Circuit ops</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          Traffic for every listing at once. Invite tech admins, grant REG
-          access, and follow live judging from Comp Dashboard.
+          Manage the circuit, live judging, access, teams, and competitions.
         </p>
       </div>
 
-      <Link
-        href="/ops/comps"
-        prefetch
-        className="brand-gradient group flex flex-wrap items-center justify-between gap-4 rounded-2xl px-6 py-5 text-white shadow-sm transition hover:brightness-110"
-      >
-        <div>
-          <p className="text-xs uppercase tracking-widest text-white/80">
-            Live judging
-          </p>
-          <p className="font-heading text-2xl tracking-wide">Comp Dashboard</p>
-          <p className="mt-1 text-sm text-white/85">
-            Every competition at a glance, with the team on screen and each
-            judge’s scores as they come in.
-          </p>
-        </div>
-        <span className="rounded-full border border-white/40 px-4 py-2 text-sm font-semibold transition group-hover:bg-white group-hover:text-accent">
-          Open
-        </span>
+      <Link href="/ops/comps" prefetch className="brand-gradient group flex flex-wrap items-center justify-between gap-4 rounded-2xl px-6 py-5 text-white shadow-sm transition hover:brightness-110">
+        <div><p className="text-xs uppercase tracking-widest text-white/80">Live judging</p><p className="font-heading text-2xl tracking-wide">Comp Dashboard</p><p className="mt-1 text-sm text-white/85">Follow every live viewing session and judge score.</p></div>
+        <span className="rounded-full border border-white/40 px-4 py-2 text-sm font-semibold transition group-hover:bg-white group-hover:text-accent">Open</span>
       </Link>
 
       <section className="rounded-xl border border-line bg-card p-6">
-        <h2 className="font-heading text-xl">Your account</h2>
-        <p className="mt-2">{name || email}</p>
+        <h2 className="font-heading text-xl">Your account</h2><p className="mt-2">{name || email}</p>
         {name ? <p className="text-sm text-muted">{email}</p> : null}
         <p className="text-sm text-muted">Tech admin · platform access</p>
-        <Link href="/profile" className="btn btn-ghost mt-4">
-          Profile
-        </Link>
+        <Link href="/profile" className="btn btn-ghost mt-4">Profile</Link>
       </section>
 
-      <section className="space-y-4">
-        <h2 className="font-heading text-2xl">Competitions</h2>
-        <p className="text-sm text-muted">
-          Every listing, claimed or not. Open a row for judging controls and
-          live scores.
-        </p>
-        {comps.length === 0 ? (
-          <p className="text-muted">No competitions yet. Add the first one below.</p>
-        ) : (
-          <div className="overflow-x-auto rounded-xl border border-line bg-card">
-            <table className="w-full min-w-[48rem] text-left text-sm">
-              <thead className="border-b border-line bg-blush text-xs uppercase tracking-wide text-muted">
-                <tr>
-                  <th className="px-4 py-3 font-medium">Competition</th>
-                  <th className="px-4 py-3 font-medium">Claim</th>
-                  <th className="px-4 py-3 font-medium">Apps</th>
-                  <th className="px-4 py-3 font-medium">Judging</th>
-                  <th className="px-4 py-3 font-medium">Teams</th>
-                  <th className="px-4 py-3 font-medium">Packets</th>
-                  <th className="px-4 py-3 font-medium"> </th>
-                </tr>
-              </thead>
-              <tbody>
-                {comps.map((comp) => {
-                  const claimed = Boolean(comp.claimedAt);
-                  const appsOpen = isCompetitionOpen(comp);
-                  const packetsIn = comp.judgeAssignments.filter(
-                    (row) => row.submittedAt,
-                  ).length;
-                  return (
-                    <tr
-                      key={comp.id}
-                      className="border-b border-line last:border-0"
-                    >
-                      <th className="px-4 py-3 text-left font-semibold">
-                        {comp.name}
-                      </th>
-                      <td className="px-4 py-3">
-                        {claimed ? "Claimed" : "Unclaimed"}
-                      </td>
-                      <td className="px-4 py-3">
-                        {!claimed
-                          ? "—"
-                          : appsOpen
-                            ? "Open"
-                            : "Closed"}
-                      </td>
-                      <td className="px-4 py-3">
-                        {!claimed
-                          ? "—"
-                          : comp.judgingOpen
-                            ? "Open"
-                            : "Closed"}
-                      </td>
-                      <td className="px-4 py-3 tabular-nums">
-                        {comp.applications.length}
-                      </td>
-                      <td className="px-4 py-3 tabular-nums">
-                        {packetsIn} / {comp.requiredJudgeCount}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap justify-end gap-2">
-                          <Link
-                            href={`/ops/comps/${comp.id}`}
-                            prefetch
-                            className={
-                              claimed && comp.judgingOpen
-                                ? "btn btn-primary py-1.5"
-                                : "btn btn-ghost py-1.5"
-                            }
-                          >
-                            {claimed && comp.judgingOpen ? "Live" : "Open"}
-                          </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      <section className="space-y-4 rounded-xl border border-line bg-card p-6">
-        <h2 className="font-heading text-xl">Tech admins</h2>
-        <p className="text-sm text-muted">
-          Everyone here has the same circuit-ops access. Invite by email.
-        </p>
-        <InvitePlatformAdminForm />
-        <ul className="divide-y divide-line rounded-lg border border-line">
-          {techAdmins.map((admin) => (
-            <li
-              key={admin.id}
-              className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
-            >
-              <span className="text-sm">
-                {admin.name ? `${admin.name} · ` : ""}
-                {admin.email}
-                {admin.id === userId ? " · You" : ""}
-              </span>
-              {admin.id !== userId ? (
-                <RevokePlatformAdminForm userId={admin.id} />
-              ) : null}
-            </li>
-          ))}
-          {techInvites.map((invite) => (
-            <li
-              key={invite.id}
-              className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
-            >
-              <span className="text-sm">
-                {invite.email}
-                <span className="text-muted"> · waiting to log in</span>
-              </span>
-              <CancelPlatformAdminInviteForm inviteId={invite.id} />
-            </li>
-          ))}
-        </ul>
-      </section>
+      <div className="grid gap-6 lg:grid-cols-2"><CreateTeamForm /><CreateCompForm /></div>
 
       <section className="space-y-4 rounded-xl border border-line bg-card p-6">
         <h2 className="font-heading text-xl">Registration (REG) access</h2>
-        <p className="text-sm text-muted">
-          REG accounts are the only ones that can play the AVs. They run live
-          viewing for one competition, share their screen with the judges
-          elsewhere, and choose which team every judge scores.
-        </p>
-        <GrantRegistrationForm
-          competitions={comps.map((comp) => ({ id: comp.id, name: comp.name }))}
-        />
-        {regAccess.length === 0 && regInvites.length === 0 ? (
-          <p className="text-sm text-muted">No REG accounts yet.</p>
-        ) : (
+        <p className="text-sm text-muted">Grant an account control of live viewing for a competition.</p>
+        <GrantRegistrationForm competitions={competitions} />
+        {regAccess.length === 0 && regInvites.length === 0 ? <p className="text-sm text-muted">No REG accounts yet.</p> : (
           <ul className="divide-y divide-line rounded-lg border border-line">
-            {regAccess.map((row) => (
-              <li
-                key={row.id}
-                className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
-              >
-                <span className="text-sm">
-                  <span className="font-medium">{row.competition.name}</span>
-                  <span className="text-muted"> · </span>
-                  {row.user.email}
-                </span>
-                <RemoveRegistrationAccessForm accessId={row.id} />
-              </li>
-            ))}
-            {regInvites.map((invite) => (
-              <li
-                key={invite.id}
-                className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
-              >
-                <span className="text-sm">
-                  <span className="font-medium">{invite.competition.name}</span>
-                  <span className="text-muted"> · </span>
-                  {invite.email}
-                  <span className="text-muted"> · waiting to log in</span>
-                </span>
-                <CancelRegistrationInviteForm inviteId={invite.id} />
-              </li>
-            ))}
+            {regAccess.map((row) => <li key={row.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"><span className="text-sm"><span className="font-medium">{row.competition.name}</span><span className="text-muted"> · </span>{row.user.email}</span><RemoveRegistrationAccessForm accessId={row.id} /></li>)}
+            {regInvites.map((invite) => <li key={invite.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"><span className="text-sm"><span className="font-medium">{invite.competition.name}</span><span className="text-muted"> · </span>{invite.email}<span className="text-muted"> · waiting to log in</span></span><CancelRegistrationInviteForm inviteId={invite.id} /></li>)}
           </ul>
         )}
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <CreateTeamForm />
-        <CreateCompForm />
+        <Link href="/ops/teams" prefetch className="group rounded-2xl border border-line bg-card p-6 transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md"><p className="text-xs uppercase tracking-widest text-muted">Circuit management</p><h2 className="mt-1 font-heading text-2xl group-hover:text-accent">Teams</h2><p className="mt-2 text-sm text-muted">Claim codes, owners, profiles, rosters, applications, and application blocks.</p><span className="mt-5 inline-flex text-sm font-semibold text-accent">Manage teams →</span></Link>
+        <Link href="/ops/competitions" prefetch className="group rounded-2xl border border-line bg-card p-6 transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md"><p className="text-xs uppercase tracking-widest text-muted">Circuit management</p><h2 className="mt-1 font-heading text-2xl group-hover:text-accent">Competitions</h2><p className="mt-2 text-sm text-muted">Claim codes, owners, event details, REG access, applications, and live-dashboard links.</p><span className="mt-5 inline-flex text-sm font-semibold text-accent">Manage competitions →</span></Link>
       </div>
 
-      <section className="space-y-4">
-        <h2 className="font-heading text-2xl">Teams</h2>
-        {teams.length === 0 ? (
-          <p className="text-muted">No teams yet. Add the first one above.</p>
-        ) : (
-          <div className="space-y-6">
-            {teams.map((team) => (
-              <article
-                id={`ops-team-${team.id}`}
-                key={team.id}
-                className="space-y-4 rounded-xl border border-line bg-card p-5"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h3 className="font-heading text-xl">{team.name}</h3>
-                    <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-muted">
-                      Claim code
-                    </p>
-                    <p className="font-mono text-sm text-accent">{team.claimCode}</p>
-                    <p className="text-sm text-muted">
-                      {team.claimedAt ? "Claimed" : "Unclaimed"}
-                      {team.applyBlocked ? " · Blocked from applying" : ""}
-                    </p>
-                    {team.applyBlocked ? (
-                      <p className="mt-1 max-w-xl text-sm text-muted">
-                        Circuit ops reason: {team.applyBlockReason || "No reason recorded for this earlier block."}
-                      </p>
-                    ) : null}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <SetTeamApplyBlockForm
-                      teamId={team.id}
-                      teamName={team.name}
-                      blocked={team.applyBlocked}
-                      reason={team.applyBlockReason}
-                    />
-                    {team.claimedAt ? (
-                      <ResetTeamClaimForm teamId={team.id} teamName={team.name} />
-                    ) : null}
-                  </div>
-                </div>
-                {team.claimedAt ? (
-                  <InviteTeamAdminForm teamId={team.id} />
-                ) : null}
-                {(() => {
-                  const approved = team.memberships.filter(
-                    (row) => row.status === "APPROVED",
-                  );
-                  const pendingMembers = team.memberships.filter(
-                    (row) => row.status === "PENDING",
-                  );
-                  return (
-                    <>
-                      {team.invites.length || pendingMembers.length ? (
-                        <div>
-                          <h4 className="mb-2 text-sm font-semibold">
-                            Request sent
-                          </h4>
-                          <ul className="divide-y divide-line rounded-lg border border-line">
-                            {team.invites.map((invite) => (
-                              <li
-                                key={invite.id}
-                                className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
-                              >
-                                <span className="text-sm">
-                                  {invite.email}
-                                  <span className="text-muted">
-                                    {" "}
-                                    · waiting to create an account
-                                  </span>
-                                </span>
-                                <CancelTeamInviteForm inviteId={invite.id} />
-                              </li>
-                            ))}
-                            {pendingMembers.map((row) => (
-                              <li
-                                key={row.id}
-                                className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
-                              >
-                                <span className="text-sm">
-                                  {row.user.email}
-                                  <span className="text-muted">
-                                    {" "}
-                                    · waiting to approve
-                                  </span>
-                                </span>
-                                <RevokeTeamAccessForm membershipId={row.id} />
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ) : null}
-                      <div>
-                        <h4 className="mb-2 text-sm font-semibold">Admins</h4>
-                        {approved.length === 0 ? (
-                          <p className="text-sm text-muted">None yet.</p>
-                        ) : (
-                          <ul className="divide-y divide-line rounded-lg border border-line">
-                            {approved.map((row) => (
-                              <li
-                                key={row.id}
-                                className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
-                              >
-                                <span className="text-sm">
-                                  {row.user.email}
-                                  {row.isPrimary ? " · Primary" : " · Secondary"}
-                                </span>
-                                {!row.isPrimary && row.userId !== userId ? (
-                                  <RevokeTeamAccessForm membershipId={row.id} />
-                                ) : null}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    </>
-                  );
-                })()}
-                <div>
-                  <h4 className="mb-2 text-sm font-semibold">Applications</h4>
-                  {team.applications.length === 0 ? (
-                    <p className="text-sm text-muted">No applications yet.</p>
-                  ) : (
-                    <ul className="space-y-1 text-sm">
-                      {team.applications.map((app) => (
-                        <li key={app.id} className="flex justify-between gap-3">
-                          <span>{app.competition.name}</span>
-                          <span>{statusLabel(app.status)}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="space-y-4">
-        <h2 className="font-heading text-2xl">Competition listings</h2>
-        {comps.length === 0 ? (
-          <p className="text-muted">No competitions yet. Add the first one above.</p>
-        ) : (
-          <div className="space-y-6">
-            {comps.map((comp) => {
-            const pending = comp.applications.filter((a) => a.status === "PENDING").length;
-            const accepted = comp.applications.filter((a) => a.status === "ACCEPTED").length;
-            const waitlisted = comp.applications.filter((a) => a.status === "WAITLISTED").length;
-            const declined = comp.applications.filter((a) => a.status === "DECLINED").length;
-            return (
-              <article
-                id={`ops-comp-${comp.id}`}
-                key={comp.id}
-                className="space-y-4 rounded-xl border border-line bg-card p-5"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h3 className="font-heading text-xl">{comp.name}</h3>
-                    <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-muted">
-                      Claim code
-                    </p>
-                    <p className="font-mono text-sm text-accent">{comp.claimCode}</p>
-                    <p className="text-sm text-muted">
-                      {comp.claimedAt ? "Claimed" : "Unclaimed · not in team Apply"}
-                      {comp.claimedAt
-                        ? isCompetitionOpen(comp)
-                          ? " · Apps open"
-                          : comp.judgingOpen
-                            ? " · Judging open"
-                            : " · Judging closed"
-                        : ""}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Link
-                      href={`/ops/comps/${comp.id}`}
-                      prefetch
-                      className="btn btn-ghost py-1.5"
-                    >
-                      Comp Dashboard
-                    </Link>
-                    {comp.claimedAt ? (
-                      <ResetCompClaimForm
-                        competitionId={comp.id}
-                        competitionName={comp.name}
-                      />
-                    ) : null}
-                  </div>
-                </div>
-                {comp.claimedAt ? <InviteCompAdminForm competitionId={comp.id} /> : null}
-                {(() => {
-                  const approved = comp.memberships.filter(
-                    (row) => row.status === "APPROVED",
-                  );
-                  const pendingMembers = comp.memberships.filter(
-                    (row) => row.status === "PENDING",
-                  );
-                  return (
-                    <>
-                      {comp.invites.length || pendingMembers.length ? (
-                        <div>
-                          <h4 className="mb-2 text-sm font-semibold">
-                            Request sent
-                          </h4>
-                          <ul className="divide-y divide-line rounded-lg border border-line">
-                            {comp.invites.map((invite) => (
-                              <li
-                                key={invite.id}
-                                className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
-                              >
-                                <span className="text-sm">
-                                  {invite.email}
-                                  <span className="text-muted">
-                                    {" "}
-                                    · waiting to create an account
-                                  </span>
-                                </span>
-                                <CancelCompInviteForm inviteId={invite.id} />
-                              </li>
-                            ))}
-                            {pendingMembers.map((row) => (
-                              <li
-                                key={row.id}
-                                className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
-                              >
-                                <span className="text-sm">
-                                  {row.user.email}
-                                  <span className="text-muted">
-                                    {" "}
-                                    · waiting to approve
-                                  </span>
-                                </span>
-                                <RevokeCompAccessForm membershipId={row.id} />
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ) : null}
-                      <div>
-                        <h4 className="mb-2 text-sm font-semibold">Admins</h4>
-                        {approved.length === 0 ? (
-                          <p className="text-sm text-muted">None yet.</p>
-                        ) : (
-                          <ul className="divide-y divide-line rounded-lg border border-line">
-                            {approved.map((row) => (
-                              <li
-                                key={row.id}
-                                className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
-                              >
-                                <span className="text-sm">
-                                  {row.user.email}
-                                  {row.isPrimary ? " · Primary" : " · Secondary"}
-                                </span>
-                                {!row.isPrimary && row.userId !== userId ? (
-                                  <RevokeCompAccessForm membershipId={row.id} />
-                                ) : null}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    </>
-                  );
-                })()}
-                <p className="text-sm text-muted">
-                  Pending {pending} · Accepted {accepted} · Waitlisted {waitlisted}{" "}
-                  · Declined {declined}
-                </p>
-                {comp.applications.length ? (
-                  <ul className="space-y-1 text-sm">
-                    {comp.applications.map((app) => (
-                      <li key={app.id} className="flex justify-between gap-3">
-                        <span>{app.team.name}</span>
-                        <span>{statusLabel(app.status)}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-muted">No applications yet.</p>
-                )}
-              </article>
-            );
-          })}
-          </div>
-        )}
+      <section className="space-y-4 rounded-xl border border-line bg-card p-6">
+        <h2 className="font-heading text-xl">Tech admins</h2><p className="text-sm text-muted">Everyone here has the same circuit-ops access. Invite by email.</p>
+        <InvitePlatformAdminForm />
+        <ul className="divide-y divide-line rounded-lg border border-line">
+          {techAdmins.map((admin) => <li key={admin.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"><span className="text-sm">{admin.name ? `${admin.name} · ` : ""}{admin.email}{admin.id === userId ? " · You" : ""}</span>{admin.id !== userId ? <RevokePlatformAdminForm userId={admin.id} /> : null}</li>)}
+          {techInvites.map((invite) => <li key={invite.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"><span className="text-sm">{invite.email}<span className="text-muted"> · waiting to log in</span></span><CancelPlatformAdminInviteForm inviteId={invite.id} /></li>)}
+        </ul>
       </section>
     </div>
   );
