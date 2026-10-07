@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { ALL_CLAIM_CODES, E2E, login, SEALED_NAMES } from "./helpers";
+import { ALL_CLAIM_CODES, db, E2E, login, SEALED_NAMES } from "./helpers";
 
 const OPS_PAGES = ["/ops/teams", "/ops/competitions", "/ops/export", "/ops/comps"];
 
@@ -39,5 +39,28 @@ test("a tech admin sees every team and competition", async ({ page }) => {
   await page.goto("/ops/competitions");
   for (const comp of Object.values(E2E.comps)) {
     await expect(page.getByText(comp.name, { exact: true }).first()).toBeVisible();
+  }
+});
+
+test("circuit ops can create and relabel a non-partner competition", async ({ page }) => {
+  const name = "E2E Non-partner Competition";
+  await login(page, "tech");
+  try {
+    const form = page.getByRole("heading", { name: "Add a competition" }).locator("..", { hasText: "Add a competition" }).locator("..");
+    await form.getByLabel("Competition name").fill(name);
+    await form.getByLabel("Competition type").selectOption("non-partner");
+    await form.getByRole("button", { name: "Create competition" }).click();
+    await expect(form.locator(".notice-ok")).toContainText(name);
+
+    await page.goto("/ops/competitions");
+    const row = page.locator("article").filter({ hasText: name });
+    await expect(row.getByText("Non-partner", { exact: true })).toBeVisible();
+    await row.getByRole("button", { name: /E2E Non-partner Competition/ }).click();
+    await row.getByLabel("Competition type").selectOption("partner");
+    await row.getByRole("button", { name: "Save type" }).click();
+    await expect(row.locator("button").first().getByText("Partner", { exact: true })).toBeVisible();
+    await expect(db.competitionProfile.findFirstOrThrow({ where: { name }, select: { isPartner: true } })).resolves.toMatchObject({ isPartner: true });
+  } finally {
+    await db.competitionProfile.deleteMany({ where: { name } });
   }
 });

@@ -785,8 +785,14 @@ export async function createCompetition(
   }
 
   const parsed = z
-    .object({ name: z.string().min(2, "Competition name is required.") })
-    .safeParse({ name: String(formData.get("name") ?? "").trim() });
+    .object({
+      name: z.string().min(2, "Competition name is required."),
+      type: z.enum(["partner", "non-partner"]),
+    })
+    .safeParse({
+      name: String(formData.get("name") ?? "").trim(),
+      type: String(formData.get("type") ?? "partner"),
+    });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid form." };
   }
@@ -796,9 +802,10 @@ export async function createCompetition(
   const competition = await prisma.competitionProfile.create({
     data: {
       name: parsed.data.name,
+      isPartner: parsed.data.type === "partner",
       slug,
       claimCode,
-      description: `${parsed.data.name}. Claim this listing with the official partner code after you log in.`,
+      description: `${parsed.data.name}. Claim this listing with the official claim code after you log in.`,
     },
   });
 
@@ -811,6 +818,37 @@ export async function createCompetition(
     competitionId: competition.id,
     message: `Created ${competition.name}.`,
   };
+}
+
+export async function setCompetitionPartnerStatus(
+  _prev: { error?: string; ok?: boolean; message?: string } | undefined,
+  formData: FormData,
+): Promise<{ error?: string; ok?: boolean; message?: string }> {
+  const user = await requireUser();
+  if (!user) return { error: "You must be signed in." };
+  if (!(await isPlatformAdmin(user.id))) {
+    return { error: "Only circuit ops can change competition types." };
+  }
+
+  const parsed = z.object({
+    competitionId: z.string().min(1),
+    type: z.enum(["partner", "non-partner"]),
+  }).safeParse({
+    competitionId: String(formData.get("competitionId") ?? ""),
+    type: String(formData.get("type") ?? ""),
+  });
+  if (!parsed.success) return { error: "Choose a valid competition type." };
+
+  const updated = await prisma.competitionProfile.updateMany({
+    where: { id: parsed.data.competitionId },
+    data: { isPartner: parsed.data.type === "partner" },
+  });
+  if (!updated.count) return { error: "Competition not found." };
+
+  revalidateAccessPaths();
+  revalidatePath("/");
+  revalidatePath(`/comps/${parsed.data.competitionId}`);
+  return { ok: true, message: "Competition type saved." };
 }
 
 export async function resetTeamClaim(

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { BrandMark } from "@/components/BrandMark";
+import { CompetitionTypeBadge } from "@/components/CompetitionTypeBadge";
 import { Lattice } from "@/components/Lattice";
 import { RoleGuide } from "@/components/RoleGuide";
 import { isCompetitionOpen } from "@/lib/judging";
@@ -102,12 +103,15 @@ export default async function HomePage() {
               {competitions.map((comp) => (
                 <tr key={comp.id} className="border-b border-line last:border-0">
                   <td className="px-4 py-3">
-                    <Link
-                      href={`/comps/${comp.id}`}
-                      className="font-semibold text-accent hover:underline"
-                    >
-                      {comp.name}
-                    </Link>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link
+                        href={`/comps/${comp.id}`}
+                        className="font-semibold text-accent hover:underline"
+                      >
+                        {comp.name}
+                      </Link>
+                      <CompetitionTypeBadge isPartner={comp.isPartner} />
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-muted">{comp.dates || "TBA"}</td>
                   <td className="px-4 py-3 text-muted">{comp.location || "TBA"}</td>

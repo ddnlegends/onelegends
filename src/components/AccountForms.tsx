@@ -33,6 +33,7 @@ import {
   setTeamApplyBlock,
   revokeCompAccess,
   revokeTeamAccess,
+  setCompetitionPartnerStatus,
 } from "@/app/actions/team-access";
 import {
   cancelPlatformAdminInvite,
@@ -127,7 +128,7 @@ export function ClaimCompForm() {
       <div>
         <h2 className="font-heading text-xl">Claim a competition</h2>
         <p className="mt-1 text-sm text-muted">
-          Use the official partner code. First valid claim is the primary admin.
+          Use the official claim code. First valid claim is the primary admin.
         </p>
       </div>
       <form
@@ -503,7 +504,7 @@ export function CreateCompForm() {
       <div>
         <h2 className="font-heading text-xl">Add a competition</h2>
         <p className="mt-1 text-sm text-muted">
-          Creating a competition generates a partner code. Manage it from the
+          Creating a competition generates a claim code. Manage it from the
           Competitions page. Teams cannot apply until someone claims it. This
           app does not email anyone.
         </p>
@@ -518,10 +519,47 @@ export function CreateCompForm() {
           placeholder="Buckeye Mela"
         />
       </div>
+      <div className="field">
+        <label htmlFor="comp-type">Competition type</label>
+        <select id="comp-type" name="type" defaultValue="partner">
+          <option value="partner">Partner</option>
+          <option value="non-partner">Non-partner</option>
+        </select>
+      </div>
       <SaveNotice state={state} scroll={false} />
       <button className="btn btn-primary" disabled={pending} type="submit">
         {pending ? "Creating…" : "Create competition"}
       </button>
+    </form>
+  );
+}
+
+export function CompetitionTypeForm({
+  competitionId,
+  isPartner,
+}: {
+  competitionId: string;
+  isPartner: boolean;
+}) {
+  const [state, formAction, pending] = useActionState(
+    setCompetitionPartnerStatus,
+    undefined,
+  );
+
+  return (
+    <form action={formAction} className="flex flex-wrap items-end gap-3">
+      <input type="hidden" name="competitionId" value={competitionId} />
+      <div className="field">
+        <label htmlFor={`comp-type-${competitionId}`}>Competition type</label>
+        <select id={`comp-type-${competitionId}`} name="type" defaultValue={isPartner ? "partner" : "non-partner"}>
+          <option value="partner">Partner</option>
+          <option value="non-partner">Non-partner</option>
+        </select>
+      </div>
+      <button className="btn btn-ghost" disabled={pending} type="submit">
+        {pending ? "Saving…" : "Save type"}
+      </button>
+      <SaveNotice state={state} scroll={false} />
     </form>
   );
 }
@@ -689,7 +727,7 @@ export function ResetCompClaimForm({
       <p className="text-sm">
         Are you sure? This removes every admin from{" "}
         <strong>{competitionName}</strong>, its judges, and moderator access, then
-        issues a new partner code (the old one stops working).
+        issues a new claim code (the old one stops working).
       </p>
       <div className="flex gap-2">
         <button className="btn btn-primary py-1.5" disabled={pending} type="submit">

@@ -119,6 +119,7 @@ async function competitionsTable(competitionId?: string): Promise<ExportCell[][]
   return [
     [
       "Competition",
+      "Type",
       "Status",
       "Claimed",
       "Dates",
@@ -142,6 +143,7 @@ async function competitionsTable(competitionId?: string): Promise<ExportCell[][]
     ],
     ...competitions.map((comp) => [
       comp.name,
+      comp.isPartner ? "Partner" : "Non-partner",
       COMP_STATUS_LABEL[competitionStatus(comp)],
       yesNo(Boolean(comp.claimedAt || comp.userId)),
       comp.dates,

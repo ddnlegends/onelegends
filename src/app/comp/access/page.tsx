@@ -39,7 +39,7 @@ export default async function CompAccessPage() {
       <div>
         <h1 className="font-heading text-4xl">Admins · {competition.name}</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          The primary admin claimed this listing with the partner code. Only they
+          The primary admin claimed this listing with the claim code. Only they
           can invite secondary admins by email. No email is sent from this app.
         </p>
       </div>

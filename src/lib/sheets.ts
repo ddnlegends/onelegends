@@ -14,7 +14,7 @@ const SHEET_HEADERS = [
   "Team Name",
   "AV Drive Link",
   "Wiki",
-  "Photo",
+  "Logo",
   "Blurb",
   "Captains",
   "Years Established",

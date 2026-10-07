@@ -2,11 +2,13 @@ import Link from "next/link";
 import { requirePlatformAdminPage } from "@/lib/page-guards";
 import {
   CancelCompInviteForm,
+  CompetitionTypeForm,
   InviteCompAdminForm,
   ResetCompClaimForm,
   RevokeCompAccessForm,
 } from "@/components/AccountForms";
 import { CompStatusPill } from "@/components/CompStatusPill";
+import { CompetitionTypeBadge } from "@/components/CompetitionTypeBadge";
 import { ExpandableRow } from "@/components/ExpandableRow";
 import { Chip, ExternalLink, InfoGrid, PanelSection } from "@/components/OpsListParts";
 import { prisma } from "@/lib/prisma";
@@ -97,6 +99,7 @@ export default async function OpsCompetitionsPage() {
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="truncate font-heading text-xl">{competition.name}</span>
+                      <CompetitionTypeBadge isPartner={competition.isPartner} />
                       <CompStatusPill status={status} />
                       {pending.length || competition.invites.length ? (
                         <Chip tone="warn">
@@ -149,6 +152,10 @@ export default async function OpsCompetitionsPage() {
                 </div>
 
                 <PanelSection title="Event details">
+                  <CompetitionTypeForm
+                    competitionId={competition.id}
+                    isPartner={competition.isPartner}
+                  />
                   <InfoGrid
                     items={[
                       { label: "Event dates", value: competition.dates },

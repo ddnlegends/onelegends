@@ -43,7 +43,7 @@ export default async function TeamApplyPage() {
         <div className="space-y-4 rounded-xl border border-line bg-card p-6">
           <p className="notice notice-error">
             Finish Team Profile before applying. Competitions need the complete
-            packet: photo, blurb, AV, captains, years, and roster.
+            packet: logo, blurb, AV, captains, years, and roster.
           </p>
           <ul className="list-disc space-y-1 pl-5 text-sm text-ink">
             {gaps.map((item) => (
@@ -61,6 +61,7 @@ export default async function TeamApplyPage() {
           competitions={competitions.map((c) => ({
             id: c.id,
             name: c.name,
+            isPartner: c.isPartner,
             dates: c.dates,
             location: c.location,
             venue: c.venue,

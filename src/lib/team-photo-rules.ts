@@ -1,7 +1,7 @@
 export const TEAM_PHOTO_MAX_BYTES = 5 * 1024 * 1024;
 export const TEAM_PHOTO_TOO_LARGE =
-  "Team photo must be 5MB or smaller. Choose a smaller image and save again.";
-export const TEAM_PHOTO_BAD_TYPE = "Upload a JPEG, PNG, WebP, or GIF photo.";
+  "Team logo must be 5MB or smaller. Choose a smaller image and save again.";
+export const TEAM_PHOTO_BAD_TYPE = "Upload a JPEG, PNG, WebP, or GIF logo.";
 
 const ALLOWED_TYPES = new Set([
   "image/jpeg",

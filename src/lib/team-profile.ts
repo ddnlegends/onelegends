@@ -19,7 +19,7 @@ export function teamProfileGaps(team: TeamProfileForApply): string[] {
   if (team.yearsEstablished == null || !Number.isFinite(team.yearsEstablished)) {
     missing.push("years established");
   }
-  if (!hasTeamPhoto(team.photoUrl)) missing.push("team photo");
+  if (!hasTeamPhoto(team.photoUrl)) missing.push("team logo");
   if (!team.blurb.trim()) missing.push("team blurb");
 
   const drive = parseDriveUrl(team.avDriveUrl);

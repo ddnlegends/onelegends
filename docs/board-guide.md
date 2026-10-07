@@ -17,10 +17,10 @@ Access checks run in server pages and actions. Giving someone a claim code or in
 ## Start of season
 
 1. Tech chair verifies production Google OAuth, Supabase connection, and migration status using [setup.md](setup.md). Confirm board members can sign in with their own Google accounts.
-2. Circuit ops creates team listings and competition listings in the admin dashboard. Give each primary contact the correct one-time claim code through your normal secure channel. A Google sign-in alone does not create or claim a team.
+2. Circuit ops creates team listings and competition listings in the admin dashboard. Set each competition type to **Partner** or **Non-partner**; existing listings default to Partner, and the type can be changed from **Competitions**. The type is a label and does not change application or judging permissions. Give each primary contact the correct one-time claim code through your normal secure channel. A Google sign-in alone does not create or claim a team.
 3. First-time users must use **Register** (Continue with Google there). **Log In** with a Google account that has no OneLegends account sends them to Register with a notice instead of creating one.
 4. Primary team and competition admins claim their listings and invite secondary admins by email. The app shows invitations at login and on the dashboard; it does not send email. Tell invitees to register with the same Google email as the invitation.
-5. Teams complete the profile, photo, Drive AV, and roster. A complete profile is required to apply. Ask teams to give the Drive file a neutral name (not the team name), because the title can show when the moderator shares the video.
+5. Teams complete the profile, logo, Drive AV, and roster. A complete profile is required to apply. Ask teams to give the Drive file a neutral name (not the team name), because the title can show when the moderator shares the video.
 6. Competition admins fill dates, venue, production details, application deadline, and required judge count. They invite judges and moderators. The deadline is entered and shown in each viewer's own timezone, with the zone labeled.
 
 ## Payments and eligibility

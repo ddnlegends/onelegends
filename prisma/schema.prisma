@@ -138,6 +138,7 @@ model CompetitionProfile {
   claimCode           String    @unique
   claimedAt           DateTime?
   name                String
+  isPartner           Boolean   @default(true)
   acceptingApps       Boolean   @default(true)
   applicationDeadline DateTime?
   requiredJudgeCount  Int       @default(3)

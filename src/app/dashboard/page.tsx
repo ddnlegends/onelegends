@@ -326,6 +326,7 @@ export default async function DashboardPage() {
                   competitions={claimedComps.map((c) => ({
                     id: c.id,
                     name: c.name,
+                    isPartner: c.isPartner,
                     dates: c.dates,
                     location: c.location,
                     venue: c.venue,

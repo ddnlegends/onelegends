@@ -4,6 +4,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Team image labels now say logo throughout the site and applicant sheet; upload and display behavior is unchanged. Competitions now have Partner and Non-partner labels in public, team, and ops lists. Circuit ops chooses the type when creating a listing and can change it later; existing listings default to Partner.
 - Standardized partner competition claim-code wording throughout the site and updated existing competition descriptions.
 - Replaced the placeholder PayPal link on the application form and Payments page with Zelle or PayPal instructions for `legends@desidancenetwork.org`.
 - Renamed the live viewing role to Moderator across the site, access controls, exports, and documentation. Existing assignments remain in place.
@@ -14,7 +15,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
   - Prisma no longer ships to the browser: pure judging helpers moved to `src/lib/judging-rules.ts` (re-exported from `judging.ts`), photo helpers to `team-photo-rules.ts`.
   - The applicant sheet sync checks release and sheet ID before loading every team and dancer, and reuses one Google client.
   - `/api/live` answers each judge poll in one parallel round of queries instead of three sequential ones.
-  - Header and landing crown served from resized copies (21 KB and 142 KB instead of 249 KB); team photos load lazily.
+  - Header and landing crown served from resized copies (21 KB and 142 KB instead of 249 KB); team logos load lazily.
 - Fixed a flaky browser test that matched two "Team Profile" links on the dashboard.
 
 ## 2026-10-05: Google account chooser
@@ -73,8 +74,8 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 - `4a2acac` Circuit ops can create competitions with partner codes.
 - `c926474` Active team dropdown stays in sync after switching.
 - `31c802f` Circuit ops can block a team from applying; claim codes shown on the team list.
-- `890ae19` Team photos stored in the database instead of local disk.
-- `93dfa33` Team memberships, admin invites, profile forms, and team photos.
+- `890ae19` Team logos stored in the database instead of local disk.
+- `93dfa33` Team memberships, admin invites, profile forms, and team logos.
 
 ## 2026-09-02
 

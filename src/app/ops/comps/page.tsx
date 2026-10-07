@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { CompStatusPill } from "@/components/CompStatusPill";
+import { CompetitionTypeBadge } from "@/components/CompetitionTypeBadge";
 import { LiveProgress } from "@/components/LiveProgress";
 import {
   COMP_STATUS_LABEL,
@@ -32,6 +33,7 @@ export default async function CompDashboardPage() {
     select: {
       id: true,
       name: true,
+      isPartner: true,
       location: true,
       eventDate: true,
       acceptingApps: true,
@@ -135,6 +137,7 @@ export default async function CompDashboardPage() {
                       <h2 className="truncate font-heading text-xl group-hover:text-accent">
                         {comp.name}
                       </h2>
+                      <CompetitionTypeBadge isPartner={comp.isPartner} />
                       <p className="truncate text-xs text-muted">
                         {[comp.location, comp.eventDate ? formatDate(comp.eventDate) : ""]
                           .filter(Boolean)

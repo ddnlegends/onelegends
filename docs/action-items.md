@@ -75,6 +75,8 @@ Today a primary admin can invite and remove secondary admins only. Removing the 
 
 A competition that is a partner one year might not be a partner the next. This is for competitions only. Teams stay on the platform. Listings today persist until someone removes them, so a host that sits out a season would still appear.
 
+Circuit ops can now label a listing Partner or Non-partner. That label applies to the whole listing and does not archive it by year.
+
 Find a way to carry a partner competition for the year it belongs to, and leave it off the next season when the partnership does not continue. Applications, judging, and results for the year it ran should stay intact.
 
 ### MOU tracking
@@ -85,7 +87,7 @@ Blocking a team from applying is a manual decision: circuit ops sets a block wit
 
 These work as built, but the board should confirm each one is intended:
 
-- Team photos load from a public link, so anyone with the URL can see them.
+- Team logos load from a public link, so anyone with the URL can see them.
 - There is no limit on how many claim codes someone can try.
 - Declined applications still get a place in the viewing order.
 - The public competition listing shows production details such as stage size and lighting.

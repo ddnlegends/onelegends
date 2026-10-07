@@ -29,7 +29,7 @@ export function TeamPhoto({
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={src}
-      alt={name}
+      alt={`${name} logo`}
       loading="lazy"
       decoding="async"
       className={`${box} shrink-0 rounded-xl object-cover`}

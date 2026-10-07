@@ -56,7 +56,7 @@ export async function storeTeamPhoto(
   file: File,
 ): Promise<{ url: string } | { error: string }> {
   if (!(file instanceof File) || file.size === 0) {
-    return { error: "Choose a team photo to upload." };
+    return { error: "Choose a team logo to upload." };
   }
   if (file.size > TEAM_PHOTO_MAX_BYTES) {
     return { error: TEAM_PHOTO_TOO_LARGE };

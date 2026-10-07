@@ -3,10 +3,12 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { applyToCompetitions } from "@/app/actions/team";
+import { CompetitionTypeBadge } from "@/components/CompetitionTypeBadge";
 
 type Comp = {
   id: string;
   name: string;
+  isPartner: boolean;
   dates: string;
   location: string;
   venue: string;
@@ -59,7 +61,10 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
             />
             <label htmlFor={`comp-${comp.id}`} className="flex-1 cursor-pointer">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <span className="font-medium">{comp.name}</span>
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium">{comp.name}</span>
+                  <CompetitionTypeBadge isPartner={comp.isPartner} />
+                </span>
                 <Link
                   href={`/comps/${comp.id}`}
                   className="text-xs text-muted underline"
@@ -91,6 +96,7 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
             {closed.map((comp) => (
               <li key={comp.id}>
                 {comp.name}
+                {" "}<CompetitionTypeBadge isPartner={comp.isPartner} />
                 {comp.dates ? ` — ${comp.dates}` : ""}
                 {comp.deadline ? ` · Apps close ${comp.deadline}` : ""}
               </li>
