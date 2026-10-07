@@ -40,11 +40,11 @@ export default async function OpsCompetitionsPage() {
         orderBy: { requestedAt: "asc" },
       },
       judgeInvites: { orderBy: { createdAt: "asc" } },
-      registrationAccess: {
+      moderatorAccess: {
         include: { user: { select: { email: true, name: true } } },
         orderBy: { createdAt: "asc" },
       },
-      registrationInvites: { orderBy: { createdAt: "asc" } },
+      moderatorInvites: { orderBy: { createdAt: "asc" } },
     },
   });
   const claimed = competitions.filter((comp) => comp.claimedAt || comp.userId).length;
@@ -56,7 +56,7 @@ export default async function OpsCompetitionsPage() {
         <h1 className="font-heading text-4xl">Competitions</h1>
         <p className="mt-2 max-w-2xl text-muted">
           Every competition listing. Open one with its arrow to see all of its
-          event and production details, admins, REG access, judges, and
+          event and production details, admins, moderator access, judges, and
           applications. Live judging stays on the Comp Dashboard.
         </p>
       </div>
@@ -272,16 +272,16 @@ export default async function OpsCompetitionsPage() {
                   </PanelSection>
                 ) : null}
 
-                <PanelSection title="REG access">
-                  {competition.registrationAccess.length || competition.registrationInvites.length ? (
+                <PanelSection title="Moderator access">
+                  {competition.moderatorAccess.length || competition.moderatorInvites.length ? (
                     <ul className="divide-y divide-line rounded-lg border border-line text-sm">
-                      {competition.registrationAccess.map((row) => (
+                      {competition.moderatorAccess.map((row) => (
                         <li key={row.id} className="px-3 py-2">
                           {row.user.name ? `${row.user.name} · ` : ""}
                           {row.user.email}
                         </li>
                       ))}
-                      {competition.registrationInvites.map((invite) => (
+                      {competition.moderatorInvites.map((invite) => (
                         <li key={invite.id} className="px-3 py-2">
                           {invite.email}
                           <span className="text-muted"> · waiting to log in</span>
@@ -290,7 +290,7 @@ export default async function OpsCompetitionsPage() {
                     </ul>
                   ) : (
                     <p className="text-sm text-muted">
-                      No REG account assigned. Grant one from Circuit ops.
+                      No moderator assigned. Grant access from Circuit ops.
                     </p>
                   )}
                 </PanelSection>

@@ -22,7 +22,7 @@ function slotsMatchOrder(slots: SlotRow[], order: OrderRow[]): boolean {
 
 /**
  * One shuffled team order per competition. Every judge's slots copy it, so
- * "Team 3" is the same team for every judge and for REG.
+ * "Team 3" is the same team for every judge and for Moderator.
  */
 export async function ensureSharedViewingOrder(
   competitionId: string,

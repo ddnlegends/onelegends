@@ -68,7 +68,7 @@ export default async function JudgeTeamPage({
           </p>
           <h1 className="font-heading text-4xl">Team {position}</h1>
           <p className="mt-2 text-sm text-muted">
-            {index + 1} of {slots.length}. Registration plays the video on a
+            {index + 1} of {slots.length}. The moderator plays the video on a
             shared screen. Every judge sees the same Team number.
           </p>
         </div>

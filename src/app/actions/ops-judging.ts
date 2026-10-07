@@ -24,7 +24,7 @@ function revalidateJudging(competitionId: string) {
   revalidatePath("/comp/judges");
   revalidatePath("/comp/results");
   revalidatePath("/ops/comps", "layout");
-  revalidatePath("/reg", "layout");
+  revalidatePath("/moderator", "layout");
   revalidatePath("/judge");
   revalidatePath(`/judge/${competitionId}`, "layout");
   revalidatePath("/", "layout");
@@ -78,7 +78,7 @@ export async function setJudgingOpen(
     revalidateJudging(competition.id);
     return {
       ok: true,
-      message: "Judging is open. REG can start live viewing and judges can score.",
+      message: "Judging is open. The moderator can start live viewing and judges can score.",
     };
   }
 

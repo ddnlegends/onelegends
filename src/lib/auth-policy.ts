@@ -4,7 +4,8 @@ const LEGACY_TEST_EMAILS = new Set([
   "legendstestadmin@gmail.com",
   "legendstestcomp@gmail.com",
   "legendstestuser@gmail.com",
-  "legendstestreg@gmail.com",
+  "legendstestreg@gmail.com", // Existing test account keeps its login.
+  "legendstestmoderator@gmail.com",
 ]);
 
 export function isLegacyTestLogin(email: string): boolean {

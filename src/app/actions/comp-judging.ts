@@ -4,7 +4,7 @@
  * Competition-admin judging settings: approve or deny judge requests and set
  * the required judge count N.
  *
- * Callers must be an admin of their active competition. REG staff for a
+ * Callers must be an admin of their active competition. Moderator staff for a
  * competition can never be approved to judge it. Lowering N can release
  * results immediately, so it goes through `maybeReleaseResults`.
  */
@@ -34,8 +34,8 @@ export async function decideJudgeRequest(
   }
 
   if (decision === "APPROVED") {
-    const [regAccess, regInvite] = await Promise.all([
-      prisma.registrationAccess.findUnique({
+    const [moderatorAccess, moderatorInvite] = await Promise.all([
+      prisma.moderatorAccess.findUnique({
         where: {
           userId_competitionId: {
             userId: assignment.judge.userId,
@@ -44,7 +44,7 @@ export async function decideJudgeRequest(
         },
         select: { id: true },
       }),
-      prisma.registrationInvite.findUnique({
+      prisma.moderatorInvite.findUnique({
         where: {
           competitionId_email: {
             competitionId: competition.id,
@@ -54,8 +54,8 @@ export async function decideJudgeRequest(
         select: { id: true },
       }),
     ]);
-    if (regAccess || regInvite) {
-      return { error: "Registration staff for this competition cannot judge it." };
+    if (moderatorAccess || moderatorInvite) {
+      return { error: "Moderators for this competition cannot judge it." };
     }
   }
 

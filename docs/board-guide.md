@@ -9,8 +9,8 @@ This guide is for the Legends board, circuit operations, and incoming officers. 
 | Team admin | Own team profile, roster, invitations, applications, and payment guidance. |
 | Competition admin | Own competition settings, aggregate applicant stats, judges, and results. Team names and full rosters are available only for teams that applied to that competition after results release. |
 | Judge | Anonymous AV packet and own scores. Never receives named team profiles. |
-| Registration staff | Assigned competition's live viewing: anonymous team numbers, each team's AV, and a checkmark per judge per team. Never sees team names. |
-| Circuit tech admin | **Teams** and **Competitions** (click a row's arrow to expand every detail, including stage size, lighting, production notes, owners, judges, REG access, and applications), **Comp Dashboard** for live judging, and **Export data** for .xlsx/CSV downloads. |
+| Moderator | Assigned competition's live viewing: anonymous team numbers, each team's AV, and a checkmark per judge per team. Never sees team names. |
+| Circuit tech admin | **Teams** and **Competitions** (click a row's arrow to expand every detail, including stage size, lighting, production notes, owners, judges, moderator access, and applications), **Comp Dashboard** for live judging, and **Export data** for .xlsx/CSV downloads. |
 
 Access checks run in server pages and actions. Giving someone a claim code or inviting them grants access only after they claim or approve it. Do not share test login credentials as a way to grant a normal role.
 
@@ -20,8 +20,8 @@ Access checks run in server pages and actions. Giving someone a claim code or in
 2. Circuit ops creates team listings and competition listings in the admin dashboard. Give each primary contact the correct one-time claim code through your normal secure channel. A Google sign-in alone does not create or claim a team.
 3. First-time users must use **Register** (Continue with Google there). **Log In** with a Google account that has no OneLegends account sends them to Register with a notice instead of creating one.
 4. Primary team and competition admins claim their listings and invite secondary admins by email. The app shows invitations at login and on the dashboard; it does not send email. Tell invitees to register with the same Google email as the invitation.
-5. Teams complete the profile, photo, Drive AV, and roster. A complete profile is required to apply. Ask teams to give the Drive file a neutral name (not the team name), because the title can show when registration shares the video.
-6. Competition admins fill dates, venue, production details, application deadline, and required judge count. They invite judges and registration staff. The deadline is entered and shown in each viewer's own timezone, with the zone labeled.
+5. Teams complete the profile, photo, Drive AV, and roster. A complete profile is required to apply. Ask teams to give the Drive file a neutral name (not the team name), because the title can show when the moderator shares the video.
+6. Competition admins fill dates, venue, production details, application deadline, and required judge count. They invite judges and moderators. The deadline is entered and shown in each viewer's own timezone, with the zone labeled.
 
 ## Payments and eligibility
 
@@ -33,7 +33,7 @@ Circuit ops may block a team from new applications on its dashboard. Enter a cle
 
 Applications can be accepted only while the competition is marked as accepting them, before its deadline and before results release. A team must have a complete profile and no circuit block. Competition admins see applicant counts and aggregate stats while judging is pending; team identities remain sealed.
 
-Close applications before circuit ops opens judging. Opening judging also forces applications closed, and the database prevents both flags being true at once. Judges score anonymous packets. Registration staff coordinate the live AV. Once a team has a place in a viewing order, it cannot change its AV link until that competition releases results; if a video will not play, fix the sharing setting on the same Drive file instead. After the required number of approved judges submit, results release and scores lock. A competition admin can then open **Viewing Results** and **Applied Teams** for names, status decisions, full rosters, AV, dietary restrictions, and shirt sizes. That view contains only teams that applied to the active competition. Circuit tech admins can always inspect all registered teams through **Teams**.
+Close applications before circuit ops opens judging. Opening judging also forces applications closed, and the database prevents both flags being true at once. Judges score anonymous packets. The moderator coordinates the live AV. Once a team has a place in a viewing order, it cannot change its AV link until that competition releases results; if a video will not play, fix the sharing setting on the same Drive file instead. After the required number of approved judges submit, results release and scores lock. A competition admin can then open **Viewing Results** and **Applied Teams** for names, status decisions, full rosters, AV, dietary restrictions, and shirt sizes. That view contains only teams that applied to the active competition. Circuit tech admins can always inspect all registered teams through **Teams**.
 
 See [judging.md](judging.md) for the scoring rubric and full judging flow. Coordinate any manual change to the required judge count before results release.
 
@@ -42,7 +42,7 @@ See [judging.md](judging.md) for the scoring rubric and full judging flow. Coord
 Use a reset only when a listing was claimed by the wrong person or its contact has left. It cannot be undone.
 
 - **Team reset** removes every team admin and pending invite, and issues a new claim code. The profile, roster, and applications stay.
-- **Competition reset** removes every competition admin and admin invite, judge invite, and REG access, closes judging, and issues a new claim code. Judges are removed too unless results have already been released, so historical scores stay intact.
+- **Competition reset** removes every competition admin and admin invite, judge invite, and moderator access, closes judging, and issues a new claim code. Judges are removed too unless results have already been released, so historical scores stay intact.
 
 The new code appears in the confirmation message and on the row in **Teams** or **Competitions**. Send it to the right contact through a secure channel.
 

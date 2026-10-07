@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Keeps judge pages in step with REG. Both components poll
+ * Keeps judge pages in step with Moderator. Both components poll
  * `/api/live/[competitionId]` until the judge submits their packet, pausing
  * while the tab is hidden.
  * `LiveTeamFollower` moves an open score sheet to the team on screen unless the
@@ -109,7 +109,7 @@ export function LiveTeamFollower({
         <span className="h-2.5 w-2.5 rounded-full bg-muted/50" />
         <span className="text-muted">
           {live.judgingOpen
-            ? "Waiting for registration to put a team on screen. Your sheet switches on its own."
+            ? "Waiting for moderator to put a team on screen. Your sheet switches on its own."
             : "Judging is closed right now."}
         </span>
       </div>
@@ -125,7 +125,7 @@ export function LiveTeamFollower({
         </span>
         <span className="font-semibold text-accent">Live now</span>
         <span className="text-muted">
-          Every judge is on Team {position}. This sheet follows registration.
+          Every judge is on Team {position}. This sheet follows moderator.
         </span>
       </div>
     );
@@ -188,7 +188,7 @@ export function LiveTeamBanner({
     return (
       <div className="flex flex-wrap items-center gap-3 rounded-xl border border-line bg-blush px-4 py-4 text-sm text-muted">
         <span className="h-2.5 w-2.5 rounded-full bg-muted/50" />
-        Waiting for registration to put the first team on screen.
+        Waiting for moderator to put the first team on screen.
       </div>
     );
   }

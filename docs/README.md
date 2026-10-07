@@ -3,7 +3,7 @@
 | File | Contents |
 | --- | --- |
 | [setup.md](setup.md) | Install, env, migrate, seed, run |
-| [judging.md](judging.md) | Blind packets, REG live viewing, ops open/close, Comp Dashboard, when names unlock |
+| [judging.md](judging.md) | Blind packets, moderator live viewing, ops open/close, Comp Dashboard, when names unlock |
 | [board-guide.md](board-guide.md) | Day-to-day board and circuit ops workflows, payment, access, claim resets, rosters, and exports |
 | [tech-chair-handoff.md](tech-chair-handoff.md) | Architecture, deployment, safety, and annual technical handoff |
 | [workflows.md](workflows.md) | Step-by-step recipes for common code changes, tests, commits, and deploys |

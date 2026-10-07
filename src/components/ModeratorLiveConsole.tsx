@@ -1,14 +1,14 @@
 "use client";
 
 /**
- * REG's live viewing console: Show / Next / Clear controls, the anonymous
+ * Moderator's live viewing console: Show / Next / Clear controls, the anonymous
  * viewing order, and a checkmark per judge per team. It receives Team numbers
  * and judge names only, never team names; the video player is passed in as
- * `children` by the REG page.
+ * `children` by the Moderator page.
  */
 import type { ReactNode } from "react";
 import { useActionState } from "react";
-import { setLiveTeam } from "@/app/actions/registration";
+import { setLiveTeam } from "@/app/actions/moderator";
 import { SaveNotice } from "@/components/SaveNotice";
 
 type TeamRow = {
@@ -46,7 +46,7 @@ function ShowButton({
   );
 }
 
-export function RegLiveConsole({
+export function ModeratorLiveConsole({
   competitionId,
   teams,
   livePosition,

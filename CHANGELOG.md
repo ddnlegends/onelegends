@@ -5,8 +5,9 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 ## Unreleased
 
 - Replaced the placeholder PayPal link on the application form and Payments page with Zelle or PayPal instructions for `legends@desidancenetwork.org`.
+- Renamed the live viewing role to Moderator across the site, access controls, exports, and documentation. Existing assignments remain in place.
 - Performance pass with no behavior changes:
-  - Auto-refresh (REG, ops live pages) and the judge live poll pause while the tab is hidden or the phone is locked, and catch up immediately when it is visible again (`usePollWhileVisible`).
+  - Auto-refresh (moderator and ops live pages) and the judge live poll pause while the tab is hidden or the phone is locked, and catch up immediately when it is visible again (`usePollWhileVisible`).
   - Links no longer force a full background render of their target page; they prefetch the loading skeleton (the Next default). The judge's previous/next and live-team links keep full prefetch.
   - Indexes on `Dancer.teamId`, `JudgeScore.assignmentId`, and `JudgeViewingSlot.applicationId` (migration `20261005230000_foreign_key_indexes`).
   - Prisma no longer ships to the browser: pure judging helpers moved to `src/lib/judging-rules.ts` (re-exported from `judging.ts`), photo helpers to `team-photo-rules.ts`.
@@ -25,11 +26,11 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 - Score saves and packet submits lock the judge's assignment and re-check state inside one transaction, so a save can no longer land after submit and a packet cannot submit with missing scores.
 - Results release exactly once even when the last judges submit together; the applicant Google Sheet syncs at that moment. Release moved to `src/lib/release.ts`.
 - Score-sheet saves for a team go through one ordered queue, so a quick comment followed by a score change can no longer save out of order.
-- Judge and REG pages refresh on their own when judging opens, pauses, or ends, and stop polling once the judge submits.
+- Judge and moderator pages refresh on their own when judging opens, pauses, or ends, and stop polling once the judge submits.
 - A team cannot change its AV link while it sits in an unreleased viewing order.
 
 **Accounts and admin**
-- Resetting a team or competition claim issues a new, cryptographically random claim code. A competition reset also clears judge invites, REG access, and (before release) judges.
+- Resetting a team or competition claim issues a new, cryptographically random claim code. A competition reset also clears judge invites, moderator access, and (before release) judges.
 - Two admins can no longer remove each other at the same moment and leave zero platform admins.
 - The applicant Google Sheet refuses to sync before results release.
 
@@ -39,20 +40,20 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 **Testing and docs**
 - Unit tests (Vitest) and browser tests (Playwright) with a localhost-only fixture seed; both run in GitHub Actions on every push and pull request.
 - Module headers on key files, `docs/workflows.md`, this changelog, and `docs/action-items.md` (replaces `feature-implementation.md`).
-- All docs updated for Google Log In vs Register, anonymous REG, exports, and claim resets.
+- All docs updated for Google Log In vs Register, anonymous moderator viewing, exports, and claim resets.
 
 ## 2026-10-05
 
 - `091a2f7` Tech-admin pages check access themselves (a layout-only check had let logged-out visitors receive claim codes and emails). Teams and Competitions became expandable rows with every detail, including stage size, lighting, and production notes.
 - `ce90837` Competitions link added to the tech-admin top nav.
 - `bf7d879` Tech-admin data export: pick datasets and download one .xlsx workbook or a single-table CSV.
-- `4ef8be2` REG live viewing is anonymous (Team numbers and per-judge checkmarks only); the separate presentation tab was removed. Tech-admin management split into Teams and Competitions pages.
+- `4ef8be2` Moderator live viewing is anonymous (Team numbers and per-judge checkmarks only); the separate presentation tab was removed. Tech-admin management split into Teams and Competitions pages.
 - `952a14c` Google Log In only signs in existing accounts; new users must Register. Tech-admin dashboard redesign.
 
 ## 2026-10-04
 
 - `f15e7f6` Payments instructions page, circuit-admin Teams view with full team details, competition Applied Teams after release, and the Google-first login form.
-- `74d63c5` Live judging and registration: one shared viewing order, REG drives the team on screen, judges' sheets follow.
+- `74d63c5` Live judging and moderation: one shared viewing order, the moderator drives the team on screen, and judges' sheets follow.
 - `4a769ae` Optional Google sign-in and tech-admin invites; README describes OneLegends for the circuit.
 
 ## 2026-09-29

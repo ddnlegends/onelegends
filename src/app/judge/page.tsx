@@ -32,7 +32,7 @@ export default async function JudgeDashboardPage() {
         <h1 className="font-heading text-4xl">Judging</h1>
         <p className="mt-2 max-w-2xl text-muted">
           Competitions invite you by email. You approve that invite on your
-          dashboard. On viewing day, registration shares each team’s video on
+          dashboard. On viewing day, moderator shares each team’s video on
           screen and your anonymous score sheet follows along. You never see
           names.
         </p>

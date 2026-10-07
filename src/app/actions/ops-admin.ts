@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * Circuit tech-admin access controls: REG grants and invites, and platform
+ * Circuit tech-admin access controls: Moderator grants and invites, and platform
  * admin invites and removal.
  *
  * Every action requires `platformAdmin`. Removing an admin takes an advisory
@@ -16,18 +16,18 @@ import { isPlatformAdmin } from "@/lib/team-access";
 function revalidateOps() {
   revalidatePath("/dashboard");
   revalidatePath("/ops/comps", "layout");
-  revalidatePath("/reg", "layout");
+  revalidatePath("/moderator", "layout");
   revalidatePath("/", "layout");
 }
 
-export async function grantRegistrationAccess(
+export async function grantModeratorAccess(
   _prev: { error?: string; ok?: boolean; message?: string } | undefined,
   formData: FormData,
 ): Promise<{ error?: string; ok?: boolean; message?: string }> {
   const user = await requireUser();
   if (!user) return { error: "You must be signed in." };
   if (!(await isPlatformAdmin(user.id))) {
-    return { error: "Only circuit ops can grant registration access." };
+    return { error: "Only circuit ops can grant moderator access." };
   }
 
   const parsed = z
@@ -68,7 +68,7 @@ export async function grantRegistrationAccess(
   if (account?.platformAdmin) {
     return {
       error:
-        "Tech admins follow judging from Comp Dashboard. Use a separate registration account.",
+        "Tech admins follow judging from Comp Dashboard. Use a separate moderator account.",
     };
   }
   const judgeInvite = await prisma.judgeInvite.findUnique({
@@ -82,17 +82,17 @@ export async function grantRegistrationAccess(
   }
 
   if (account) {
-    const existing = await prisma.registrationAccess.findUnique({
+    const existing = await prisma.moderatorAccess.findUnique({
       where: { userId_competitionId: { userId: account.id, competitionId } },
       select: { id: true },
     });
     if (existing) {
-      return { error: `${email} already runs registration for ${competition.name}.` };
+      return { error: `${email} is already a moderator for ${competition.name}.` };
     }
-    await prisma.registrationAccess.create({
+    await prisma.moderatorAccess.create({
       data: { userId: account.id, competitionId },
     });
-    await prisma.registrationInvite.deleteMany({ where: { competitionId, email } });
+    await prisma.moderatorInvite.deleteMany({ where: { competitionId, email } });
     revalidateOps();
     return {
       ok: true,
@@ -100,7 +100,7 @@ export async function grantRegistrationAccess(
     };
   }
 
-  await prisma.registrationInvite.upsert({
+  await prisma.moderatorInvite.upsert({
     where: { competitionId_email: { competitionId, email } },
     create: { competitionId, email },
     update: {},
@@ -108,46 +108,46 @@ export async function grantRegistrationAccess(
   revalidateOps();
   return {
     ok: true,
-    message: `${email} gets registration for ${competition.name} as soon as they log in or register.`,
+    message: `${email} gets moderator access for ${competition.name} as soon as they log in or register.`,
   };
 }
 
-export async function removeRegistrationAccess(
+export async function removeModeratorAccess(
   _prev: { error?: string; ok?: boolean } | undefined,
   formData: FormData,
 ): Promise<{ error?: string; ok?: boolean }> {
   const user = await requireUser();
   if (!user) return { error: "You must be signed in." };
   if (!(await isPlatformAdmin(user.id))) {
-    return { error: "Only circuit ops can remove registration access." };
+    return { error: "Only circuit ops can remove moderator access." };
   }
   const accessId = String(formData.get("accessId") ?? "");
-  const row = await prisma.registrationAccess.findUnique({
+  const row = await prisma.moderatorAccess.findUnique({
     where: { id: accessId },
     select: { id: true },
   });
-  if (!row) return { error: "Registration access not found." };
-  await prisma.registrationAccess.delete({ where: { id: row.id } });
+  if (!row) return { error: "Moderator access not found." };
+  await prisma.moderatorAccess.delete({ where: { id: row.id } });
   revalidateOps();
   return { ok: true };
 }
 
-export async function cancelRegistrationInvite(
+export async function cancelModeratorInvite(
   _prev: { error?: string; ok?: boolean } | undefined,
   formData: FormData,
 ): Promise<{ error?: string; ok?: boolean }> {
   const user = await requireUser();
   if (!user) return { error: "You must be signed in." };
   if (!(await isPlatformAdmin(user.id))) {
-    return { error: "Only circuit ops can cancel registration invites." };
+    return { error: "Only circuit ops can cancel moderator invites." };
   }
   const inviteId = String(formData.get("inviteId") ?? "");
-  const invite = await prisma.registrationInvite.findUnique({
+  const invite = await prisma.moderatorInvite.findUnique({
     where: { id: inviteId },
     select: { id: true },
   });
   if (!invite) return { error: "Invite not found." };
-  await prisma.registrationInvite.delete({ where: { id: invite.id } });
+  await prisma.moderatorInvite.delete({ where: { id: invite.id } });
   revalidateOps();
   return { ok: true };
 }

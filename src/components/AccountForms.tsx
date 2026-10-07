@@ -36,10 +36,10 @@ import {
 } from "@/app/actions/team-access";
 import {
   cancelPlatformAdminInvite,
-  cancelRegistrationInvite,
-  grantRegistrationAccess,
+  cancelModeratorInvite,
+  grantModeratorAccess,
   invitePlatformAdmin,
-  removeRegistrationAccess,
+  removeModeratorAccess,
   revokePlatformAdmin,
 } from "@/app/actions/ops-admin";
 import { SaveNotice } from "@/components/SaveNotice";
@@ -688,7 +688,7 @@ export function ResetCompClaimForm({
       <input type="hidden" name="competitionId" value={competitionId} />
       <p className="text-sm">
         Are you sure? This removes every admin from{" "}
-        <strong>{competitionName}</strong>, its judges, and REG access, then
+        <strong>{competitionName}</strong>, its judges, and moderator access, then
         issues a new bid code (the old one stops working).
       </p>
       <div className="flex gap-2">
@@ -761,13 +761,13 @@ export function CancelPlatformAdminInviteForm({
   );
 }
 
-export function GrantRegistrationForm({
+export function GrantModeratorForm({
   competitions,
 }: {
   competitions: { id: string; name: string }[];
 }) {
   const [state, formAction, pending] = useActionState(
-    grantRegistrationAccess,
+    grantModeratorAccess,
     undefined,
   );
   const [email, setEmail] = useState("");
@@ -778,8 +778,8 @@ export function GrantRegistrationForm({
     <form action={formAction} className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
         <div className="field min-w-0">
-          <label htmlFor="reg-competition">Competition</label>
-          <select id="reg-competition" name="competitionId" required defaultValue="">
+          <label htmlFor="moderator-competition">Competition</label>
+          <select id="moderator-competition" name="competitionId" required defaultValue="">
             <option value="" disabled>
               Pick a competition
             </option>
@@ -791,23 +791,23 @@ export function GrantRegistrationForm({
           </select>
         </div>
         <div className="field min-w-0">
-          <label htmlFor="reg-email">Registration email</label>
+          <label htmlFor="moderator-email">Moderator email</label>
           <input
-            id="reg-email"
+            id="moderator-email"
             name="email"
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="legendstestreg@gmail.com"
+            placeholder="legendstestmoderator@gmail.com"
           />
         </div>
         <button className="btn btn-primary" disabled={pending} type="submit">
-          {pending ? "Granting…" : "Grant REG"}
+          {pending ? "Granting…" : "Grant Moderator"}
         </button>
       </div>
       <p className="text-sm text-muted">
-        No email is sent. REG accounts play the videos and pick the team judges
+        No email is sent. Moderator accounts play the videos and pick the team judges
         score. If the account does not exist yet, access applies when they log
         in or register.
       </p>
@@ -816,9 +816,9 @@ export function GrantRegistrationForm({
   );
 }
 
-export function RemoveRegistrationAccessForm({ accessId }: { accessId: string }) {
+export function RemoveModeratorAccessForm({ accessId }: { accessId: string }) {
   const [state, formAction, pending] = useActionState(
-    removeRegistrationAccess,
+    removeModeratorAccess,
     undefined,
   );
   return (
@@ -832,9 +832,9 @@ export function RemoveRegistrationAccessForm({ accessId }: { accessId: string })
   );
 }
 
-export function CancelRegistrationInviteForm({ inviteId }: { inviteId: string }) {
+export function CancelModeratorInviteForm({ inviteId }: { inviteId: string }) {
   const [state, formAction, pending] = useActionState(
-    cancelRegistrationInvite,
+    cancelModeratorInvite,
     undefined,
   );
   return (

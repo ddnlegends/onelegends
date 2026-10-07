@@ -104,13 +104,13 @@ export const getNavAccess = cache(async (userId: string) => {
           },
         },
       },
-      registrationAccess: { take: 1, select: { id: true } },
+      moderatorAccess: { take: 1, select: { id: true } },
     },
   });
   const ops = Boolean(user?.platformAdmin);
   return {
     ops,
-    registrationAccess: Boolean(user?.registrationAccess.length),
+    moderatorAccess: Boolean(user?.moderatorAccess.length),
     teamAccess: Boolean(user?.memberships.length),
     compAccess:
       ops ||

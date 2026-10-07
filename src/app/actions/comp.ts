@@ -123,7 +123,7 @@ export async function saveCompProfile(
   revalidatePath("/comp/judges");
   revalidatePath("/comp/results");
   revalidatePath("/ops/comps", "layout");
-  revalidatePath("/reg", "layout");
+  revalidatePath("/moderator", "layout");
   revalidatePath("/judge");
   revalidatePath("/");
   revalidatePath("/dashboard");

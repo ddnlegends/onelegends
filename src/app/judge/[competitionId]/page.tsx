@@ -62,7 +62,7 @@ export default async function JudgePacketPage({
         </p>
         <h1 className="font-heading text-4xl">{fresh.competition.name}</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          Registration plays each video on a shared screen. Your sheet follows
+          The moderator plays each video on a shared screen. Your sheet follows
           the team on screen, labeled Team 1, Team 2, … in the same order for
           every judge. You never see names.
         </p>

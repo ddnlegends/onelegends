@@ -18,8 +18,8 @@ async function wipeAppData() {
   await prisma.teamProfile.deleteMany();
   await prisma.compInvite.deleteMany();
   await prisma.competitionMembership.deleteMany();
-  await prisma.registrationInvite.deleteMany();
-  await prisma.registrationAccess.deleteMany();
+  await prisma.moderatorInvite.deleteMany();
+  await prisma.moderatorAccess.deleteMany();
   await prisma.platformAdminInvite.deleteMany();
   await prisma.user.deleteMany();
   await prisma.competitionProfile.deleteMany();
@@ -65,10 +65,10 @@ async function main() {
 
   await prisma.user.create({
     data: {
-      email: "legendstestreg@gmail.com",
-      passwordHash: await bcrypt.hash("Legendsreg@123", 10),
+      email: "legendstestmoderator@gmail.com",
+      passwordHash: await bcrypt.hash("LegendsModerator@123", 10),
       role: "TEAM",
-      name: "Test Registration",
+      name: "Test Moderator",
     },
   });
 
@@ -79,7 +79,7 @@ async function main() {
     "Team circuit ops: legendstech@desidancenetwork.org (Legends Admin). No dance teams until ops creates a team and hands out a claim code.",
   );
   console.log(
-    "Test Registration: legendstestreg@gmail.com. Grant it REG for a competition from the circuit ops dashboard.",
+    "Test Moderator: legendstestmoderator@gmail.com. Grant moderator access for a competition from the circuit ops dashboard.",
   );
 }
 

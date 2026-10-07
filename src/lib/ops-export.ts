@@ -59,7 +59,7 @@ export const EXPORT_DATASETS = [
   {
     key: "access",
     label: "Accounts and access",
-    description: "Tech admins, team and competition owners, REG access, and open invites.",
+    description: "Tech admins, team and competition owners, Moderator access, and open invites.",
   },
 ] as const;
 
@@ -470,8 +470,8 @@ async function accessTable(competitionId?: string): Promise<ExportCell[][]> {
     teamInvites,
     compMemberships,
     compInvites,
-    regAccess,
-    regInvites,
+    moderatorAccess,
+    moderatorInvites,
   ] = await Promise.all([
     competitionId
       ? Promise.resolve([])
@@ -506,7 +506,7 @@ async function accessTable(competitionId?: string): Promise<ExportCell[][]> {
       orderBy: [{ competition: { name: "asc" } }, { createdAt: "asc" }],
       include: { competition: { select: { name: true } } },
     }),
-    prisma.registrationAccess.findMany({
+    prisma.moderatorAccess.findMany({
       where: compWhere,
       orderBy: [{ competition: { name: "asc" } }, { createdAt: "asc" }],
       include: {
@@ -514,7 +514,7 @@ async function accessTable(competitionId?: string): Promise<ExportCell[][]> {
         user: { select: { email: true, name: true } },
       },
     }),
-    prisma.registrationInvite.findMany({
+    prisma.moderatorInvite.findMany({
       where: compWhere,
       orderBy: [{ competition: { name: "asc" } }, { createdAt: "asc" }],
       include: { competition: { select: { name: true } } },
@@ -582,21 +582,21 @@ async function accessTable(competitionId?: string): Promise<ExportCell[][]> {
       "Invited (no account yet)",
       stamp(invite.createdAt),
     ]),
-    ...regAccess.map((row) => [
-      "REG",
+    ...moderatorAccess.map((row) => [
+      "Moderator",
       row.competition.name,
       row.user.email,
       row.user.name,
-      "Registration",
+      "Moderator",
       "Active",
       stamp(row.createdAt),
     ]),
-    ...regInvites.map((invite) => [
-      "REG",
+    ...moderatorInvites.map((invite) => [
+      "Moderator",
       invite.competition.name,
       invite.email,
       "",
-      "Registration",
+      "Moderator",
       "Invited (no account yet)",
       stamp(invite.createdAt),
     ]),

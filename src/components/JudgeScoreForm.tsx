@@ -3,7 +3,7 @@
 /**
  * One judge's rubric sheet for one anonymous team. Scores save the moment a
  * number is picked; comments save after a short pause, on blur, and when the
- * sheet unmounts (for example when it follows REG to the next team). All saves
+ * sheet unmounts (for example when it follows Moderator to the next team). All saves
  * for a sheet go through one ordered queue so an older save never overwrites a
  * newer one. The form never receives a team name.
  */
