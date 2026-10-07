@@ -38,6 +38,7 @@ export function isCompetitionClaimed(comp: {
 export function isCompetitionOpen(
   comp: {
     acceptingApps: boolean;
+    earlyApplicationDeadline?: Date | null;
     applicationDeadline: Date | null;
     resultsReleasedAt?: Date | null;
   },
@@ -45,6 +46,7 @@ export function isCompetitionOpen(
 ): boolean {
   if (comp.resultsReleasedAt) return false;
   if (!comp.acceptingApps) return false;
+  // The early deadline is informational; only the late deadline closes applications.
   if (comp.applicationDeadline && now > comp.applicationDeadline) return false;
   return true;
 }

@@ -10,6 +10,7 @@ This is the starting point for future maintainers. Read [setup.md](setup.md) to 
 - **Data:** Supabase PostgreSQL through Prisma in `src/lib/prisma.ts`; schema in `prisma/schema.prisma`; versioned SQL in `prisma/migrations`. `DATABASE_URL` uses the transaction pooler for app queries; `DIRECT_URL` uses the session/direct connection for migrations.
 - **Media:** Team logos are stored in the database and served by `src/app/api/teams/[id]/photo`. AVs are external Google Drive file links; no video upload or transcoding is provided.
 - **Competition type:** `CompetitionProfile.isPartner` controls the Partner/Non-partner label. The migration defaults existing listings to Partner; circuit ops can set or change the type. It does not alter application or judging rules.
+- **Application deadlines:** `earlyApplicationDeadline` is an optional date shown to teams. The existing `applicationDeadline` column is the late deadline and remains the automatic application cutoff, so existing dates keep their behavior.
 - **Integrations:** Optional applicant Google Sheet sync uses a service account (`src/lib/sheets.ts`) and refuses to run before results release. Tech-admin downloads are built in `src/lib/ops-export.ts` and served by `src/app/api/ops/export/route.ts` (platform admins only; `dataset` can repeat, `format` is `xlsx` or `csv`, optional `competitionId`). Payment is manual via Zelle or PayPal to `legends@desidancenetwork.org`, and no payment status is inferred by the app.
 
 ## Data and permission model

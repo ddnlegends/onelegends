@@ -99,7 +99,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Set Comp Details",
-        body: "Dates, city, venue, stage, lighting, production notes, application deadline, and required judge count (N). The competition name stays locked to the official listing.",
+        body: "Dates, city, venue, stage, lighting, production notes, early and late application deadlines, and required judge count (N). The late deadline closes applications. The competition name stays locked to the official listing.",
       },
       {
         title: "Invite judges by email",

@@ -37,6 +37,7 @@ export default async function CompDashboardPage() {
       location: true,
       eventDate: true,
       acceptingApps: true,
+      earlyApplicationDeadline: true,
       applicationDeadline: true,
       claimedAt: true,
       userId: true,
@@ -186,9 +187,14 @@ export default async function CompDashboardPage() {
                         {comp.status === "UNCLAIMED"
                           ? "Waiting for a competition admin to claim it."
                           : comp.status === "APPS_OPEN"
-                            ? comp.applicationDeadline
-                              ? `Apps close ${formatDateTime(comp.applicationDeadline)}`
-                              : "Teams can still apply."
+                            ? [
+                                comp.earlyApplicationDeadline
+                                  ? `Early deadline ${formatDateTime(comp.earlyApplicationDeadline)}`
+                                  : null,
+                                comp.applicationDeadline
+                                  ? `Late deadline ${formatDateTime(comp.applicationDeadline)}`
+                                  : null,
+                              ].filter(Boolean).join(" · ") || "Teams can still apply."
                             : comp._count.moderatorAccess === 0
                               ? "No moderator assigned yet. Grant access before viewing."
                               : "Open judging when viewing starts."}

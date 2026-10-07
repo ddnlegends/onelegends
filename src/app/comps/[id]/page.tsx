@@ -41,10 +41,16 @@ export default async function CompPublicPage({
     ["Lighting", comp.lighting],
     ["Production", comp.productionNotes],
     [
-      "Application deadline",
+      "Early application deadline",
+      comp.earlyApplicationDeadline
+        ? formatDateTime(comp.earlyApplicationDeadline)
+        : "Not set",
+    ],
+    [
+      "Late application deadline",
       comp.applicationDeadline
         ? formatDateTime(comp.applicationDeadline)
-        : "No clock deadline",
+        : "No automatic close",
     ],
   ];
 

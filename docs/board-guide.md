@@ -21,7 +21,7 @@ Access checks run in server pages and actions. Giving someone a claim code or in
 3. First-time users must use **Register** (Continue with Google there). **Log In** with a Google account that has no OneLegends account sends them to Register with a notice instead of creating one.
 4. Primary team and competition admins claim their listings and invite secondary admins by email. The app shows invitations at login and on the dashboard; it does not send email. Tell invitees to register with the same Google email as the invitation.
 5. Teams complete the profile, logo, Drive AV, and roster. A complete profile is required to apply. Ask teams to give the Drive file a neutral name (not the team name), because the title can show when the moderator shares the video.
-6. Competition admins fill dates, venue, production details, application deadline, and required judge count. They invite judges and moderators. The deadline is entered and shown in each viewer's own timezone, with the zone labeled.
+6. Competition admins fill dates, venue, production details, early and late application deadlines, and required judge count. They invite judges and moderators. Deadlines are entered and shown in each viewer's own timezone, with the zone labeled. The early deadline is informational; the late deadline automatically closes applications.
 
 ## Payments and eligibility
 
@@ -31,7 +31,7 @@ Circuit ops may block a team from new applications on its dashboard. Enter a cle
 
 ## Applications, viewing, and results
 
-Applications can be accepted only while the competition is marked as accepting them, before its deadline and before results release. A team must have a complete profile and no circuit block. Competition admins see applicant counts and aggregate stats while judging is pending; team identities remain sealed.
+Applications can be accepted only while the competition is marked as accepting them, before its late deadline and before results release. A team must have a complete profile and no circuit block. Competition admins see applicant counts and aggregate stats while judging is pending; team identities remain sealed.
 
 Close applications before circuit ops opens judging. Opening judging also forces applications closed, and the database prevents both flags being true at once. Judges score anonymous packets. The moderator coordinates the live AV. Once a team has a place in a viewing order, it cannot change its AV link until that competition releases results; if a video will not play, fix the sharing setting on the same Drive file instead. After the required number of approved judges submit, results release and scores lock. A competition admin can then open **Viewing Results** and **Applied Teams** for names, status decisions, full rosters, AV, dietary restrictions, and shirt sizes. That view contains only teams that applied to the active competition. Circuit tech admins can always inspect all registered teams through **Teams**.
 

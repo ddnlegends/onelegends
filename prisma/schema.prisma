@@ -140,6 +140,7 @@ model CompetitionProfile {
   name                String
   isPartner           Boolean   @default(true)
   acceptingApps       Boolean   @default(true)
+  earlyApplicationDeadline DateTime?
   applicationDeadline DateTime?
   requiredJudgeCount  Int       @default(3)
   resultsReleasedAt   DateTime?

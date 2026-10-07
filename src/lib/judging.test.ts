@@ -39,6 +39,12 @@ const full = {
 describe("isCompetitionOpen", () => {
   it("is open only while accepting, before the deadline, and before release", () => {
     expect(
+      isCompetitionOpen(
+        { ...claimedClosed, acceptingApps: true, earlyApplicationDeadline: PAST, applicationDeadline: FUTURE },
+        NOW,
+      ),
+    ).toBe(true);
+    expect(
       isCompetitionOpen({ ...claimedClosed, acceptingApps: true, applicationDeadline: FUTURE }, NOW),
     ).toBe(true);
     expect(isCompetitionOpen({ ...claimedClosed, acceptingApps: true }, NOW)).toBe(false);

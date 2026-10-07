@@ -27,6 +27,7 @@ const profileSchema = z.object({
   description: z.string(),
   googleSheetUrl: z.string(),
   acceptingApps: z.string().optional(),
+  earlyApplicationDeadline: z.string(),
   applicationDeadline: z.string(),
   requiredJudgeCount: z.string(),
 });
@@ -53,6 +54,7 @@ export async function saveCompProfile(
     description: String(formData.get("description") ?? "").trim(),
     googleSheetUrl: String(formData.get("googleSheetUrl") ?? "").trim(),
     acceptingApps: formData.get("acceptingApps") ? "on" : "",
+    earlyApplicationDeadline: String(formData.get("earlyApplicationDeadline") ?? "").trim(),
     applicationDeadline: String(formData.get("applicationDeadline") ?? "").trim(),
     requiredJudgeCount: String(formData.get("requiredJudgeCount") ?? "").trim(),
   });
@@ -69,10 +71,18 @@ export async function saveCompProfile(
   if (competition.resultsReleasedAt && n !== competition.requiredJudgeCount) {
     return { error: "Required judges cannot change after results are released." };
   }
-  const deadlineRaw = parsed.data.applicationDeadline;
-  const applicationDeadline = deadlineRaw ? new Date(deadlineRaw) : null;
-  if (deadlineRaw && Number.isNaN(applicationDeadline?.getTime())) {
-    return { error: "Enter a valid application deadline." };
+  const earlyRaw = parsed.data.earlyApplicationDeadline;
+  const earlyApplicationDeadline = earlyRaw ? new Date(earlyRaw) : null;
+  if (earlyRaw && Number.isNaN(earlyApplicationDeadline?.getTime())) {
+    return { error: "Enter a valid early application deadline." };
+  }
+  const lateRaw = parsed.data.applicationDeadline;
+  const applicationDeadline = lateRaw ? new Date(lateRaw) : null;
+  if (lateRaw && Number.isNaN(applicationDeadline?.getTime())) {
+    return { error: "Enter a valid late application deadline." };
+  }
+  if (earlyApplicationDeadline && applicationDeadline && earlyApplicationDeadline >= applicationDeadline) {
+    return { error: "The early deadline must be before the late deadline." };
   }
 
   const acceptingApps = parsed.data.acceptingApps === "on";
@@ -109,6 +119,7 @@ export async function saveCompProfile(
       googleSheetUrl: parsed.data.googleSheetUrl,
       googleSheetId: sheetId,
       acceptingApps,
+      earlyApplicationDeadline,
       applicationDeadline,
       requiredJudgeCount: n,
       ...(acceptingApps
@@ -123,6 +134,7 @@ export async function saveCompProfile(
   revalidatePath("/comp/judges");
   revalidatePath("/comp/results");
   revalidatePath("/ops/comps", "layout");
+  revalidatePath("/ops/competitions", "layout");
   revalidatePath("/moderator", "layout");
   revalidatePath("/judge");
   revalidatePath("/");

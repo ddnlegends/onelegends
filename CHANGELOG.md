@@ -4,6 +4,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Competition details now include an optional early application deadline and a late deadline. The previous application deadline remains the late cutoff; both appear in public, team, and ops views and exports.
 - Team image labels now say logo throughout the site and applicant sheet; upload and display behavior is unchanged. Competitions now have Partner and Non-partner labels in public, team, and ops lists. Circuit ops chooses the type when creating a listing and can change it later; existing listings default to Partner.
 - Standardized partner competition claim-code wording throughout the site and updated existing competition descriptions.
 - Replaced the placeholder PayPal link on the application form and Payments page with Zelle or PayPal instructions for `legends@desidancenetwork.org`.

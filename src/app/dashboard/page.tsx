@@ -330,7 +330,10 @@ export default async function DashboardPage() {
                     dates: c.dates,
                     location: c.location,
                     venue: c.venue,
-                    deadline: c.applicationDeadline
+                    earlyDeadline: c.earlyApplicationDeadline
+                      ? formatDateTime(c.earlyApplicationDeadline)
+                      : undefined,
+                    lateDeadline: c.applicationDeadline
                       ? formatDateTime(c.applicationDeadline)
                       : undefined,
                     acceptingApps: isCompetitionOpen(c),
