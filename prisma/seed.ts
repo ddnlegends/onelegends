@@ -42,7 +42,7 @@ async function main() {
         stageSize: "TBA",
         productionNotes: "Payment is handled off this site.",
         lighting: "TBA",
-        description: `${comp.name} — ${comp.location}. Claim this listing with the official bid code after you log in, then run anonymous viewing.`,
+        description: `${comp.name} — ${comp.location}. Claim this listing with the official partner code after you log in, then run anonymous viewing.`,
         applicationDeadline:
           comp.acceptingApps === false
             ? new Date("2025-11-01T23:59:00")
@@ -73,7 +73,7 @@ async function main() {
   });
 
   console.log(
-    `Reset complete. ${SEASON_COMPS.length} bid listings seeded, unclaimed.`,
+    `Reset complete. ${SEASON_COMPS.length} partner listings seeded, unclaimed.`,
   );
   console.log(
     "Team circuit ops: legendstech@desidancenetwork.org (Legends Admin). No dance teams until ops creates a team and hands out a claim code.",

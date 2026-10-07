@@ -127,7 +127,7 @@ export function ClaimCompForm() {
       <div>
         <h2 className="font-heading text-xl">Claim a competition</h2>
         <p className="mt-1 text-sm text-muted">
-          Use the official bid code. First valid claim is the primary admin.
+          Use the official partner code. First valid claim is the primary admin.
         </p>
       </div>
       <form
@@ -503,7 +503,7 @@ export function CreateCompForm() {
       <div>
         <h2 className="font-heading text-xl">Add a competition</h2>
         <p className="mt-1 text-sm text-muted">
-          Creating a competition generates a bid code. Manage it from the
+          Creating a competition generates a partner code. Manage it from the
           Competitions page. Teams cannot apply until someone claims it. This
           app does not email anyone.
         </p>
@@ -689,7 +689,7 @@ export function ResetCompClaimForm({
       <p className="text-sm">
         Are you sure? This removes every admin from{" "}
         <strong>{competitionName}</strong>, its judges, and moderator access, then
-        issues a new bid code (the old one stops working).
+        issues a new partner code (the old one stops working).
       </p>
       <div className="flex gap-2">
         <button className="btn btn-primary py-1.5" disabled={pending} type="submit">

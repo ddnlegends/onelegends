@@ -798,7 +798,7 @@ export async function createCompetition(
       name: parsed.data.name,
       slug,
       claimCode,
-      description: `${parsed.data.name}. Claim this listing with the official bid code after you log in.`,
+      description: `${parsed.data.name}. Claim this listing with the official partner code after you log in.`,
     },
   });
 

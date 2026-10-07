@@ -4,6 +4,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Standardized partner competition claim-code wording throughout the site and updated existing competition descriptions.
 - Replaced the placeholder PayPal link on the application form and Payments page with Zelle or PayPal instructions for `legends@desidancenetwork.org`.
 - Renamed the live viewing role to Moderator across the site, access controls, exports, and documentation. Existing assignments remain in place.
 - Performance pass with no behavior changes:
@@ -69,7 +70,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## 2026-09-11
 
-- `4a2acac` Circuit ops can create competitions with bid codes.
+- `4a2acac` Circuit ops can create competitions with partner codes.
 - `c926474` Active team dropdown stays in sync after switching.
 - `31c802f` Circuit ops can block a team from applying; claim codes shown on the team list.
 - `890ae19` Team photos stored in the database instead of local disk.

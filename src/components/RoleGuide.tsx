@@ -84,14 +84,14 @@ const GUIDES: Guide[] = [
   {
     id: "COMP",
     tab: "Competitions",
-    kicker: "Bid code · then invite",
+    kicker: "Partner code · then invite",
     title: "How competitions run apps",
     intro:
-      "Everyone signs in with Google. Existing test accounts retain password login. Circuit ops creates the competition listing and a bid code. The first person to enter that code becomes the primary admin. You see counts until anonymous judging is done.",
+      "Everyone signs in with Google. Existing test accounts retain password login. Circuit ops creates the competition listing and a partner code. The first person to enter that code becomes the primary admin. You see counts until anonymous judging is done.",
     steps: [
       {
-        title: "Register, then claim with the bid code",
-        body: "Only Legends Admin can create a competition. Creating one generates a bid code. The app does not email anyone — ops gives you the code. First successful claim becomes primary admin and uses the code up. If it is already claimed, you will see that plus a blurred admin email.",
+        title: "Register, then claim with the partner code",
+        body: "Only Legends Admin can create a competition. Creating one generates a partner code. The app does not email anyone — ops gives you the code. First successful claim becomes primary admin and uses the code up. If it is already claimed, you will see that plus a blurred admin email.",
       },
       {
         title: "Invite secondary admins",
