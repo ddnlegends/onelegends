@@ -18,7 +18,7 @@ What the board asked for, what is done, and what is still open. The [README](../
 
 | Item | Owner | Status |
 | --- | --- | --- |
-| [Payments](#payments) | Board, then tech | Placeholder link only |
+| [Payments](#payments) | Board, then tech | Manual Zelle/PayPal address shown; no in-app confirmation |
 | [DDN app integration](#ddn-app-integration) | Board and app team | Needs a decision |
 | [Branding review](#branding-review) | Sreya and MD | Not started |
 | [Regression workflow merge](#regression-workflow-merge) | Rushi and tech | Not started |
@@ -31,11 +31,11 @@ What the board asked for, what is done, and what is still open. The [README](../
 
 ### Payments
 
-The site does not take money yet. The home, team, apply, and Payments pages explain the manual process. The PayPal link is a generic placeholder, so teams must confirm the real recipient before paying. The memo is `{Team}'s OneLegends Payment`.
+The site does not take money yet. The home, team, apply, and Payments pages explain the manual process. Teams can pay via Zelle or PayPal to `legends@desidancenetwork.org` after confirming the amount and recipient. The memo is `{Team}'s OneLegends Payment`.
 
-Needed from the board: either an official payment link for each recipient (circuit dues, and each competition's entry fee), or a PayPal Business account with API keys if the app should confirm payments itself.
+For future payment integration, the board would need either an official payment link for each recipient (circuit dues, and each competition's entry fee), or a PayPal Business account with API keys if the app should confirm payments itself.
 
-A free path is a Zelle or PayPal link, with circuit ops still marking dues paid by unblocking the team. A minimal-cost path is a bank debit or card link that can confirm the payment in the app later. Each competition would keep its own link. Circuit dues stay separate from a host’s application fee.
+With the current Zelle or PayPal address, circuit ops still marks dues paid by unblocking the team. A later bank debit or card link could confirm payment in the app. Each competition could keep its own link. Circuit dues stay separate from a host’s application fee.
 
 ### DDN app integration
 

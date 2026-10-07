@@ -29,15 +29,11 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
         One application, many comps. Check the ones you want — your complete
         team profile, AV Drive link, roster, dietary notes, and shirt sizes go
         with it.{" "}
-        <a
-          href="https://www.paypal.com/paypalme/"
-          className="text-accent underline"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Pay on PayPal
+        Pay via Zelle or PayPal to{" "}
+        <a href="mailto:legends@desidancenetwork.org" className="text-accent underline">
+          legends@desidancenetwork.org
         </a>
-        {" "}(placeholder link). See the{" "}
+        . See the{" "}
         <Link href="/payments" className="text-accent underline">
           payment instructions
         </Link>{" "}

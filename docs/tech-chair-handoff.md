@@ -9,7 +9,7 @@ This is the starting point for future maintainers. Read [setup.md](setup.md) to 
 - **Identity:** Auth.js configuration in `src/auth.ts`; user rows in Prisma. Google OAuth is the normal login. The exact allowlist in `src/lib/auth-policy.ts` retains password sign-in for existing test accounts only. Auth.js is separate from Supabase Auth. Log In and Register share one Google provider: `googleSignInAction` in `src/app/actions/auth.ts` sets a short-lived `ol_auth_intent` cookie, and the `signIn` callback only creates users when the intent is `register`. Otherwise an unknown email is redirected to `/register?error=no-account`.
 - **Data:** Supabase PostgreSQL through Prisma in `src/lib/prisma.ts`; schema in `prisma/schema.prisma`; versioned SQL in `prisma/migrations`. `DATABASE_URL` uses the transaction pooler for app queries; `DIRECT_URL` uses the session/direct connection for migrations.
 - **Media:** Team photos are stored in the database and served by `src/app/api/teams/[id]/photo`. AVs are external Google Drive file links; no video upload or transcoding is provided.
-- **Integrations:** Optional applicant Google Sheet sync uses a service account (`src/lib/sheets.ts`) and refuses to run before results release. Tech-admin downloads are built in `src/lib/ops-export.ts` and served by `src/app/api/ops/export/route.ts` (platform admins only; `dataset` can repeat, `format` is `xlsx` or `csv`, optional `competitionId`). Payment is manual: the PayPal URL is a generic placeholder, and no payment status is inferred by the app.
+- **Integrations:** Optional applicant Google Sheet sync uses a service account (`src/lib/sheets.ts`) and refuses to run before results release. Tech-admin downloads are built in `src/lib/ops-export.ts` and served by `src/app/api/ops/export/route.ts` (platform admins only; `dataset` can repeat, `format` is `xlsx` or `csv`, optional `competitionId`). Payment is manual via Zelle or PayPal to `legends@desidancenetwork.org`, and no payment status is inferred by the app.
 
 ## Data and permission model
 
@@ -43,7 +43,7 @@ Step-by-step recipes for pages, actions, migrations, permissions, exports, tests
 - **Invite not visible:** Confirm the invited email exactly matches the Google account email. Invites are displayed inside the app at the next sign-in and no email is sent.
 - **Team cannot apply:** Check profile completeness, roster, circuit block reason, competition accepting flag, deadline, and whether judging/results are already open. The block reason is an admin note; there is no MOU API.
 - **Competition cannot see rosters:** Team details unlock only after results release for its applied teams. Check approved competition admin membership and active competition selection. Circuit admins can use `/ops/teams` regardless of results state.
-- **Payment confusion:** The PayPal link is a placeholder. Obtain an official recipient and amount from circuit ops or the host; verify receipts manually before clearing a block.
+- **Payment confusion:** The app shows `legends@desidancenetwork.org` for Zelle or PayPal. Confirm the recipient and amount with circuit ops or the host; verify receipts manually before clearing a block.
 
 ## Release and handoff checklist
 
