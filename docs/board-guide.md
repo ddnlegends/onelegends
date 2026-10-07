@@ -25,7 +25,7 @@ Access checks run in server pages and actions. Giving someone a claim code or in
 
 ## Payments and eligibility
 
-The Payments page is linked from the home page, team dashboard, and application form. The PayPal link is a **generic placeholder**, not a real recipient. Teams should confirm amount and recipient with circuit ops or the host before sending money, use the memo **`{Team}'s OneLegends Payment`** with their actual team name, and keep a receipt. The app has no checkout, payment webhook, or automatic paid flag. Circuit dues and host application fees may go to different recipients.
+The Payments page is linked from the home page, team dashboard, and application form. It shows `legends@desidancenetwork.org` for Zelle or PayPal payments. Teams should confirm amount and recipient with circuit ops or the host before sending money, use the memo **`{Team}'s OneLegends Payment`** with their actual team name, and keep a receipt. The app has no checkout, payment webhook, or automatic paid flag. Circuit dues and host application fees may go to different recipients.
 
 Circuit ops may block a team from new applications on its dashboard. Enter a clear reason (for example, unpaid circuit dues or pending paperwork); the reason is saved in Supabase and visible to other circuit admins in their dashboard and **Teams** view. Remove the block after resolving the issue. Existing applications remain. There is **no MOU system connection** and no automatic eligibility check based on a signed MOU. Use the reason field to record the manual decision, without adding private document contents.
 
@@ -62,5 +62,5 @@ Exports respect the anonymity gate: before a competition releases results, score
 2. Review current circuit admins and remove departing officers' access. Invite new admins using their Google emails and verify their dashboard privileges.
 3. Review team and competition admin membership. A primary transfer button is not yet built; use [Resetting a claim](#resetting-a-claim) only when appropriate, because it removes existing membership. Download an **Everything** export as a season archive before making changes.
 4. Record which competitions are active for the new season. Automatic partner-by-year archiving is not built, so check old listings manually.
-5. Confirm the current payment recipient and replace the placeholder only when the board provides an official link. Review outstanding application blocks and reasons.
+5. Confirm that `legends@desidancenetwork.org` is still the current payment recipient. Review outstanding application blocks and reasons.
 6. Use the [tech chair checklist](tech-chair-handoff.md#release-and-handoff-checklist) for changes and deployment.
