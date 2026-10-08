@@ -9,6 +9,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { isJudgingOpen } from "@/lib/judging-rules";
+import { hasModeratorAccess } from "@/lib/moderator";
 
 export async function GET(
   _request: Request,
@@ -33,12 +34,7 @@ export async function GET(
           where: { competitionId, status: "APPROVED", judge: { userId } },
           select: { id: true },
         }),
-    ops
-      ? null
-      : prisma.moderatorAccess.findUnique({
-          where: { userId_competitionId: { userId, competitionId } },
-          select: { id: true },
-        }),
+    ops ? false : hasModeratorAccess(userId, competitionId),
     prisma.competitionProfile.findUnique({
       where: { id: competitionId },
       select: {

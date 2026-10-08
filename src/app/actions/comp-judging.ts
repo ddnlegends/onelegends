@@ -12,6 +12,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
 import { maybeReleaseResults } from "@/lib/release";
+import { hasModeratorAccess } from "@/lib/moderator";
 import { requireActiveCompetition } from "@/lib/team-access";
 
 export async function decideJudgeRequest(
@@ -35,15 +36,7 @@ export async function decideJudgeRequest(
 
   if (decision === "APPROVED") {
     const [moderatorAccess, moderatorInvite] = await Promise.all([
-      prisma.moderatorAccess.findUnique({
-        where: {
-          userId_competitionId: {
-            userId: assignment.judge.userId,
-            competitionId: competition.id,
-          },
-        },
-        select: { id: true },
-      }),
+      hasModeratorAccess(assignment.judge.userId, competition.id),
       prisma.moderatorInvite.findUnique({
         where: {
           competitionId_email: {

@@ -16,6 +16,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
 import { claimAttemptError } from "@/lib/claim-rate-limit";
 import { blurEmail, normalizeClaimCode } from "@/lib/claim-code";
+import { hasModeratorAccess } from "@/lib/moderator";
 import {
   isCompAdmin,
   isCompPrimary,
@@ -152,6 +153,13 @@ export async function previewCompClaim(
         : "That competition is already claimed.",
     };
   }
+
+  if (!listing.isPartner && await prisma.judgeAssignment.findFirst({
+    where: { competitionId: listing.id, status: "APPROVED", judge: { userId: user.id } },
+    select: { id: true },
+  })) {
+    return { error: "Judges cannot claim a non-partner competition they score." };
+  }
   return { name: listing.name, claimCode: listing.claimCode };
 }
 
@@ -253,6 +261,13 @@ export async function claimCompAction(
     };
   }
 
+  if (!listing.isPartner && await prisma.judgeAssignment.findFirst({
+    where: { competitionId: listing.id, status: "APPROVED", judge: { userId: user.id } },
+    select: { id: true },
+  })) {
+    return { error: "Judges cannot claim a non-partner competition they score." };
+  }
+
   try {
     await prisma.$transaction(async (tx) => {
       const claimed = await tx.competitionProfile.updateMany({
@@ -327,8 +342,16 @@ export async function acceptCompInvite(
   const membershipId = String(formData.get("membershipId") ?? "");
   const membership = await prisma.competitionMembership.findFirst({
     where: { id: membershipId, userId: user.id, status: "PENDING" },
+    include: { competition: { select: { isPartner: true } } },
   });
   if (!membership) return { error: "That competition request was not found." };
+
+  if (!membership.competition.isPartner && await prisma.judgeAssignment.findFirst({
+    where: { competitionId: membership.competitionId, status: "APPROVED", judge: { userId: user.id } },
+    select: { id: true },
+  })) {
+    return { error: "Judges cannot admin a non-partner competition they score." };
+  }
 
   await prisma.competitionMembership.update({
     where: { id: membership.id },
@@ -353,15 +376,7 @@ export async function acceptJudgeInvite(
   });
   if (!invite) return { error: "That judging invite was not found." };
   const [moderatorAccess, moderatorInvite] = await Promise.all([
-    prisma.moderatorAccess.findUnique({
-      where: {
-        userId_competitionId: {
-          userId: user.id,
-          competitionId: invite.competitionId,
-        },
-      },
-      select: { id: true },
-    }),
+    hasModeratorAccess(user.id, invite.competitionId),
     prisma.moderatorInvite.findUnique({
       where: {
         competitionId_email: {
@@ -538,6 +553,16 @@ export async function inviteCompAdmin(
     if (existing?.status === "APPROVED") {
       return { error: "That person is already an admin of this competition." };
     }
+    const competition = await prisma.competitionProfile.findUnique({
+      where: { id: competitionId },
+      select: { isPartner: true },
+    });
+    if (!competition?.isPartner && await prisma.judgeAssignment.findFirst({
+      where: { competitionId, status: "APPROVED", judge: { userId: account.id } },
+      select: { id: true },
+    })) {
+      return { error: "Judges cannot admin a non-partner competition they score." };
+    }
     await prisma.competitionMembership.upsert({
       where: {
         userId_competitionId: { userId: account.id, competitionId },
@@ -619,11 +644,8 @@ export async function inviteJudge(
   }
   const [moderatorAccess, moderatorInvite] = await Promise.all([
     account
-      ? prisma.moderatorAccess.findUnique({
-          where: { userId_competitionId: { userId: account.id, competitionId } },
-          select: { id: true },
-        })
-      : Promise.resolve(null),
+      ? hasModeratorAccess(account.id, competitionId)
+      : Promise.resolve(false),
     prisma.moderatorInvite.findUnique({
       where: { competitionId_email: { competitionId, email } },
       select: { id: true },
@@ -847,6 +869,25 @@ export async function setCompetitionPartnerStatus(
     type: String(formData.get("type") ?? ""),
   });
   if (!parsed.success) return { error: "Choose a valid competition type." };
+
+  if (parsed.data.type === "non-partner") {
+    const competition = await prisma.competitionProfile.findUnique({
+      where: { id: parsed.data.competitionId },
+      select: {
+        userId: true,
+        memberships: { where: { status: "APPROVED", isAdmin: true }, select: { userId: true } },
+        judgeAssignments: { where: { status: "APPROVED" }, select: { judge: { select: { userId: true } } } },
+      },
+    });
+    if (!competition) return { error: "Competition not found." };
+    const admins = new Set([
+      ...(competition.userId ? [competition.userId] : []),
+      ...competition.memberships.map((membership) => membership.userId),
+    ]);
+    if (competition.judgeAssignments.some((assignment) => admins.has(assignment.judge.userId))) {
+      return { error: "An approved competition admin is also a judge. Resolve that role conflict before switching to Non-partner." };
+    }
+  }
 
   const updated = await prisma.competitionProfile.updateMany({
     where: { id: parsed.data.competitionId },

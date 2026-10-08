@@ -70,6 +70,10 @@ export default async function CompDashboardDetailPage({
         include: { user: { select: { email: true } } },
         orderBy: { createdAt: "asc" },
       },
+      memberships: {
+        where: { status: "APPROVED", isAdmin: true },
+        include: { user: { select: { email: true } } },
+      },
       moderatorInvites: { orderBy: { createdAt: "asc" } },
     },
   });
@@ -81,6 +85,10 @@ export default async function CompDashboardDetailPage({
   const released = Boolean(competition.resultsReleasedAt);
   const live = status === "LIVE";
   const livePosition = live ? competition.livePosition : null;
+  const moderatorEmails = new Set(competition.moderatorAccess.map((row) => row.user.email));
+  if (!competition.isPartner) {
+    for (const membership of competition.memberships) moderatorEmails.add(membership.user.email);
+  }
 
   const ordered = competition.applications
     .filter((app) => app.viewingPosition != null)
@@ -192,10 +200,10 @@ export default async function CompDashboardDetailPage({
         />
         <Stat
           label="Moderator"
-          value={String(competition.moderatorAccess.length)}
+          value={String(moderatorEmails.size)}
           hint={
-            competition.moderatorAccess.length
-              ? competition.moderatorAccess.map((row) => row.user.email).join(", ")
+            moderatorEmails.size
+              ? [...moderatorEmails].join(", ")
               : competition.moderatorInvites.length
                 ? `${competition.moderatorInvites.length} waiting to log in`
                 : "Grant one on circuit ops home"

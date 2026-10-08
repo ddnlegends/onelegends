@@ -4,6 +4,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Approved Non-partner competition admins automatically receive moderator controls for their competition. Partner competitions still use assigned moderators; both types keep the same application and judging flow.
 - Group Prisma CLI and client dependency updates and defer major upgrades until the app migration is ready.
 - Move the theme controls to the fixed top-right corner and use accessible System, Light, and Dark icon buttons.
 - Fixed the competition claim race fixture to use an account without an existing competition, and gave browser CI enough time to install WebKit's Linux system dependencies before its regression suite.

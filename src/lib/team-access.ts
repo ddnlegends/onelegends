@@ -11,6 +11,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { generateCompClaimCode, generateTeamClaimCode } from "@/lib/claim-code";
 import { getCachedUser } from "@/lib/cached-user";
+import { hasAnyModeratorAccess } from "@/lib/moderator";
 
 export const ACTIVE_TEAM_COOKIE = "onelegends-team";
 export const ACTIVE_COMP_COOKIE = "onelegends-comp";
@@ -80,37 +81,39 @@ export async function requireActiveCompetition(userId: string) {
 }
 
 export const getNavAccess = cache(async (userId: string) => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      platformAdmin: true,
-      competition: { select: { id: true } },
-      memberships: {
-        where: { status: "APPROVED" },
-        take: 1,
-        select: { id: true },
-      },
-      competitionMemberships: {
-        where: { status: "APPROVED" },
-        take: 1,
-        select: { id: true },
-      },
-      judge: {
-        select: {
-          assignments: {
-            where: { status: "APPROVED" },
-            take: 1,
-            select: { id: true },
+  const [user, moderatorAccess] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        platformAdmin: true,
+        competition: { select: { id: true } },
+        memberships: {
+          where: { status: "APPROVED" },
+          take: 1,
+          select: { id: true },
+        },
+        competitionMemberships: {
+          where: { status: "APPROVED" },
+          take: 1,
+          select: { id: true },
+        },
+        judge: {
+          select: {
+            assignments: {
+              where: { status: "APPROVED" },
+              take: 1,
+              select: { id: true },
+            },
           },
         },
       },
-      moderatorAccess: { take: 1, select: { id: true } },
-    },
-  });
+    }),
+    hasAnyModeratorAccess(userId),
+  ]);
   const ops = Boolean(user?.platformAdmin);
   return {
     ops,
-    moderatorAccess: Boolean(user?.moderatorAccess.length),
+    moderatorAccess,
     teamAccess: Boolean(user?.memberships.length),
     compAccess:
       ops ||

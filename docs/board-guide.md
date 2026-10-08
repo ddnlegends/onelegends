@@ -11,7 +11,7 @@ Use **Theme** in the header to choose **System**, **Light**, or **Dark**. System
 | Role | Access |
 | --- | --- |
 | Team admin | Own team profile, roster, invitations, applications, and payment guidance. |
-| Competition admin | Own competition settings, aggregate applicant stats, judges, and results. Team names and full rosters are available only for teams that applied to that competition after results release. |
+| Competition admin | Own competition settings, aggregate applicant stats, judges, and results. Approved admins of Non-partner competitions also get moderator controls automatically. Team names and full rosters are available only for teams that applied to that competition after results release. |
 | Judge | Anonymous AV packet and own scores. Never receives named team profiles. |
 | Moderator | Assigned competition's live viewing: anonymous team numbers, each team's AV, and a checkmark per judge per team. Never sees team names. |
 | Circuit tech admin | **Teams** and **Competitions** (click a row's arrow to expand every detail, including stage size, lighting, production notes, owners, judges, moderator access, and applications), **Comp Dashboard** for live judging, and **Export data** for .xlsx/CSV downloads. |
@@ -21,11 +21,11 @@ Access checks run in server pages and actions. Giving someone a claim code or in
 ## Start of season
 
 1. Tech chair verifies production Google OAuth, Supabase connection, and migration status using [setup.md](setup.md). Confirm board members can sign in with their own Google accounts.
-2. Circuit ops creates team listings and competition listings in the admin dashboard. Set each competition type to **Partner** or **Non-partner**; existing listings default to Partner, and the type can be changed from **Competitions**. The type is a label and does not change application or judging permissions. Give each primary contact the correct one-time claim code through your normal secure channel. A Google sign-in alone does not create or claim a team.
+2. Circuit ops creates team listings and competition listings in the admin dashboard. Set each competition type to **Partner** or **Non-partner**; existing listings default to Partner, and the type can be changed from **Competitions**. Both types use the same application and judging flow. For Non-partner competitions, approved competition admins automatically have moderator controls; Partner competitions need an assigned moderator. Give each primary contact the correct one-time claim code through your normal secure channel. A Google sign-in alone does not create or claim a team.
 3. First-time users must use **Register** (Continue with Google there). **Log In** with a Google account that has no OneLegends account sends them to Register with a notice instead of creating one.
 4. Primary team and competition admins claim their listings and invite secondary admins by email. The app shows invitations at login and on the dashboard; it does not send email. Tell invitees to register with the same Google email as the invitation.
 5. Teams complete the profile, logo, Drive AV, and roster. A complete profile is required to apply. Ask teams to give the Drive file a neutral name (not the team name), because the title can show when the moderator shares the video.
-6. Competition admins fill dates, venue, production details, early and late application deadlines, and required judge count. They invite judges and moderators. Deadlines are entered and shown in each viewer's own timezone, with the zone labeled. The early deadline is informational; the late deadline automatically closes applications.
+6. Competition admins fill dates, venue, production details, early and late application deadlines, and required judge count. They invite judges. Partner competitions also assign moderators; Non-partner admins can use the moderator controls themselves and may still assign another moderator. Deadlines are entered and shown in each viewer's own timezone, with the zone labeled. The early deadline is informational; the late deadline automatically closes applications.
 
 ## Payments and eligibility
 

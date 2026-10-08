@@ -195,7 +195,7 @@ export default async function CompDashboardPage() {
                                   ? `Late deadline ${formatDateTime(comp.applicationDeadline)}`
                                   : null,
                               ].filter(Boolean).join(" · ") || "Teams can still apply."
-                            : comp._count.moderatorAccess === 0
+                            : comp.isPartner && comp._count.moderatorAccess === 0
                               ? "No moderator assigned yet. Grant access before viewing."
                               : "Open judging when viewing starts."}
                       </p>

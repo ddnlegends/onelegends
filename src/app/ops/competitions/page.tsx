@@ -286,6 +286,11 @@ export default async function OpsCompetitionsPage() {
                 ) : null}
 
                 <PanelSection title="Moderator access">
+                  {!competition.isPartner ? (
+                    <p className="mb-2 text-sm text-muted">
+                      Approved competition admins can run live viewing automatically.
+                    </p>
+                  ) : null}
                   {competition.moderatorAccess.length || competition.moderatorInvites.length ? (
                     <ul className="divide-y divide-line rounded-lg border border-line text-sm">
                       {competition.moderatorAccess.map((row) => (
@@ -301,11 +306,11 @@ export default async function OpsCompetitionsPage() {
                         </li>
                       ))}
                     </ul>
-                  ) : (
+                  ) : competition.isPartner ? (
                     <p className="text-sm text-muted">
                       No moderator assigned. Grant access from Circuit ops.
                     </p>
-                  )}
+                  ) : null}
                 </PanelSection>
 
                 <PanelSection title="Judges">

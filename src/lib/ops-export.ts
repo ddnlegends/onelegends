@@ -501,7 +501,7 @@ async function accessTable(competitionId?: string): Promise<ExportCell[][]> {
       where: compWhere,
       orderBy: [{ competition: { name: "asc" } }, { createdAt: "asc" }],
       include: {
-        competition: { select: { name: true } },
+        competition: { select: { name: true, isPartner: true } },
         user: { select: { email: true, name: true } },
       },
     }),
@@ -573,7 +573,9 @@ async function accessTable(competitionId?: string): Promise<ExportCell[][]> {
       m.competition.name,
       m.user.email,
       m.user.name,
-      membershipRole(m),
+      m.status === "APPROVED" && m.isAdmin && !m.competition.isPartner
+        ? `${membershipRole(m)} + moderator`
+        : membershipRole(m),
       membershipStatus(m.status),
       stamp(m.createdAt),
     ]),

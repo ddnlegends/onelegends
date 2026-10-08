@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { test, E2E, competitionId, login, SEALED_NAMES, ALL_CLAIM_CODES } from "./helpers";
+import { test, db, E2E, competitionId, login, pageAs, SEALED_NAMES, ALL_CLAIM_CODES } from "./helpers";
 
 test("live state refuses anonymous, team, and competition-admin callers", async ({ page, request }) => {
   const id = await competitionId(E2E.comps.showcase.slug);
@@ -30,3 +30,47 @@ for (const role of ["moderator", "judge"] as const) {
     }
   });
 }
+
+test("non-partner admins get moderator controls while pending admins and judges do not", async ({ browser }) => {
+  const id = await competitionId(E2E.comps.showcase.slug);
+  const secondary = await db.user.findUniqueOrThrow({ where: { email: E2E.emails.team } });
+  await db.competitionProfile.update({ where: { id }, data: { isPartner: false } });
+  const membership = await db.competitionMembership.create({
+    data: { competitionId: id, userId: secondary.id, status: "PENDING", isAdmin: true },
+  });
+
+  const comp = await pageAs(browser, "comp");
+  const pending = await pageAs(browser, "team");
+  const judge = await pageAs(browser, "judge");
+  expect((await comp.request.get(`/api/live/${id}`)).status()).toBe(200);
+  expect((await pending.request.get(`/api/live/${id}`)).status()).toBe(403);
+  await expect(comp.getByRole("link", { name: /Open Live Viewing/ })).toBeVisible();
+  await expect(pending.getByRole("link", { name: /Open Live Viewing/ })).toHaveCount(0);
+  await pending.goto(`/moderator/${id}`);
+  await expect(pending).toHaveURL(/\/dashboard$/);
+  await judge.goto(`/moderator/${id}`);
+  await expect(judge).toHaveURL(/\/dashboard$/);
+
+  await db.competitionMembership.update({ where: { id: membership.id }, data: { status: "APPROVED" } });
+  expect((await pending.request.get(`/api/live/${id}`)).status()).toBe(200);
+  await pending.goto("/dashboard");
+  await expect(pending.getByRole("link", { name: /Open Live Viewing/ })).toBeVisible();
+  const ops = await pageAs(browser, "tech");
+  await ops.goto(`/ops/comps/${id}`);
+  await ops.getByRole("button", { name: "Open judging" }).click();
+
+  await comp.goto(`/moderator/${id}`);
+  await expect(comp.getByRole("heading", { name: "Ready when you are" })).toBeVisible();
+  await comp.getByRole("button", { name: "Show Team 1" }).click();
+  await expect(comp.getByRole("heading", { name: "Team 1" })).toBeVisible();
+  for (const secret of [...SEALED_NAMES, ...ALL_CLAIM_CODES]) {
+    expect(await comp.content()).not.toContain(secret);
+  }
+  const live = await judge.request.get(`/api/live/${id}`);
+  expect((await live.json()).livePosition).toBe(1);
+
+  await db.competitionMembership.delete({ where: { id: membership.id } });
+  expect((await pending.request.get(`/api/live/${id}`)).status()).toBe(403);
+  await db.competitionProfile.update({ where: { id }, data: { isPartner: true } });
+  expect((await comp.request.get(`/api/live/${id}`)).status()).toBe(403);
+});
