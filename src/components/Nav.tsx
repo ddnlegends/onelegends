@@ -3,7 +3,6 @@ import { auth } from "@/auth";
 import { BrandMark } from "@/components/BrandMark";
 import { NavLink } from "@/components/NavLink";
 import { SignOutButton } from "@/components/SignOutButton";
-import { ThemeSelect } from "@/components/ThemeSelect";
 import { getNavAccess } from "@/lib/team-access";
 
 export async function Nav() {
@@ -18,8 +17,10 @@ export async function Nav() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-paper/90 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-3 px-4 py-3">
-        <BrandMark href={homeHref} />
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-3 px-4 py-3 lg:pr-36">
+        <div className="mr-32 lg:mr-0">
+          <BrandMark href={homeHref} />
+        </div>
         <nav className="order-3 flex w-full flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium tracking-wide lg:order-none lg:w-auto lg:flex-1 lg:justify-end">
           {session ? (
             <NavLink href="/dashboard">Dashboard</NavLink>
@@ -68,7 +69,6 @@ export async function Nav() {
             </>
           )}
         </nav>
-        <ThemeSelect />
       </div>
     </header>
   );

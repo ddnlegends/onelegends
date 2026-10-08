@@ -4,6 +4,31 @@ import { useSyncExternalStore } from "react";
 import { THEME_STORAGE_KEY, themePreference, type ThemePreference } from "@/lib/theme";
 
 const THEME_CHANGE = "onelegends-theme-change";
+const THEMES: ThemePreference[] = ["system", "light", "dark"];
+
+function ThemeIcon({ theme }: { theme: ThemePreference }) {
+  if (theme === "system") {
+    return (
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <rect x="3" y="4" width="18" height="14" rx="2" />
+        <path d="M9 21h6m-3-3v3" />
+      </svg>
+    );
+  }
+  if (theme === "light") {
+    return (
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className="h-5 w-5">
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" />
+      </svg>
+    );
+  }
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <path d="M20.3 15.6A8.5 8.5 0 0 1 8.4 3.7 8.5 8.5 0 1 0 20.3 15.6Z" />
+    </svg>
+  );
+}
 
 function getPreference(): ThemePreference {
   return themePreference(document.documentElement.dataset.themePreference);
@@ -65,18 +90,20 @@ export function ThemeSelect() {
   const preference = useSyncExternalStore(subscribe, getPreference, getServerPreference);
 
   return (
-    <label className="inline-flex items-center gap-2 rounded-md border border-line bg-card px-2.5 py-1.5 text-xs font-semibold text-muted">
-      Theme
-      <select
-        aria-label="Color theme"
-        value={preference}
-        onChange={(event) => setPreference(themePreference(event.target.value))}
-        className="cursor-pointer rounded-sm bg-card py-0.5 text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-      >
-        <option value="system">System</option>
-        <option value="light">Light</option>
-        <option value="dark">Dark</option>
-      </select>
-    </label>
+    <div role="group" aria-label="Color theme" className="fixed right-3 top-2.5 z-50 flex gap-1 rounded-full border border-line bg-card p-1 shadow-md">
+      {THEMES.map((theme) => (
+        <button
+          key={theme}
+          type="button"
+          aria-label={`${theme[0].toUpperCase()}${theme.slice(1)} theme`}
+          aria-pressed={preference === theme}
+          title={`${theme[0].toUpperCase()}${theme.slice(1)} theme`}
+          onClick={() => setPreference(theme)}
+          className="flex h-9 w-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-blush hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent aria-pressed:bg-blush aria-pressed:text-accent"
+        >
+          <ThemeIcon theme={theme} />
+        </button>
+      ))}
+    </div>
   );
 }

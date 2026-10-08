@@ -16,7 +16,7 @@ Step-by-step recipes for the changes maintainers make most often. Read [setup.md
 
 Use the semantic colors in `src/app/globals.css`: `bg-paper` for the page, `bg-card` for panels and fields, `bg-blush` for subtle surfaces, and `text-ink`, `text-muted`, `text-accent`, and `border-line`. Status colors use `success`, `warning`, `danger`, `info`, and `ready`, each with `-soft` backgrounds and `-line` borders. These tokens adapt to light and dark themes. Keep `brand` fills for white-label buttons; `accent` is a readable foreground and changes between themes.
 
-The root layout's fixed inline script applies the saved/device preference before paint. `ThemeSelect` handles changes, system updates, and cross-tab storage events. Keep their resolution logic in sync. Check both themes at desktop and phone widths, including focus, errors, dialogs, and unsaved forms. `e2e/theme.spec.ts` runs in the existing Chromium/WebKit CI jobs.
+The root layout's fixed inline script applies the saved/device preference before paint. The top-right `ThemeSelect` icon buttons handle changes, system updates, and cross-tab storage events. Keep their resolution logic in sync. Check both themes at desktop and phone widths, including focus, errors, dialogs, and unsaved forms. `e2e/theme.spec.ts` runs in the existing Chromium/WebKit CI jobs.
 
 ## Add a server action
 

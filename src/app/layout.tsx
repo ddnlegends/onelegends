@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Montserrat } from "next/font/google";
 import { Nav } from "@/components/Nav";
+import { ThemeSelect } from "@/components/ThemeSelect";
 import { NavigationPulse } from "@/components/NavigationPulse";
 import { PendingInviteGate } from "@/components/PendingInviteGate";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="flex min-h-full flex-col font-sans">
         <Nav />
+        <ThemeSelect />
         <NavigationPulse />
         <Suspense fallback={null}>
           <PendingInviteGate />
