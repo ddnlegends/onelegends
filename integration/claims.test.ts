@@ -75,7 +75,8 @@ it("two simultaneous team claims leave exactly one primary owner", async () => {
 });
 
 it("two simultaneous competition claims leave one primary and matching legacy owner", async () => {
-  const other = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.comp } });
+  // The fixture comp admin already owns Showcase, and CompetitionProfile.userId is unique.
+  const other = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.moderator } });
   const comp = await prisma.competitionProfile.create({ data: { name: "Race Comp", slug: "race-comp", claimCode: "COMP-RACE" } });
   identity.requireUser.mockResolvedValueOnce({ id: userId }).mockResolvedValueOnce({ id: other.id });
   const results = await Promise.all([claimCompAction(undefined, form(comp.claimCode)), claimCompAction(undefined, form(comp.claimCode))]);
