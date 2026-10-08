@@ -21,8 +21,8 @@ What the board asked for, what is done, and what is still open. The [README](../
 | [Payments](#payments) | Board, then tech | Manual Zelle/PayPal address shown; no in-app confirmation |
 | [DDN app integration](#ddn-app-integration) | Board and app team | Needs a decision |
 | [Branding review](#branding-review) | Sreya and MD | Not started |
-| [Regression workflow merge](#regression-workflow-merge) | Rushi and tech | Not started |
-| [Test-account passwords](#test-account-passwords) | Tech | Should fix before next season |
+| [Regression workflow merge](#regression-workflow-merge) | Rushi and tech | Expanded suite prepared; merge/CI activation pending |
+| [Test-account passwords](#test-account-passwords) | Tech | Launch blocker; local-only guard prepared, production activation pending |
 | [Transfer primary admin](#transfer-primary-admin) | Tech | Not built |
 | [Partner competitions by year](#partner-competitions-by-year) | Tech | Not built |
 | [MOU tracking](#mou-tracking) | Board | Nice-to-have |
@@ -53,11 +53,11 @@ Sreya and the MD team should check colors, fonts, logo use, and page layouts aga
 
 ### Regression workflow merge
 
-Rushi has been setting up agentic regression testing with Codex. The repo now has its own tests (`npm test`, `npm run test:e2e`, and the GitHub Actions workflow). Compare the two, keep whichever covers more, and fold the other's useful checks in so there is one suite.
+The existing Vitest/Playwright suite is the canonical suite. The release-hardening branch adds PostgreSQL judging/claim transaction regression, cross-competition live API denials, sealed CSV/XLSX export checks, Chromium/WebKit runs, fixture isolation, and hosted authentication boundary tests. See [regression-testing.md](regression-testing.md). Owner review, GitHub execution, and Vercel gate activation are still required.
 
 ### Test-account passwords
 
-`prisma/seed.ts` contains plaintext passwords for the test accounts listed in `src/lib/auth-policy.ts`, and those accounts can still sign in with a password on production. One of them is a tech admin. Before next season, do one of: change those passwords and move them into environment variables, or turn off password sign-in on production entirely.
+**Resolve before this launch.** The release-hardening branch removes literal seed passwords, disables hosted password authentication, and invalidates legacy/credential sessions on hosted deployments. Verify a real tech admin's Google login before rollout. Rotate exposed passwords wherever reused and inspect privileged access. Published competition claim codes also need review and rotation if active; removing them from source does not revoke database values. See [release-readiness.md](release-readiness.md) for all launch blockers.
 
 ### Transfer primary admin
 
@@ -88,7 +88,7 @@ Blocking a team from applying is a manual decision: circuit ops sets a block wit
 These work as built, but the board should confirm each one is intended:
 
 - Team logos load from a public link, so anyone with the URL can see them.
-- There is no limit on how many claim codes someone can try.
+- The release-hardening branch limits each signed-in account to 20 claim/preview requests per 15 minutes, shared across teams and competitions. A normal preview and confirmation use two requests. Confirm this allowance with event staff; distributed-account abuse still needs hosting controls and monitoring.
 - Declined applications still get a place in the viewing order.
 - The public competition listing shows production details such as stage size and lighting.
 

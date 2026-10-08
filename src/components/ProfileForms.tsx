@@ -114,7 +114,7 @@ export function ChangePasswordForm() {
           return (
             <li
               key={rule.id}
-              className={ok ? "font-medium text-emerald-700" : "text-red-600"}
+              className={ok ? "font-medium text-success" : "text-danger"}
             >
               {ok ? "✓" : "✕"} {rule.label}
             </li>
@@ -137,8 +137,8 @@ export function ChangePasswordForm() {
       <p
         className={
           passwordsMatch
-            ? "text-sm font-medium text-emerald-700"
-            : "text-sm text-red-600"
+            ? "text-sm font-medium text-success"
+            : "text-sm text-danger"
         }
       >
         {passwordsMatch ? "✓ Passwords match" : "✕ Passwords must match"}

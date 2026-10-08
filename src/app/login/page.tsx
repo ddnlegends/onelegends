@@ -1,3 +1,4 @@
+import { testPasswordLoginEnabled } from "@/lib/test-environment";
 import { AuthForm } from "@/components/AuthForm";
 import { PageShell } from "@/components/PageShell";
 import { googleAuthEnabled } from "@/lib/ops-admin";
@@ -11,11 +12,10 @@ export default function LoginPage() {
           <h1 className="mt-2 font-heading text-3xl tracking-[0.08em]">Log In</h1>
           <p className="mt-2 text-sm text-muted">
             Log in with the Google account you registered with. New here?
-            Create an account first. Existing test accounts retain a separate
-            password login.
+            Create an account first.
           </p>
         </div>
-        <AuthForm mode="login" googleEnabled={googleEnabled} />
+        <AuthForm mode="login" googleEnabled={googleEnabled} testLoginEnabled={testPasswordLoginEnabled()} />
       </div>
     </PageShell>
   );

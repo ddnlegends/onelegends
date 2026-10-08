@@ -158,9 +158,9 @@ export default async function CompDashboardDetailPage({
                     key={judge.id}
                     className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs ${
                       done
-                        ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                        ? "border-success-line bg-success-soft text-success"
                         : filled
-                          ? "border-amber-200 bg-amber-50 text-amber-800"
+                          ? "border-warning-line bg-warning-soft text-warning"
                           : "border-line bg-blush text-muted"
                     }`}
                   >
@@ -311,7 +311,7 @@ export default async function CompDashboardDetailPage({
                     >
                       <th
                         className={`sticky left-0 px-4 py-3 text-left font-semibold ${
-                          isLive ? "bg-[#fdf3f1]" : "bg-card"
+                          isLive ? "bg-live-surface" : "bg-card"
                         }`}
                       >
                         Team {app.viewingPosition}
@@ -321,7 +321,7 @@ export default async function CompDashboardDetailPage({
                           </span>
                         ) : null}
                         {isLive ? (
-                          <span className="ml-2 rounded-full bg-accent-ember px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide text-white">
+                          <span className="ml-2 rounded-full bg-brand-ember px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide text-white">
                             Live
                           </span>
                         ) : null}
@@ -335,7 +335,7 @@ export default async function CompDashboardDetailPage({
                             {total != null ? (
                               <span className="font-semibold">{total}</span>
                             ) : filled ? (
-                              <span className="text-amber-700">{filled}/5</span>
+                              <span className="text-warning">{filled}/5</span>
                             ) : (
                               <span className="text-muted">—</span>
                             )}
@@ -380,7 +380,7 @@ export default async function CompDashboardDetailPage({
                       <span
                         className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                           judge.submittedAt
-                            ? "bg-emerald-50 text-emerald-800"
+                            ? "bg-success-soft text-success"
                             : "bg-blush text-muted"
                         }`}
                       >

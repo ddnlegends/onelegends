@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { EXPORT_DATASETS, isExportDatasetKey, toCsv } from "@/lib/ops-export";
+import { EXPORT_DATASETS, isExportDatasetKey, toCsv, toXlsx } from "@/lib/ops-export";
 
 describe("toCsv", () => {
   it("joins rows with CRLF and quotes cells that need it", () => {
@@ -31,4 +31,19 @@ describe("isExportDatasetKey", () => {
     expect(isExportDatasetKey("passwords")).toBe(false);
     expect(isExportDatasetKey(undefined)).toBe(false);
   });
+});
+
+
+it("XLSX exports round-trip sheets, numbers, and untrusted text as text", async () => {
+  const ExcelJS = await import("exceljs");
+  const output = await toXlsx([
+    { key: "teams", title: "Teams", rows: [["Team", "Score"], ["=HYPERLINK(\"https://example.org\")", 42.5]] },
+    { key: "competitions", title: "Competitions", rows: [["Name"], ["Fixture Cup"]] },
+  ]);
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(output);
+  expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual(["Teams", "Competitions"]);
+  expect(workbook.getWorksheet("Teams")!.getCell("A2").value).toBe('=HYPERLINK("https://example.org")');
+  expect(workbook.getWorksheet("Teams")!.getCell("A2").type).toBe(ExcelJS.ValueType.String);
+  expect(workbook.getWorksheet("Teams")!.getCell("B2").value).toBe(42.5);
 });

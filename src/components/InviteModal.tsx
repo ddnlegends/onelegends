@@ -33,12 +33,12 @@ export function InviteModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/65 p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="invite-modal-title"
     >
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-line bg-white p-6 shadow-[0_24px_80px_rgba(142,28,66,0.18)]">
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-line bg-card p-6 shadow-[0_24px_80px_rgba(142,28,66,0.18)]">
         <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-accent">
           Waiting on you
         </p>

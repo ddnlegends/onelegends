@@ -4,6 +4,17 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Fixed the competition claim race fixture to use an account without an existing competition, and gave browser CI enough time to install WebKit's Linux system dependencies before its regression suite.
+- Add system, light, and dark themes with a persistent header selector, cross-tab updates, and themed forms, dialogs, tables, and status indicators. Browser regressions cover preference persistence, pre-hydration styling, blocked storage, and small-screen use.
+- Restrict password test logins to opted-in disposable local environments; revoke hosted legacy/credential sessions and require one fresh login for older sessions.
+- Guard both seed commands and test migrations, remove seeded passwords and published competition codes, and generate local claim codes.
+- Serialize judging writes and release on the competition row; recheck closure during submission and refuse writes that race a completed release.
+- Add database and browser permission/state regression, WebKit coverage, hosted-auth tests, dependency audit/release gates, and SDLC/release/capacity documentation.
+- Update Sharp within Next's supported dependency range to address its librsvg advisory.
+- Patch the Prisma config merger and ExcelJS UUID dependencies with scoped overrides; verify config loading and XLSX round trips. The production dependency audit is clean at review time.
+- Limit claim previews and confirmations to 20 requests per account per 15 minutes using PostgreSQL; refuse stale codes rotated during a claim. Apply migration `20261006170000_claim_attempt_limits` before deploying.
+- Require Google's verified-email assertion before account lookup; test registration intent and existing-user sign-in. Read and verify sealed/released CSV and XLSX exports in both browsers.
+
 - Competition details now include an optional early application deadline and a late deadline. The previous application deadline remains the late cutoff; both appear in public, team, and ops views and exports.
 - Team image labels now say logo throughout the site and applicant sheet; upload and display behavior is unchanged. Competitions now have Partner and Non-partner labels in public, team, and ops lists. Circuit ops chooses the type when creating a listing and can change it later; existing listings default to Partner.
 - Standardized partner competition claim-code wording throughout the site and updated existing competition descriptions.

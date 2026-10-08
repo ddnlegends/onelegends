@@ -46,7 +46,9 @@ export async function saveJudgeProfile(
 const COMMENT_MAX = 1000;
 
 /** Serializes score saves and packet submission for one judge so no write lands after submit. */
-async function lockAssignment(tx: Prisma.TransactionClient, assignmentId: string) {
+async function lockAssignment(tx: Prisma.TransactionClient, competitionId: string, assignmentId: string) {
+  // Always lock competition first so close/release and score writes serialize.
+  await tx.$queryRaw`SELECT id FROM "CompetitionProfile" WHERE id = ${competitionId} FOR UPDATE`;
   await tx.$queryRaw`SELECT id FROM "JudgeAssignment" WHERE id = ${assignmentId} FOR UPDATE`;
 }
 
@@ -118,9 +120,9 @@ export async function saveTeamScores(
   };
 
   const saved = await prisma.$transaction(async (tx) => {
-    await lockAssignment(tx, assignmentId);
-    const fresh = await tx.judgeAssignment.findUnique({
-      where: { id: assignmentId },
+    await lockAssignment(tx, assignment.competitionId, assignmentId);
+    const fresh = await tx.judgeAssignment.findFirst({
+      where: { id: assignmentId, status: "APPROVED", judge: { userId: user.id } },
       select: { submittedAt: true, competition: true },
     });
     if (!fresh) return "Assignment not found.";
@@ -174,13 +176,15 @@ export async function submitJudgingPacket(
   const lock = judgingLockMessage(assignment.competition);
   if (lock) return { error: lock };
   const failed = await prisma.$transaction(async (tx) => {
-    await lockAssignment(tx, assignment.id);
-    const fresh = await tx.judgeAssignment.findUnique({
-      where: { id: assignment.id },
-      select: { submittedAt: true, slots: { include: { score: true } } },
+    await lockAssignment(tx, assignment.competitionId, assignment.id);
+    const fresh = await tx.judgeAssignment.findFirst({
+      where: { id: assignment.id, status: "APPROVED", judge: { userId: user.id } },
+      select: { submittedAt: true, competition: true, slots: { include: { score: true } } },
     });
     if (!fresh) return "Assignment not found.";
     if (fresh.submittedAt) return null;
+    const freshLock = judgingLockMessage(fresh.competition);
+    if (freshLock) return freshLock;
     if (fresh.slots.length === 0) return "No teams in this packet yet.";
     if (fresh.slots.some((slot) => !isScoreComplete(slot.score))) {
       return "Score every team before submitting the packet.";

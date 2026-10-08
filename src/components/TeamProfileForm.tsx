@@ -194,7 +194,7 @@ export function TeamProfileForm({ profile }: { profile: Profile }) {
                   Save the profile to keep it.
                 </p>
               ) : photoSrc ? (
-                <p className="text-sm font-semibold text-emerald-700">
+                <p className="text-sm font-semibold text-success">
                   Logo saved.
                 </p>
               ) : (

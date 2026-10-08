@@ -87,10 +87,11 @@ export async function setRequiredJudgeCount(
     return { error: "Required judges cannot change after results are released." };
   }
 
-  await prisma.competitionProfile.update({
-    where: { id: competition.id },
+  const updated = await prisma.competitionProfile.updateMany({
+    where: { id: competition.id, resultsReleasedAt: null },
     data: { requiredJudgeCount: n },
   });
+  if (updated.count === 0) return { error: "Required judges cannot change after results are released." };
   await maybeReleaseResults(competition.id);
 
   revalidatePath("/comp");

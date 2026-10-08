@@ -248,7 +248,7 @@ export default async function DashboardPage() {
                   <span className="mt-1 block font-heading text-2xl tracking-wide">
                     {competition.name}
                   </span>
-                  <span className="mt-4 inline-flex rounded-full border border-white/40 px-4 py-2 text-sm font-semibold transition group-hover:bg-white group-hover:text-accent">
+                  <span className="mt-4 inline-flex rounded-full border border-white/40 px-4 py-2 text-sm font-semibold transition group-hover:bg-white group-hover:text-brand">
                     Open Live Viewing
                   </span>
                 </span>
@@ -533,7 +533,7 @@ async function OpsDashboard({
 
       <Link href="/ops/comps" className="brand-gradient group flex flex-wrap items-center justify-between gap-4 rounded-2xl px-6 py-5 text-white shadow-sm transition hover:brightness-110">
         <div><p className="text-xs uppercase tracking-widest text-white/80">Live judging</p><p className="font-heading text-2xl tracking-wide">Comp Dashboard</p><p className="mt-1 text-sm text-white/85">Follow every live viewing session and judge score.</p></div>
-        <span className="rounded-full border border-white/40 px-4 py-2 text-sm font-semibold transition group-hover:bg-white group-hover:text-accent">Open</span>
+        <span className="rounded-full border border-white/40 px-4 py-2 text-sm font-semibold transition group-hover:bg-white group-hover:text-brand">Open</span>
       </Link>
 
       <section className="rounded-xl border border-line bg-card p-6">

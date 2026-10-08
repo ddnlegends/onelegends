@@ -2,11 +2,11 @@ import { COMP_STATUS_LABEL, type CompStatus } from "@/lib/judging";
 
 const STYLES: Record<CompStatus, string> = {
   UNCLAIMED: "border-line bg-blush text-muted",
-  APPS_OPEN: "border-sky-200 bg-sky-50 text-sky-800",
-  APPS_CLOSED: "border-amber-200 bg-amber-50 text-amber-800",
-  READY: "border-violet-200 bg-violet-50 text-violet-800",
+  APPS_OPEN: "border-info-line bg-info-soft text-info",
+  APPS_CLOSED: "border-warning-line bg-warning-soft text-warning",
+  READY: "border-ready-line bg-ready-soft text-ready",
   LIVE: "border-accent-ember/40 bg-accent-ember/10 text-accent-ember",
-  COMPLETE: "border-emerald-200 bg-emerald-50 text-emerald-800",
+  COMPLETE: "border-success-line bg-success-soft text-success",
 };
 
 export function CompStatusPill({ status }: { status: CompStatus }) {

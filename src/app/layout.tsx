@@ -4,6 +4,7 @@ import { Montserrat } from "next/font/google";
 import { Nav } from "@/components/Nav";
 import { NavigationPulse } from "@/components/NavigationPulse";
 import { PendingInviteGate } from "@/components/PendingInviteGate";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 const sans = Montserrat({
@@ -20,7 +21,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${sans.variable} h-full antialiased`}>
+    <html lang="en" className={`${sans.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="flex min-h-full flex-col font-sans">
         <Nav />
         <NavigationPulse />

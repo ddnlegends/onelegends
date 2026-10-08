@@ -18,7 +18,7 @@ export default async function OpsTeamDetailsPage({ params }: { params: Promise<{
   return (
     <div className="space-y-7">
       <Link href="/ops/teams" className="text-sm underline">← All teams</Link>
-      {team.applyBlocked ? <p className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">Applications blocked: {team.applyBlockReason || "No reason recorded"}</p> : null}
+      {team.applyBlocked ? <p className="rounded-xl border border-danger-line bg-danger-soft p-4 text-sm text-danger">Applications blocked: {team.applyBlockReason || "No reason recorded"}</p> : null}
       <TeamDetails team={team} />
       <section className="space-y-3">
         <h2 className="font-heading text-2xl">Competition applications</h2>

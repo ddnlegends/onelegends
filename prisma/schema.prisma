@@ -34,14 +34,16 @@ enum TeamMembershipStatus {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  passwordHash  String?
-  role          Role     @default(TEAM)
-  name          String   @default("")
-  platformAdmin Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                      String    @id @default(cuid())
+  email                   String    @unique
+  passwordHash            String?
+  role                    Role      @default(TEAM)
+  name                    String    @default("")
+  platformAdmin           Boolean   @default(false)
+  claimAttemptWindowStart DateTime? @db.Timestamptz(3)
+  claimAttemptCount       Int       @default(0)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 
   competition            CompetitionProfile?     @relation("CompPrimary")
   judge                  JudgeProfile?

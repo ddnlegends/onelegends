@@ -49,11 +49,12 @@ export async function setLiveTeam(
     if (!exists) return { error: `Team ${position} is not in this viewing order.` };
   }
 
-  await prisma.competitionProfile.update({
-    where: { id: competitionId },
+  const updated = await prisma.competitionProfile.updateMany({
+    where: { id: competitionId, judgingOpen: true, resultsReleasedAt: null },
     data: { livePosition: position, liveUpdatedAt: new Date() },
   });
 
+  if (updated.count === 0) return { error: "Judging is no longer open." };
   revalidatePath(`/moderator/${competitionId}`);
   revalidatePath("/ops/comps", "layout");
   return {

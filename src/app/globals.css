@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
   --paper: #ffffff;
   --ink: #1a1014;
   --muted: #6d5560;
@@ -11,6 +12,57 @@
   --accent-dark: #641433;
   --card: #ffffff;
   --blush: #fbf5f8;
+  /* Brand fills stay deep enough for their white labels in either theme. */
+  --brand: #8e1c42;
+  --brand-mid: #772964;
+  --brand-ember: #ce3828;
+  --scrim: #100b11;
+  --success: #166534;
+  --success-soft: #ecfdf3;
+  --success-line: #a7f3d0;
+  --warning: #92400e;
+  --warning-soft: #fffbeb;
+  --warning-line: #fde68a;
+  --danger: #991b1b;
+  --danger-soft: #fef2f2;
+  --danger-line: #fecaca;
+  --info: #075985;
+  --info-soft: #f0f9ff;
+  --info-line: #bae6fd;
+  --ready: #5b21b6;
+  --ready-soft: #f5f3ff;
+  --ready-line: #ddd6fe;
+  --live-surface: #fdf3f1;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #151116;
+  --card: #211a22;
+  --blush: #2b222c;
+  --ink: #f7edf3;
+  --muted: #c4aebb;
+  --line: #514050;
+  --accent: #f6a6c1;
+  --accent-mid: #dba7d3;
+  --accent-ember: #ffad99;
+  --accent-dark: #f9bfd2;
+  --success: #8ee6b2;
+  --success-soft: #142e23;
+  --success-line: #36674e;
+  --warning: #f7cf7c;
+  --warning-soft: #342a18;
+  --warning-line: #756038;
+  --danger: #ffa4a4;
+  --danger-soft: #3b1e28;
+  --danger-line: #7a3d4b;
+  --info: #99d8fa;
+  --info-soft: #172e3d;
+  --info-line: #365e76;
+  --ready: #d5b7ff;
+  --ready-soft: #2b223e;
+  --ready-line: #624780;
+  --live-surface: #302125;
 }
 
 @theme inline {
@@ -24,6 +76,25 @@
   --color-accent-dark: var(--accent-dark);
   --color-card: var(--card);
   --color-blush: var(--blush);
+  --color-brand: var(--brand);
+  --color-brand-ember: var(--brand-ember);
+  --color-scrim: var(--scrim);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-line: var(--success-line);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-line: var(--warning-line);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-line: var(--danger-line);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-line: var(--info-line);
+  --color-ready: var(--ready);
+  --color-ready-soft: var(--ready-soft);
+  --color-ready-line: var(--ready-line);
+  --color-live-surface: var(--live-surface);
   --font-sans: var(--font-sans);
 }
 
@@ -53,9 +124,9 @@ select {
 .brand-gradient {
   background-image: linear-gradient(
     90deg,
-    var(--accent),
-    var(--accent-mid) 50%,
-    var(--accent-ember)
+    var(--brand),
+    var(--brand-mid) 50%,
+    var(--brand-ember)
   );
 }
 
@@ -88,7 +159,7 @@ select {
 .field select {
   width: 100%;
   border: 1px solid var(--line);
-  background: white;
+  background: var(--card);
   border-radius: 0.4rem;
   padding: 0.55rem 0.75rem;
   color: var(--ink);
@@ -102,7 +173,8 @@ select {
 .field input:not([type="file"]):focus,
 .field textarea:focus,
 .field select:focus {
-  outline: 2px solid color-mix(in srgb, var(--accent) 30%, white);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
   border-color: var(--accent);
 }
 
@@ -129,9 +201,9 @@ select {
 .btn-primary {
   background-image: linear-gradient(
     90deg,
-    var(--accent),
-    var(--accent-mid) 50%,
-    var(--accent-ember)
+    var(--brand),
+    var(--brand-mid) 50%,
+    var(--brand-ember)
   );
   color: white;
 }
@@ -159,13 +231,13 @@ select {
 }
 
 .notice-error {
-  background: #fef2f2;
-  color: #991b1b;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 .notice-ok {
-  background: #ecfdf3;
-  color: #166534;
+  background: var(--success-soft);
+  color: var(--success);
   font-weight: 600;
 }
 

@@ -179,7 +179,7 @@ export function JudgeScoreForm({
 
   return (
     <form className="space-y-4 rounded-xl border border-line bg-card">
-      <div className="rounded-t-xl bg-accent px-4 py-3 text-white">
+      <div className="rounded-t-xl bg-brand px-4 py-3 text-white">
         <p className="font-heading text-lg tracking-wide">Team {position}</p>
         <p className="text-xs uppercase tracking-widest text-white/80">
           Rubric · 0–10 whole numbers · Max 50 · Autosaves

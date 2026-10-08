@@ -10,7 +10,13 @@ Step-by-step recipes for the changes maintainers make most often. Read [setup.md
    - Other pages: `const session = await auth(); if (!session?.user) redirect("/login");`, then the exact role check from `src/lib/team-access.ts` (`isTeamAdmin`, `isCompAdmin`, `getActiveTeamId`, ...).
 3. Only export the default component (and Next's known exports such as `metadata`) from a page file; extra exports break the build.
 4. Add a nav link in `src/components/Nav.tsx` if needed, gated on the same role.
-5. Add the route to `OPS_PAGES` in `e2e/access.spec.ts` if it is tech-admin only, so CI proves logged-out visitors get nothing.
+5. Add the route to `OPS_PAGES` in `e2e/access.spec.ts` if it is tech-admin only, so CI checks logged-out visitors receive no protected data.
+
+## Style a page
+
+Use the semantic colors in `src/app/globals.css`: `bg-paper` for the page, `bg-card` for panels and fields, `bg-blush` for subtle surfaces, and `text-ink`, `text-muted`, `text-accent`, and `border-line`. Status colors use `success`, `warning`, `danger`, `info`, and `ready`, each with `-soft` backgrounds and `-line` borders. These tokens adapt to light and dark themes. Keep `brand` fills for white-label buttons; `accent` is a readable foreground and changes between themes.
+
+The root layout's fixed inline script applies the saved/device preference before paint. `ThemeSelect` handles changes, system updates, and cross-tab storage events. Keep their resolution logic in sync. Check both themes at desktop and phone widths, including focus, errors, dialogs, and unsaved forms. `e2e/theme.spec.ts` runs in the existing Chromium/WebKit CI jobs.
 
 ## Add a server action
 
@@ -31,7 +37,7 @@ Step-by-step recipes for the changes maintainers make most often. Read [setup.md
    npx prisma migrate dev --create-only --name describe_the_change
    ```
 3. Read the generated SQL in `prisma/migrations/<timestamp>_describe_the_change/`. Add data backfills or `CHECK` constraints by hand if needed.
-4. Run the tests ([below](#run-the-tests)); the e2e setup applies every migration to a fresh database.
+4. Run `npm run db:migrate:test` against a fresh disposable database, then the tests ([below](#run-the-tests)). Browser setup resets fixture rows; it does not apply migrations.
 5. To ship: back up Supabase, then `npm run db:migrate` with production URLs, then deploy the code. Never run `prisma migrate reset` or `npm run db:seed` against Supabase.
 
 ## Add a role or permission
@@ -49,48 +55,17 @@ Step-by-step recipes for the changes maintainers make most often. Read [setup.md
 
 ## Run the tests
 
-**Unit tests** (no database): `npm test`. Files live next to the code as `src/**/*.test.ts`.
+See [regression-testing.md](regression-testing.md) for the single canonical local/CI recipe, isolation requirements, coverage map, and staging acceptance script. `npm run check` runs lint, generated route types, typecheck, and unit tests. `npm run test:integration` uses real disposable PostgreSQL. `npm run test:e2e` builds and runs Chromium/WebKit; `npm run test:e2e:production` then tests the hosted authentication boundary using that build.
 
-**Browser tests** need a throwaway Postgres. The fixture seed wipes every table and refuses any host but localhost.
-
-1. Start a local database, either way:
-   ```bash
-   # Docker
-   docker run --name onelegends-e2e -e POSTGRES_HOST_AUTH_METHOD=trust \
-     -e POSTGRES_DB=onelegends_e2e -p 54329:5432 -d postgres:16
-
-   # or Homebrew Postgres (data stays in the gitignored .e2e-pg/ folder)
-   initdb -D .e2e-pg/data -U postgres --auth=trust
-   pg_ctl -D .e2e-pg/data -o "-p 54329 -k $PWD/.e2e-pg" -l .e2e-pg/log.txt start
-   createdb -h 127.0.0.1 -p 54329 -U postgres onelegends_e2e
-   ```
-2. Point the shell at it and run:
-   ```bash
-   export DATABASE_URL=postgresql://postgres@127.0.0.1:54329/onelegends_e2e
-   export DIRECT_URL=$DATABASE_URL
-   export E2E_PASSWORD=any-local-password
-   npx prisma migrate deploy
-   npx playwright install chromium   # first time only
-   npm run test:e2e
-   ```
-   The run builds the app, starts it on port 3100, and re-seeds before each run. Add `E2E_SKIP_BUILD=1` to reuse the last build. Explicit environment variables win over `.env`, so your Supabase URL is not used.
-3. On failure, open the trace: `npx playwright show-trace test-results/<test>/trace.zip`.
-
-**CI** (`.github/workflows/ci.yml`) runs lint, typecheck, unit tests, and the browser tests against a Postgres container on every push to `main` and every pull request. Failed browser runs upload the report and traces as an artifact.
-
-Before pushing: `npm run lint`, `npx tsc --noEmit -p .`, `npm test`, and `npm run build`. If `tsc` complains about `LayoutProps` or `PageProps`, run `npx next typegen` first.
+CI runs those checks plus a high-severity production dependency audit. The **Release gate** fails if any prerequisite fails, is skipped, or is cancelled. It does not deploy. Configure GitHub and Vercel to require the gate as described in [release-runbook.md](release-runbook.md). Scoped dependency fixes and the remaining development-tooling advisory are recorded in [dependency-security.md](dependency-security.md).
 
 ## Commit
 
-1. Commits must be authored by the circuit account so Vercel deploys them. This repo sets it locally; check with `git log -1 --format='%an <%ae>'`. Do not change your global git config for this.
+1. Commits must be authored by the circuit account so Vercel deploys them. Verify the authorized commit identity before publishing; check with `git log -1 --format='%an <%ae>'`. Do not change your global git config for this.
 2. Write the message as what changed and why, in a sentence (see `git log`).
 3. Add a line to [CHANGELOG.md](../CHANGELOG.md) under **Unreleased** for anything that changes behavior, data, or setup.
 4. Never commit `.env` or `docs/CREDENTIALS.md` (both gitignored).
 
 ## Deploy and roll back
 
-1. Pushing to `main` on `github.com/ddnlegends/onelegends` runs CI and deploys to Vercel.
-2. New environment variables go in Vercel → Project → Settings → Environment Variables, pasted without quotes; redeploy afterwards.
-3. Schema changes: apply the migration to Supabase **before** the code that needs it goes live.
-4. Roll back code with Vercel's **Instant Rollback** to the previous deployment, then revert the commit on `main`. A migration cannot be rolled back that way; write a new migration that undoes it, after a backup.
-5. After a deploy, smoke-test Google sign-in, a team application, and the tech-admin Teams page while logged out (it must redirect).
+Follow [release-runbook.md](release-runbook.md) for protected branches, Vercel checks, migrations, smoke tests, rollback, and incident response. A push to `main` can trigger both CI and Vercel; these happen independently until the owner enables deployment checks. Never infer that a deployment waited for tests just because both exist.

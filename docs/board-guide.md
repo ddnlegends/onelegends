@@ -2,6 +2,10 @@
 
 This guide is for the Legends board, circuit operations, and incoming officers. See [setup.md](setup.md) for installation and [tech-chair-handoff.md](tech-chair-handoff.md) for code and deployment ownership.
 
+## Appearance
+
+Use **Theme** in the header to choose **System**, **Light**, or **Dark**. System follows your device's appearance and is the default. An explicit choice is saved in this browser and shared with its other OneLegends tabs; it does not change anyone else's account. If browser storage is blocked, switching still works for the current page session but resets on reload. Embedded Google Drive players control their own styling.
+
 ## Who can see what
 
 | Role | Access |

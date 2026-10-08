@@ -1,7 +1,6 @@
 export type SeasonComp = {
   slug: string;
   name: string;
-  claimCode: string;
   eventDate: Date;
   dates: string;
   location: string;
@@ -9,12 +8,11 @@ export type SeasonComp = {
   acceptingApps?: boolean;
 };
 
-/** Official partner listings. Codes are also listed in local docs/CREDENTIALS.md — treat them as secrets. */
+/** Partner listing metadata only. Seed generates fresh claim codes in a disposable database. */
 export const SEASON_COMPS: SeasonComp[] = [
   {
     slug: "legends",
     name: "Legends",
-    claimCode: "LGND-7K2M",
     eventDate: new Date("2026-04-18"),
     dates: "Apr 18, 2026",
     location: "Austin, TX",
@@ -23,7 +21,6 @@ export const SEASON_COMPS: SeasonComp[] = [
   {
     slug: "buckeye-mela",
     name: "Buckeye Mela",
-    claimCode: "BCKY-1N4R",
     eventDate: new Date("2026-01-24"),
     dates: "Jan 24, 2026",
     location: "Columbus, OH",
@@ -32,7 +29,6 @@ export const SEASON_COMPS: SeasonComp[] = [
   {
     slug: "atl-tamasha",
     name: "ATL Tamasha",
-    claimCode: "ATL-6J7K",
     eventDate: new Date("2025-11-22"),
     dates: "Nov 22, 2025",
     location: "Atlanta, GA",

@@ -183,12 +183,12 @@ function ClaimConfirmModal({
 }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/65 p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="claim-confirm-title"
     >
-      <div className="w-full max-w-md rounded-2xl border border-line bg-white p-6 text-center shadow-[0_24px_80px_rgba(142,28,66,0.18)]">
+      <div className="w-full max-w-md rounded-2xl border border-line bg-card p-6 text-center shadow-[0_24px_80px_rgba(142,28,66,0.18)]">
         <p
           id="claim-confirm-title"
           className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted"
@@ -204,7 +204,7 @@ function ClaimConfirmModal({
             {pending ? "Claiming…" : "Approve"}
           </button>
           <button
-            className="btn flex-1 border border-line bg-white text-ink"
+            className="btn flex-1 border border-line bg-card text-ink"
             type="button"
             onClick={onDecline}
           >
@@ -230,7 +230,7 @@ export function AcceptTeamInviteForm({
       <button className="btn btn-primary py-1.5" disabled={pending} type="submit">
         {pending ? "…" : label}
       </button>
-      {state?.error ? <p className="mt-1 text-xs text-red-700">{state.error}</p> : null}
+      {state?.error ? <p className="mt-1 text-xs text-danger">{state.error}</p> : null}
     </form>
   );
 }
@@ -249,7 +249,7 @@ export function AcceptCompInviteForm({
       <button className="btn btn-primary py-1.5" disabled={pending} type="submit">
         {pending ? "…" : label}
       </button>
-      {state?.error ? <p className="mt-1 text-xs text-red-700">{state.error}</p> : null}
+      {state?.error ? <p className="mt-1 text-xs text-danger">{state.error}</p> : null}
     </form>
   );
 }
@@ -268,7 +268,7 @@ export function AcceptJudgeInviteForm({
       <button className="btn btn-primary py-1.5" disabled={pending} type="submit">
         {pending ? "…" : label}
       </button>
-      {state?.error ? <p className="mt-1 text-xs text-red-700">{state.error}</p> : null}
+      {state?.error ? <p className="mt-1 text-xs text-danger">{state.error}</p> : null}
     </form>
   );
 }
@@ -388,7 +388,7 @@ export function RevokeTeamAccessForm({ membershipId }: { membershipId: string })
       <button className="btn btn-ghost py-1.5" disabled={pending} type="submit">
         {pending ? "…" : "Remove"}
       </button>
-      {state?.error ? <p className="text-xs text-red-700">{state.error}</p> : null}
+      {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
     </form>
   );
 }
@@ -401,7 +401,7 @@ export function RevokeCompAccessForm({ membershipId }: { membershipId: string })
       <button className="btn btn-ghost py-1.5" disabled={pending} type="submit">
         {pending ? "…" : "Remove"}
       </button>
-      {state?.error ? <p className="text-xs text-red-700">{state.error}</p> : null}
+      {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
     </form>
   );
 }
@@ -414,7 +414,7 @@ export function CancelTeamInviteForm({ inviteId }: { inviteId: string }) {
       <button className="btn btn-ghost py-1.5" disabled={pending} type="submit">
         {pending ? "…" : "Cancel"}
       </button>
-      {state?.error ? <p className="text-xs text-red-700">{state.error}</p> : null}
+      {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
     </form>
   );
 }
@@ -427,7 +427,7 @@ export function CancelJudgeInviteForm({ inviteId }: { inviteId: string }) {
       <button className="btn btn-ghost py-1.5" disabled={pending} type="submit">
         {pending ? "…" : "Cancel"}
       </button>
-      {state?.error ? <p className="text-xs text-red-700">{state.error}</p> : null}
+      {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
     </form>
   );
 }
@@ -440,7 +440,7 @@ export function CancelCompInviteForm({ inviteId }: { inviteId: string }) {
       <button className="btn btn-ghost py-1.5" disabled={pending} type="submit">
         {pending ? "…" : "Cancel"}
       </button>
-      {state?.error ? <p className="text-xs text-red-700">{state.error}</p> : null}
+      {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
     </form>
   );
 }
@@ -672,8 +672,8 @@ export function ResetTeamClaimForm({
         <button className="btn btn-ghost py-1.5" type="button" onClick={() => setConfirming(true)}>
           Reset claim
         </button>
-        {state?.error ? <p className="text-xs text-red-700">{state.error}</p> : null}
-        {state?.ok ? <p className="text-xs text-emerald-700">{state.message}</p> : null}
+        {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
+        {state?.ok ? <p className="text-xs text-success">{state.message}</p> : null}
       </div>
     );
   }
@@ -694,7 +694,7 @@ export function ResetTeamClaimForm({
           Cancel
         </button>
       </div>
-      {state?.error ? <p className="text-xs text-red-700">{state.error}</p> : null}
+      {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
     </form>
   );
 }
@@ -715,8 +715,8 @@ export function ResetCompClaimForm({
         <button className="btn btn-ghost py-1.5" type="button" onClick={() => setConfirming(true)}>
           Reset claim
         </button>
-        {state?.error ? <p className="text-xs text-red-700">{state.error}</p> : null}
-        {state?.ok ? <p className="text-xs text-emerald-700">{state.message}</p> : null}
+        {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
+        {state?.ok ? <p className="text-xs text-success">{state.message}</p> : null}
       </div>
     );
   }
@@ -737,7 +737,7 @@ export function ResetCompClaimForm({
           Cancel
         </button>
       </div>
-      {state?.error ? <p className="text-xs text-red-700">{state.error}</p> : null}
+      {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
     </form>
   );
 }
@@ -794,7 +794,7 @@ export function CancelPlatformAdminInviteForm({
       <button className="btn btn-ghost py-1.5" disabled={pending} type="submit">
         {pending ? "…" : "Cancel"}
       </button>
-      {state?.error ? <p className="text-xs text-red-700">{state.error}</p> : null}
+      {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
     </form>
   );
 }
@@ -865,7 +865,7 @@ export function RemoveModeratorAccessForm({ accessId }: { accessId: string }) {
       <button className="btn btn-ghost py-1.5" disabled={pending} type="submit">
         {pending ? "…" : "Remove"}
       </button>
-      {state?.error ? <p className="text-xs text-red-700">{state.error}</p> : null}
+      {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
     </form>
   );
 }
@@ -881,7 +881,7 @@ export function CancelModeratorInviteForm({ inviteId }: { inviteId: string }) {
       <button className="btn btn-ghost py-1.5" disabled={pending} type="submit">
         {pending ? "…" : "Cancel"}
       </button>
-      {state?.error ? <p className="text-xs text-red-700">{state.error}</p> : null}
+      {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
     </form>
   );
 }
@@ -897,7 +897,7 @@ export function RevokePlatformAdminForm({ userId }: { userId: string }) {
       <button className="btn btn-ghost py-1.5" disabled={pending} type="submit">
         {pending ? "…" : "Remove"}
       </button>
-      {state?.error ? <p className="text-xs text-red-700">{state.error}</p> : null}
+      {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
     </form>
   );
 }

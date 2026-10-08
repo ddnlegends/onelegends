@@ -115,7 +115,7 @@ export default async function JudgePacketPage({
                     <p className="font-medium">
                       Team {slot.position}
                       {isLive ? (
-                        <span className="ml-2 rounded-full bg-accent-ember px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-white">
+                        <span className="ml-2 rounded-full bg-brand-ember px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-white">
                           Live
                         </span>
                       ) : null}

@@ -9,6 +9,7 @@
  * `signIn` callback in `src/auth.ts` can refuse to create accounts from Log In.
  * `requireUser` is the session check every other action starts with.
  */
+import { testPasswordLoginEnabled } from "@/lib/test-environment";
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
 import { revalidatePath } from "next/cache";
@@ -42,6 +43,7 @@ export async function loginAction(
   _prev: { error?: string } | undefined,
   formData: FormData,
 ): Promise<{ error?: string }> {
+  if (!testPasswordLoginEnabled()) return { error: "Use Google to sign in." };
   const parsed = loginSchema.safeParse({
     email: String(formData.get("email") ?? "").trim().toLowerCase(),
     password: String(formData.get("password") ?? ""),
@@ -166,6 +168,7 @@ export async function changePasswordAction(
     return { error: "Sign in to change your password." };
   }
 
+  if (!testPasswordLoginEnabled()) return { error: "Use Google to manage your password." };
   const parsed = passwordChangeSchema.safeParse({
     currentPassword: String(formData.get("currentPassword") ?? ""),
     password: String(formData.get("password") ?? ""),

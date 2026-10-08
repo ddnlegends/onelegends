@@ -1,4 +1,5 @@
-import { expect, test } from "@playwright/test";
+import { test } from "./helpers";
+import { expect } from "@playwright/test";
 import { db, E2E, login } from "./helpers";
 
 test("a blocked team sees the circuit block instead of the form", async ({ page }) => {

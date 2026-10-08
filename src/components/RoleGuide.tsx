@@ -23,7 +23,7 @@ const GUIDES: Guide[] = [
     kicker: "One login · claim code",
     title: "How teams apply",
     intro:
-      "Everyone signs in with Google. Existing test accounts retain password login. Circuit ops creates the team listing and a claim code. The first person to enter that code becomes the primary admin. Payment stays off this site.",
+      "Everyone signs in with Google. Circuit ops creates the team listing and a claim code. The first person to enter that code becomes the primary admin. Payment stays off this site.",
     steps: [
       {
         title: "Register once",
@@ -87,7 +87,7 @@ const GUIDES: Guide[] = [
     kicker: "Claim code · then invite",
     title: "How competitions run apps",
     intro:
-      "Everyone signs in with Google. Existing test accounts retain password login. Circuit ops creates the competition listing and a claim code. The first person to enter that code becomes the primary admin. You see counts until anonymous judging is done.",
+      "Everyone signs in with Google. Circuit ops creates the competition listing and a claim code. The first person to enter that code becomes the primary admin. You see counts until anonymous judging is done.",
     steps: [
       {
         title: "Register, then claim with the claim code",
@@ -162,8 +162,8 @@ export function RoleGuide({ signedIn }: { signedIn?: boolean }) {
                 onClick={() => setActiveId(item.id)}
                 className={`relative px-3 py-3.5 text-center text-xs font-bold uppercase tracking-[0.14em] transition sm:text-sm ${
                   selected
-                    ? "bg-white text-accent"
-                    : "text-muted hover:bg-white/60 hover:text-ink"
+                    ? "bg-card text-accent"
+                    : "text-muted hover:bg-card/60 hover:text-ink"
                 }`}
               >
                 {item.tab}

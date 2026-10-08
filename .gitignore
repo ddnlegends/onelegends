@@ -14,6 +14,8 @@
 /coverage
 /test-results/
 /playwright-report/
+/test-results-production/
+/playwright-report-production/
 /playwright/.cache/
 /.e2e-pg/
 

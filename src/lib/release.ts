@@ -1,41 +1,35 @@
-/**
- * Releases a competition's results once enough judges have submitted.
- *
- * Server-only (it pulls in the Google Sheets client). The conditional
- * `updateMany` on `resultsReleasedAt: null` makes release happen exactly once,
- * even when the last judges submit at the same moment; only that winning call
- * syncs the applicant sheet. Release closes judging and clears the live team.
- */
+/** Release is serialized with scoring, closing, and judge-count updates. */
 import { prisma } from "@/lib/prisma";
 import { syncCompetitionSheet } from "@/lib/sheets";
 
 export async function maybeReleaseResults(competitionId: string) {
-  const competition = await prisma.competitionProfile.findUnique({
-    where: { id: competitionId },
-    include: {
-      judgeAssignments: {
-        where: { status: "APPROVED", submittedAt: { not: null } },
-        select: { id: true },
+  const result = await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "CompetitionProfile" WHERE id = ${competitionId} FOR UPDATE`;
+    const competition = await tx.competitionProfile.findUnique({
+      where: { id: competitionId },
+      include: {
+        judgeAssignments: {
+          where: { status: "APPROVED", submittedAt: { not: null } },
+          select: { id: true },
+        },
       },
-    },
+    });
+    if (!competition) return "waiting";
+    if (competition.resultsReleasedAt) return "already-released";
+    if (competition.judgeAssignments.length < competition.requiredJudgeCount) return "waiting";
+    await tx.competitionProfile.update({
+      where: { id: competitionId },
+      data: {
+        resultsReleasedAt: new Date(),
+        judgingOpen: false,
+        livePosition: null,
+        liveUpdatedAt: null,
+      },
+    });
+    return "released";
   });
-  if (!competition) return false;
-  if (competition.resultsReleasedAt) return true;
-
-  const completed = competition.judgeAssignments.length;
-  if (completed < competition.requiredJudgeCount) return false;
-
-  const released = await prisma.competitionProfile.updateMany({
-    where: { id: competitionId, resultsReleasedAt: null },
-    data: {
-      resultsReleasedAt: new Date(),
-      judgingOpen: false,
-      livePosition: null,
-      liveUpdatedAt: null,
-    },
-  });
-  if (released.count > 0) {
+  if (result === "released") {
     await syncCompetitionSheet(competitionId).catch(() => null);
   }
-  return true;
+  return result !== "waiting";
 }

@@ -14,6 +14,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
+import { claimAttemptError } from "@/lib/claim-rate-limit";
 import { blurEmail, normalizeClaimCode } from "@/lib/claim-code";
 import {
   isCompAdmin,
@@ -109,6 +110,8 @@ export async function previewTeamClaim(
   if (await isPlatformAdmin(user.id)) {
     return { error: "Circuit ops does not claim teams." };
   }
+  const limited = await claimAttemptError(user.id);
+  if (limited) return { error: limited };
   const code = normalizeClaimCode(String(formData.get("claimCode") ?? ""));
   if (code.length < 4) return { error: "Enter a team claim code." };
   const team = await prisma.teamProfile.findUnique({ where: { claimCode: code } });
@@ -133,6 +136,8 @@ export async function previewCompClaim(
   if (await isPlatformAdmin(user.id)) {
     return { error: "Circuit ops does not claim competitions." };
   }
+  const limited = await claimAttemptError(user.id);
+  if (limited) return { error: limited };
   const code = normalizeClaimCode(String(formData.get("claimCode") ?? ""));
   if (code.length < 4) return { error: "Enter a competition claim code." };
   const listing = await prisma.competitionProfile.findUnique({
@@ -160,6 +165,8 @@ export async function claimTeamAction(
     return { error: "Circuit ops does not claim teams." };
   }
 
+  const limited = await claimAttemptError(user.id);
+  if (limited) return { error: limited };
   const code = normalizeClaimCode(String(formData.get("claimCode") ?? ""));
   if (code.length < 4) return { error: "Enter a team claim code." };
 
@@ -178,7 +185,7 @@ export async function claimTeamAction(
   try {
     await prisma.$transaction(async (tx) => {
       const claimed = await tx.teamProfile.updateMany({
-        where: { id: team.id, claimedAt: null },
+        where: { id: team.id, claimedAt: null, claimCode: code },
         data: { claimedAt: new Date() },
       });
       if (claimed.count !== 1) throw new Error("CLAIM_TAKEN");
@@ -227,6 +234,8 @@ export async function claimCompAction(
     return { error: "Circuit ops does not claim competitions." };
   }
 
+  const limited = await claimAttemptError(user.id);
+  if (limited) return { error: limited };
   const code = normalizeClaimCode(String(formData.get("claimCode") ?? ""));
   if (code.length < 4) return { error: "Enter a competition claim code." };
 
@@ -247,7 +256,7 @@ export async function claimCompAction(
   try {
     await prisma.$transaction(async (tx) => {
       const claimed = await tx.competitionProfile.updateMany({
-        where: { id: listing.id, userId: null, claimedAt: null },
+        where: { id: listing.id, userId: null, claimedAt: null, claimCode: code },
         data: { userId: user.id, claimedAt: new Date() },
       });
       if (claimed.count !== 1) throw new Error("CLAIM_TAKEN");
