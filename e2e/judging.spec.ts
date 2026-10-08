@@ -1,5 +1,6 @@
-import { expect, test, type Page } from "@playwright/test";
-import { competitionId, E2E, pageAs, SEALED_NAMES } from "./helpers";
+import { test } from "./helpers";
+import { expect, type Page } from "@playwright/test";
+import { competitionId, db, E2E, pageAs, SEALED_NAMES } from "./helpers";
 
 const SCORES = {
   1: { choreography: "8", formations: "7", technique: "9", syncCleanliness: "8", overallImpression: "9" },
@@ -70,6 +71,23 @@ test("ops opens judging, REG drives the screen, a judge scores, and results rele
   }).toPass();
   await judge.getByRole("button", { name: "Submit Judging" }).click();
   await expect(judge.getByText(/Packet submitted/).first()).toBeVisible();
+
+  const stored = await db.judgeAssignment.findFirstOrThrow({
+    where: { competitionId: id, judge: { user: { email: E2E.emails.judge } } },
+    include: { slots: { orderBy: { position: "asc" }, include: { score: true } }, competition: true },
+  });
+  expect(stored.submittedAt).not.toBeNull();
+  expect(stored.competition.resultsReleasedAt).not.toBeNull();
+  expect(stored.competition.judgingOpen).toBe(false);
+  expect(stored.competition.livePosition).toBeNull();
+  for (const slot of stored.slots) {
+    const expected = SCORES[slot.position as keyof typeof SCORES];
+    for (const [field, value] of Object.entries(expected)) {
+      expect(slot.score?.[field as keyof typeof slot.score]).toBe(Number(value));
+    }
+  }
+  await judge.goto(`/judge/${id}/team/1`);
+  await expect(judge.locator("#choreography")).toBeDisabled();
 
   await comp.reload();
   await expect(comp.getByText(/Unlocked/)).toBeVisible();

@@ -7,9 +7,11 @@ import { googleSignInAction, loginAction } from "@/app/actions/auth";
 export function AuthForm({
   mode,
   googleEnabled,
+  testLoginEnabled = false,
 }: {
   mode: "login" | "register";
   googleEnabled: boolean;
+  testLoginEnabled?: boolean;
 }) {
   const [state, testLoginAction, pending] = useActionState(loginAction, undefined);
 
@@ -44,7 +46,7 @@ export function AuthForm({
         </p>
       ) : null}
 
-      {mode === "login" ? (
+      {mode === "login" && testLoginEnabled ? (
         <details className="rounded-lg border border-line p-4">
           <summary className="cursor-pointer text-sm font-medium">
             Existing test account login
@@ -79,14 +81,14 @@ export function AuthForm({
             </button>
           </form>
         </details>
-      ) : (
+      ) : mode === "register" ? (
         <p className="text-center text-sm text-muted">
           Already have an account?{" "}
           <Link href="/login" className="text-ink underline">
             Log in
           </Link>
         </p>
-      )}
+      ) : null}
     </div>
   );
 }

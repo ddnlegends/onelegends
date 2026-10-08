@@ -13,6 +13,8 @@ export default defineConfig({
   testDir: "./e2e",
   globalSetup: "./e2e/global-setup.ts",
   fullyParallel: false,
+  forbidOnly: !!process.env.CI,
+  failOnFlakyTests: !!process.env.CI,
   workers: 1,
   retries: process.env.CI ? 1 : 0,
   timeout: 60_000,
@@ -22,16 +24,26 @@ export default defineConfig({
     baseURL,
     trace: "retain-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    { name: "webkit", use: { ...devices["Desktop Safari"] } },
+  ],
   webServer: {
     command: process.env.E2E_SKIP_BUILD
       ? `npx next start -p ${PORT}`
       : `npm run build && npx next start -p ${PORT}`,
     url: baseURL,
     timeout: 300_000,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     env: {
       AUTH_URL: baseURL,
+      AUTH_ENABLE_TEST_LOGIN: "true",
+      AUTH_GOOGLE_ID: "",
+      AUTH_GOOGLE_SECRET: "",
+      GOOGLE_CLIENT_ID: "",
+      GOOGLE_CLIENT_SECRET: "",
+      GOOGLE_SERVICE_ACCOUNT_EMAIL: "",
+      GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: "",
       AUTH_SECRET: process.env.AUTH_SECRET ?? "e2e-only-secret-not-for-production-use",
       AUTH_TRUST_HOST: "true",
     },

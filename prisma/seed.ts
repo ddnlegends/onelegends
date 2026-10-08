@@ -1,5 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { assertDisposableDatabase } from "../src/lib/test-environment";
+import { generateCompClaimCode } from "../src/lib/claim-code";
 import { SEASON_COMPS } from "./season-comps";
 
 const prisma = new PrismaClient();
@@ -26,6 +28,9 @@ async function wipeAppData() {
 }
 
 async function main() {
+  assertDisposableDatabase();
+  const password = process.env.E2E_PASSWORD;
+  if (!password) throw new Error("Set E2E_PASSWORD before seeding a disposable database.");
   await wipeAppData();
 
   for (const comp of SEASON_COMPS) {
@@ -33,7 +38,7 @@ async function main() {
       data: {
         slug: comp.slug,
         name: comp.name,
-        claimCode: comp.claimCode,
+        claimCode: generateCompClaimCode(),
         acceptingApps: comp.acceptingApps ?? true,
         dates: comp.dates,
         eventDate: comp.eventDate,
@@ -52,7 +57,7 @@ async function main() {
     });
   }
 
-  const passwordHash = await bcrypt.hash("onelegends@143", 10);
+  const passwordHash = await bcrypt.hash(password, 10);
   await prisma.user.create({
     data: {
       email: "legendstech@desidancenetwork.org",
@@ -66,7 +71,7 @@ async function main() {
   await prisma.user.create({
     data: {
       email: "legendstestreg@gmail.com",
-      passwordHash: await bcrypt.hash("Legendsreg@123", 10),
+      passwordHash: await bcrypt.hash(password, 10),
       role: "TEAM",
       name: "Test Registration",
     },

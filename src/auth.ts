@@ -2,8 +2,8 @@
  * Auth.js configuration (JWT sessions; separate from Supabase Auth).
  *
  * Google is the normal sign-in. Password sign-in exists only for the legacy
- * test emails in `src/lib/auth-policy.ts`. The `signIn` callback creates new
- * Google users only when the intent cookie says Register; from Log In an
+ * test emails in `src/lib/auth-policy.ts`, only against opted-in local fixtures.
+ * The `signIn` callback creates new Google users only when the intent cookie says Register; from Log In an
  * unknown email is sent to `/register?error=no-account`. The session carries
  * `id`, `role`, and `platformAdmin`, kept in sync with the user row.
  */
@@ -13,6 +13,7 @@ import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { testPasswordLoginEnabled } from "@/lib/test-environment";
 import { getCachedUser } from "@/lib/cached-user";
 import {
   AUTH_INTENT_COOKIE,
@@ -44,6 +45,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        if (!testPasswordLoginEnabled()) return null;
         const email = String(credentials?.email ?? "")
           .trim()
           .toLowerCase();
@@ -92,8 +94,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       : []),
   ],
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       if (account?.provider !== "google") return true;
+      if (profile?.email_verified !== true) return false;
       const email = user.email?.trim().toLowerCase();
       if (!email) return false;
 
@@ -109,6 +112,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return existing ? true : "/register?error=no-account";
     },
     async jwt({ token, user, account }) {
+      if (account) token.authProvider = account.provider;
+      // Old sessions have no provenance; require one fresh login on rollout.
+      if (
+        token.authProvider !== "google" &&
+        !(token.authProvider === "credentials" && testPasswordLoginEnabled())
+      ) return null;
       if (account?.provider === "google") {
         const email = user?.email?.trim().toLowerCase();
         if (!email) return null;

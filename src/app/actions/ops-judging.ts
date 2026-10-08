@@ -71,10 +71,11 @@ export async function setJudgingOpen(
       return { error: "No applications to judge yet." };
     }
     await ensureCompetitionJudgeSlots(competition.id);
-    await prisma.competitionProfile.update({
-      where: { id: competition.id },
+    const updated = await prisma.competitionProfile.updateMany({
+      where: { id: competition.id, resultsReleasedAt: null },
       data: { judgingOpen: true, acceptingApps: false },
     });
+    if (updated.count === 0) return { error: "Judging cannot reopen after results are released." };
     revalidateJudging(competition.id);
     return {
       ok: true,

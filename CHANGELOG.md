@@ -4,6 +4,15 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Restrict password test logins to opted-in disposable local environments; revoke hosted legacy/credential sessions and require one fresh login for older sessions.
+- Guard both seed commands and test migrations, remove seeded passwords and published competition codes, and generate local claim codes.
+- Serialize judging writes and release on the competition row; recheck closure during submission and refuse writes that race a completed release.
+- Add database and browser permission/state regression, WebKit coverage, hosted-auth tests, dependency audit/release gates, and SDLC/release/capacity documentation.
+- Update Sharp within Next's supported dependency range to address its librsvg advisory.
+- Patch the Prisma config merger and ExcelJS UUID dependencies with scoped overrides; verify config loading and XLSX round trips. The production dependency audit is clean at review time.
+- Limit claim previews and confirmations to 20 requests per account per 15 minutes using PostgreSQL; refuse stale codes rotated during a claim. Apply migration `20261006170000_claim_attempt_limits` before deploying.
+- Require Google's verified-email assertion before account lookup; test registration intent and existing-user sign-in. Read and verify sealed/released CSV and XLSX exports in both browsers.
+
 - Performance pass with no behavior changes:
   - Auto-refresh (REG, ops live pages) and the judge live poll pause while the tab is hidden or the phone is locked, and catch up immediately when it is visible again (`usePollWhileVisible`).
   - Links no longer force a full background render of their target page; they prefetch the loading skeleton (the Next default). The judge's previous/next and live-team links keep full prefetch.

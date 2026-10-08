@@ -1,4 +1,4 @@
-/** Existing demonstration accounts retain password sign-in during the Google transition. */
+/** Account allowlist for local fixtures only; the environment guard is enforced separately. */
 const LEGACY_TEST_EMAILS = new Set([
   "legendstech@desidancenetwork.org",
   "legendstestadmin@gmail.com",

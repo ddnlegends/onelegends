@@ -16,7 +16,13 @@
     "db:seed": "prisma db seed",
     "db:seed:e2e": "tsx prisma/e2e-seed.ts",
     "db:reset": "prisma db seed",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "typecheck": "next typegen && tsc --noEmit -p .",
+    "check": "npm run lint && npm run typecheck && npm test",
+    "test:integration": "vitest run --config vitest.integration.config.mts",
+    "test:e2e:production": "playwright test --config playwright.production.config.ts",
+    "db:migrate:test": "tsx scripts/check-test-database.ts && prisma migrate deploy",
+    "test:load": "node scripts/load-smoke.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -46,5 +52,13 @@
     "tsx": "^4.23.13",
     "typescript": "^5",
     "vitest": "^5.0.3"
+  },
+  "overrides": {
+    "@prisma/config": {
+      "deepmerge-ts": "8.0.2"
+    },
+    "exceljs": {
+      "uuid": "11.1.1"
+    }
   }
 }

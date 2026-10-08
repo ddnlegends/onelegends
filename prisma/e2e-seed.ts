@@ -2,11 +2,12 @@
  * Fixture data for the Playwright suite (`npm run test:e2e`).
  *
  * Wipes every app table, so it refuses to run unless DATABASE_URL points at a
- * local database. Never point it at Supabase. Every fixture account signs in
+ * loopback onelegends_e2e database with explicit reset opt-in and a safe DIRECT_URL. Every fixture account signs in
  * with the password in E2E_PASSWORD; the emails must stay in the legacy
  * allowlist in src/lib/auth-policy.ts because only those may use passwords.
  */
 import { PrismaClient } from "@prisma/client";
+import { assertDisposableDatabase } from "../src/lib/test-environment";
 import bcrypt from "bcryptjs";
 
 export const E2E = {
@@ -28,23 +29,6 @@ export const E2E = {
     beta: { slug: "crew-beta", name: "Crew Beta", claimCode: "TEAM-E2EBTA" },
   },
 } as const;
-
-const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
-
-function assertLocalDatabase() {
-  const raw = process.env.DATABASE_URL ?? "";
-  let host = "";
-  try {
-    host = new URL(raw).hostname;
-  } catch {
-    /* handled below */
-  }
-  if (!LOCAL_HOSTS.has(host)) {
-    throw new Error(
-      `Refusing to seed: DATABASE_URL host is "${host || "missing"}". The e2e seed wipes every table and only runs against localhost.`,
-    );
-  }
-}
 
 const DRIVE_FILE = "https://drive.google.com/file/d/1E2EfixtureVideoIdAAAAAAAAAAAAA/view";
 
@@ -89,7 +73,7 @@ async function wipe(prisma: PrismaClient) {
 }
 
 export async function seedE2E() {
-  assertLocalDatabase();
+  assertDisposableDatabase();
   const password = process.env.E2E_PASSWORD;
   if (!password) throw new Error("Set E2E_PASSWORD before seeding.");
 

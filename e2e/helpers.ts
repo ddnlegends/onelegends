@@ -1,8 +1,23 @@
-import { expect, type Browser, type Page } from "@playwright/test";
+import { test as base, expect, type Browser, type BrowserContext, type Page } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
-import { E2E } from "../prisma/e2e-seed";
+import { E2E, seedE2E } from "../prisma/e2e-seed";
 
 export { E2E };
+
+const roleContexts = new Set<BrowserContext>();
+
+// Each test/retry starts from known data. One worker per isolated database.
+export const test = base.extend<{ fixtureDatabase: void }>({
+  fixtureDatabase: [async ({}, runTest) => {
+    await seedE2E();
+    try {
+      await runTest();
+    } finally {
+      await Promise.all([...roleContexts].map((context) => context.close()));
+      roleContexts.clear();
+    }
+  }, { auto: true }],
+});
 
 export type Role = keyof typeof E2E.emails;
 
@@ -26,6 +41,7 @@ export async function login(page: Page, role: Role) {
 /** A separate browser context per role, so several people can be signed in at once. */
 export async function pageAs(browser: Browser, role: Role): Promise<Page> {
   const context = await browser.newContext();
+  roleContexts.add(context);
   const page = await context.newPage();
   await login(page, role);
   return page;

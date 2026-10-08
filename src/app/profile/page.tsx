@@ -5,6 +5,7 @@ import {
   ProfileDetailsForm,
 } from "@/components/ProfileForms";
 import { redirect } from "next/navigation";
+import { testPasswordLoginEnabled } from "@/lib/test-environment";
 import { isLegacyTestLogin } from "@/lib/auth-policy";
 
 export default async function ProfilePage() {
@@ -27,13 +28,13 @@ export default async function ProfilePage() {
       </div>
       <section className="grid gap-4 lg:grid-cols-2">
         <ProfileDetailsForm name={user.name} email={user.email} />
-        {user.passwordHash && isLegacyTestLogin(user.email) ? (
+        {testPasswordLoginEnabled() && user.passwordHash && isLegacyTestLogin(user.email) ? (
           <ChangePasswordForm />
         ) : (
           <div className="space-y-4 rounded-xl border border-line bg-card p-6">
             <h2 className="font-heading text-xl">Password</h2>
             <p className="text-sm text-muted">
-              This login uses Google. There is no password on file.
+              Use your Google account settings to manage your password.
             </p>
           </div>
         )}

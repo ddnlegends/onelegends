@@ -4,30 +4,40 @@ on:
   push:
     branches: [main]
   pull_request:
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   checks:
     name: Lint, typecheck, unit tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run lint
-      - run: npx next typegen
-      - run: npx tsc --noEmit -p .
-      - run: npm test
+      - run: npm run check
 
   e2e:
-    name: Browser tests
+    name: Regression (${{ matrix.browser }})
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
     services:
       postgres:
         image: postgres:16
@@ -43,26 +53,73 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
-      # Throwaway CI database and fixture password; nothing here is a real secret.
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/onelegends_e2e
       DIRECT_URL: postgresql://postgres:postgres@localhost:5432/onelegends_e2e
+      ALLOW_TEST_DATABASE_RESET: '1'
       E2E_PASSWORD: e2e-ci-password
       AUTH_SECRET: ci-only-secret-not-used-anywhere-else
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npx prisma migrate deploy
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
-      - uses: actions/upload-artifact@v4
-        if: failure()
+      - run: npm run db:migrate:test
+      - run: npm run test:integration
+        if: matrix.browser == 'chromium'
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - run: npm run test:e2e -- --project=${{ matrix.browser }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
         with:
-          name: playwright-report
+          name: regression-${{ matrix.browser }}
           path: |
             playwright-report/
             test-results/
           retention-days: 7
+      - run: npm run test:e2e:production
+        if: matrix.browser == 'chromium'
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always() && matrix.browser == 'chromium'
+        with:
+          name: production-auth
+          path: |
+            playwright-report-production/
+            test-results-production/
+          retention-days: 7
+
+  security:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --ignore-scripts
+      # Fail on new high/critical production advisories; never auto-fix the lockfile.
+      - run: npm audit --omit=dev --audit-level=high
+
+  release-gate:
+    name: Release gate
+    if: always()
+    needs: [checks, e2e, security]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require every prerequisite to succeed
+        env:
+          CHECKS: ${{ needs.checks.result }}
+          REGRESSION: ${{ needs.e2e.result }}
+          SECURITY: ${{ needs.security.result }}
+        run: |
+          test "$CHECKS" = success
+          test "$REGRESSION" = success
+          test "$SECURITY" = success
