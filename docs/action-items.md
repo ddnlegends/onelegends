@@ -69,7 +69,7 @@ Team and competition primary admins can hand primary ownership to another user.
 4. The previous primary admin becomes a secondary admin. One primary remains.
 5. The roster, profile, applications, and listing stay on the same team or competition.
 
-Today a primary admin can invite and remove secondary admins only. Removing the primary admin is blocked. Reopening a claim is limited to circuit ops, clears every admin, and issues a new claim code. This feature replaces that path for a normal leadership change.
+Today a primary admin can invite and remove secondary admins only. Circuit ops can remove a primary and select an approved replacement without clearing the other admins, or leave the listing unclaimed with a rotated code. A self-service transfer by the current primary remains to be built.
 
 ### Partner competitions by year
 

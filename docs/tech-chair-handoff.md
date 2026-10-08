@@ -56,6 +56,6 @@ Step-by-step recipes for pages, actions, migrations, permissions, exports, tests
 - Back up data, apply migrations, run checks, and review role access with a non-admin Google account and the authorized admin account.
 - Review platform admins, competition admins, team admins, judges, and moderator access; revoke departing officers.
 - Review block reasons, payment instructions, competition deadlines, required judge counts, and Drive link sharing before the season.
-- Update this guide, [action-items.md](action-items.md), and [CHANGELOG.md](../CHANGELOG.md) when behavior changes. Direct primary ownership transfer, year-specific partner listings, and integrated payment confirmation remain planned work.
+- Update this guide, [action-items.md](action-items.md), and [CHANGELOG.md](../CHANGELOG.md) when behavior changes. Self-service primary ownership transfer, year-specific partner listings, and integrated payment confirmation remain planned work.
 
 The current launch decision and evidence are in [release-readiness.md](release-readiness.md). Follow [release-runbook.md](release-runbook.md) for required checks, deployment activation, ownership, and rollback.

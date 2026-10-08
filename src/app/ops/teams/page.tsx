@@ -15,7 +15,7 @@ import { prisma } from "@/lib/prisma";
 import { formatDate, statusLabel } from "@/lib/utils";
 
 export default async function OpsTeamsPage() {
-  const { id: userId } = await requirePlatformAdminPage();
+  await requirePlatformAdminPage();
   const teams = await prisma.teamProfile.findMany({
     orderBy: { name: "asc" },
     include: {
@@ -157,9 +157,14 @@ export default async function OpsTeamsPage() {
                               {membership.isPrimary ? " · Primary" : " · Secondary"}
                             </span>
                           </span>
-                          {!membership.isPrimary && membership.userId !== userId ? (
-                            <RevokeTeamAccessForm membershipId={membership.id} />
-                          ) : null}
+                          <RevokeTeamAccessForm
+                            membershipId={membership.id}
+                            isPrimary={membership.isPrimary}
+                            adminLabel={membership.user.email}
+                            replacements={approved
+                              .filter((candidate) => candidate.id !== membership.id && candidate.isAdmin)
+                              .map((candidate) => ({ membershipId: candidate.id, label: candidate.user.email }))}
+                          />
                         </li>
                       ))}
                     </ul>

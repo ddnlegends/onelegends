@@ -41,9 +41,11 @@ Close applications before circuit ops opens judging. Opening judging also forces
 
 See [judging.md](judging.md) for the scoring rubric and full judging flow. Coordinate any manual change to the required judge count before results release.
 
-## Resetting a claim
+## Removing an admin or resetting a claim
 
-Use a reset only when a listing was claimed by the wrong person or its contact has left. It cannot be undone.
+In **Teams** or **Competitions**, open the listing and use **Remove** beside one admin to revoke only that account. Circuit ops can also remove the primary admin: choose an approved replacement, who becomes primary without changing the listing or claim code, or choose **Leave unclaimed**. An unclaimed listing receives a new claim code so the old code cannot be reused; other admins and invites remain. Removing the competition primary without a replacement also closes live judging; judge and moderator assignments remain.
+
+Use **Reset claim** only when every admin and invite must be cleared. It cannot be undone.
 
 - **Team reset** removes every team admin and pending invite, and issues a new claim code. The profile, roster, and applications stay.
 - **Competition reset** removes every competition admin and admin invite, judge invite, and moderator access, closes judging, and issues a new claim code. Judges are removed too unless results have already been released, so historical scores stay intact.
@@ -64,7 +66,7 @@ Exports respect the anonymity gate: before a competition releases results, score
 
 1. Transfer ownership of Google Cloud OAuth, Supabase, deployment, domain, and the GitHub repository to the incoming authorized tech chairs through the organization's account process. Store secrets in the deployment secret manager, never in git or a handoff document.
 2. Review current circuit admins and remove departing officers' access. Invite new admins using their Google emails and verify their dashboard privileges.
-3. Review team and competition admin membership. A primary transfer button is not yet built; use [Resetting a claim](#resetting-a-claim) only when appropriate, because it removes existing membership. Download an **Everything** export as a season archive before making changes.
+3. Review team and competition admin membership. Circuit ops can remove an individual admin and assign a replacement primary; use [resetting a claim](#removing-an-admin-or-resetting-a-claim) only when all admin access must be cleared. Download an **Everything** export as a season archive before making changes.
 4. Record which competitions are active for the new season. Automatic partner-by-year archiving is not built, so check old listings manually.
 5. Confirm that `legends@desidancenetwork.org` is still the current payment recipient. Review outstanding application blocks and reasons.
 6. Use the [tech chair checklist](tech-chair-handoff.md#release-and-handoff-checklist) for changes and deployment.

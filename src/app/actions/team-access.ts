@@ -6,9 +6,10 @@
  * (create, reset claim, block from applying).
  *
  * Claiming makes the first user the primary admin. Only primaries invite and
- * remove admins; the primary cannot be removed. Creating, resetting, and
- * blocking require `platformAdmin`. A reset issues a new claim code and clears
- * access; a competition reset keeps judges once results are released.
+ * remove secondary admins. Circuit ops can remove any individual admin and
+ * choose a replacement primary. Creating, resetting, and blocking require
+ * `platformAdmin`. A reset issues a new claim code and clears access; a
+ * competition reset keeps judges once results are released.
  */
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -670,51 +671,147 @@ export async function inviteJudge(
 }
 
 export async function revokeTeamAccess(
-  _prev: { error?: string; ok?: boolean } | undefined,
+  _prev: { error?: string; ok?: boolean; message?: string } | undefined,
   formData: FormData,
-): Promise<{ error?: string; ok?: boolean }> {
+): Promise<{ error?: string; ok?: boolean; message?: string }> {
   const user = await requireUser();
   if (!user) return { error: "You must be signed in." };
 
   const membershipId = String(formData.get("membershipId") ?? "");
+  const replacementId = String(formData.get("replacementMembershipId") ?? "");
   const membership = await prisma.teamMembership.findUnique({
     where: { id: membershipId },
   });
   if (!membership) return { error: "Membership not found." };
-  if (!(await isTeamPrimary(user.id, membership.teamId))) {
+  const ops = await isPlatformAdmin(user.id);
+  if (!ops && !(await isTeamPrimary(user.id, membership.teamId))) {
     return { error: "Only the primary admin can remove access." };
   }
-  if (membership.isPrimary) {
-    return { error: "Reset the claim from Account if you need a new primary." };
+  if (membership.isPrimary && !ops) {
+    return { error: "Only circuit ops can remove the primary admin." };
   }
 
-  await prisma.teamMembership.delete({ where: { id: membership.id } });
+  const newClaimCode = membership.isPrimary ? await uniqueTeamClaimCode() : null;
+  const result = await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "TeamProfile" WHERE id = ${membership.teamId} FOR UPDATE`;
+    const current = await tx.teamMembership.findUnique({ where: { id: membershipId } });
+    if (!current || current.teamId !== membership.teamId) {
+      return { error: "Membership not found." };
+    }
+    if (!ops) {
+      const actor = await tx.teamMembership.findUnique({
+        where: { userId_teamId: { userId: user.id, teamId: current.teamId } },
+      });
+      if (actor?.status !== "APPROVED" || !actor.isPrimary) {
+        return { error: "Only the primary admin can remove access." };
+      }
+    }
+    if (!current.isPrimary) {
+      await tx.teamMembership.delete({ where: { id: current.id } });
+      return { ok: true, message: "Admin access removed." };
+    }
+    if (!ops) return { error: "Only circuit ops can remove the primary admin." };
+
+    const replacements = await tx.teamMembership.findMany({
+      where: { teamId: current.teamId, id: { not: current.id }, status: "APPROVED", isAdmin: true },
+    });
+    if (replacements.length && replacementId !== "unclaimed") {
+      const replacement = replacements.find((row) => row.id === replacementId);
+      if (!replacement) return { error: "Choose an approved admin as the new primary." };
+      await tx.teamMembership.update({ where: { id: replacement.id }, data: { isPrimary: true } });
+      await tx.teamMembership.delete({ where: { id: current.id } });
+      return { ok: true, message: "Primary admin removed and replacement assigned." };
+    }
+    await tx.teamMembership.delete({ where: { id: current.id } });
+    await tx.teamProfile.update({
+      where: { id: current.teamId },
+      data: { claimedAt: null, claimCode: newClaimCode ?? await uniqueTeamClaimCode() },
+    });
+    return { ok: true, message: "Primary admin removed. The team is unclaimed with a new claim code." };
+  });
+  if (result.error) return result;
   revalidateAccessPaths();
-  return { ok: true };
+  return result;
 }
 
 export async function revokeCompAccess(
-  _prev: { error?: string; ok?: boolean } | undefined,
+  _prev: { error?: string; ok?: boolean; message?: string } | undefined,
   formData: FormData,
-): Promise<{ error?: string; ok?: boolean }> {
+): Promise<{ error?: string; ok?: boolean; message?: string }> {
   const user = await requireUser();
   if (!user) return { error: "You must be signed in." };
 
   const membershipId = String(formData.get("membershipId") ?? "");
+  const replacementId = String(formData.get("replacementMembershipId") ?? "");
   const membership = await prisma.competitionMembership.findUnique({
     where: { id: membershipId },
   });
   if (!membership) return { error: "Membership not found." };
-  if (!(await isCompPrimary(user.id, membership.competitionId))) {
+  const ops = await isPlatformAdmin(user.id);
+  if (!ops && !(await isCompPrimary(user.id, membership.competitionId))) {
     return { error: "Only the primary admin can remove access." };
   }
-  if (membership.isPrimary) {
-    return { error: "Reset the claim from Account if you need a new primary." };
+  if (membership.isPrimary && !ops) {
+    return { error: "Only circuit ops can remove the primary admin." };
   }
 
-  await prisma.competitionMembership.delete({ where: { id: membership.id } });
+  const newClaimCode = membership.isPrimary ? await uniqueCompClaimCode() : null;
+  const result = await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "CompetitionProfile" WHERE id = ${membership.competitionId} FOR UPDATE`;
+    const current = await tx.competitionMembership.findUnique({ where: { id: membershipId } });
+    if (!current || current.competitionId !== membership.competitionId) {
+      return { error: "Membership not found." };
+    }
+    if (!ops) {
+      const actor = await tx.competitionMembership.findUnique({
+        where: { userId_competitionId: { userId: user.id, competitionId: current.competitionId } },
+      });
+      if (actor?.status !== "APPROVED" || !actor.isPrimary) {
+        return { error: "Only the primary admin can remove access." };
+      }
+    }
+    if (!current.isPrimary) {
+      await tx.competitionMembership.delete({ where: { id: current.id } });
+      return { ok: true, message: "Admin access removed." };
+    }
+    if (!ops) return { error: "Only circuit ops can remove the primary admin." };
+
+    const replacements = await tx.competitionMembership.findMany({
+      where: { competitionId: current.competitionId, id: { not: current.id }, status: "APPROVED", isAdmin: true },
+    });
+    if (replacements.length && replacementId !== "unclaimed") {
+      const replacement = replacements.find((row) => row.id === replacementId);
+      if (!replacement) return { error: "Choose an approved admin as the new primary." };
+      const otherListing = await tx.competitionProfile.findFirst({
+        where: { userId: replacement.userId, id: { not: current.competitionId } },
+        select: { id: true },
+      });
+      if (otherListing) return { error: "That admin is already primary for another competition." };
+      await tx.competitionProfile.update({
+        where: { id: current.competitionId },
+        data: { userId: replacement.userId },
+      });
+      await tx.competitionMembership.update({ where: { id: replacement.id }, data: { isPrimary: true } });
+      await tx.competitionMembership.delete({ where: { id: current.id } });
+      return { ok: true, message: "Primary admin removed and replacement assigned." };
+    }
+    await tx.competitionMembership.delete({ where: { id: current.id } });
+    await tx.competitionProfile.update({
+      where: { id: current.competitionId },
+      data: {
+        userId: null,
+        claimedAt: null,
+        claimCode: newClaimCode ?? await uniqueCompClaimCode(),
+        judgingOpen: false,
+        livePosition: null,
+        liveUpdatedAt: null,
+      },
+    });
+    return { ok: true, message: "Primary admin removed. The competition is unclaimed with a new claim code." };
+  });
+  if (result.error) return result;
   revalidateAccessPaths();
-  return { ok: true };
+  return result;
 }
 
 export async function cancelTeamInvite(

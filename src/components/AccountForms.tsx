@@ -380,27 +380,115 @@ export function InviteJudgeForm({ competitionId }: { competitionId: string }) {
   );
 }
 
-export function RevokeTeamAccessForm({ membershipId }: { membershipId: string }) {
+type ReplacementAdmin = { membershipId: string; label: string };
+
+export function RevokeTeamAccessForm({
+  membershipId,
+  isPrimary = false,
+  adminLabel = "",
+  replacements = [],
+}: {
+  membershipId: string;
+  isPrimary?: boolean;
+  adminLabel?: string;
+  replacements?: ReplacementAdmin[];
+}) {
+  const [confirming, setConfirming] = useState(false);
   const [state, formAction, pending] = useActionState(revokeTeamAccess, undefined);
-  return (
-    <form action={formAction}>
-      <input type="hidden" name="membershipId" value={membershipId} />
-      <button className="btn btn-ghost py-1.5" disabled={pending} type="submit">
-        {pending ? "…" : "Remove"}
+  if (isPrimary && !confirming) {
+    return (
+      <button className="btn btn-ghost py-1.5" type="button" onClick={() => setConfirming(true)}>
+        Remove primary
       </button>
+    );
+  }
+  return (
+    <form action={formAction} className={isPrimary ? "space-y-2 rounded-md border border-line bg-blush p-3" : ""}>
+      <input type="hidden" name="membershipId" value={membershipId} />
+      {isPrimary ? (
+        <>
+          <p className="text-sm">Remove <strong>{adminLabel}</strong> as primary admin?</p>
+          {replacements.length ? (
+            <label className="field text-sm">
+              New primary
+              <select name="replacementMembershipId" defaultValue={replacements[0].membershipId}>
+                {replacements.map((replacement) => (
+                  <option key={replacement.membershipId} value={replacement.membershipId}>
+                    {replacement.label}
+                  </option>
+                ))}
+                <option value="unclaimed">Leave unclaimed and rotate claim code</option>
+              </select>
+            </label>
+          ) : (
+            <p className="text-sm text-muted">No approved replacement. This team will become unclaimed and its claim code will rotate. Other access and team data stay in place.</p>
+          )}
+        </>
+      ) : null}
+      <div className="flex gap-2">
+        <button className="btn btn-ghost py-1.5" disabled={pending} type="submit">
+          {pending ? "Removing…" : isPrimary ? "Confirm removal" : "Remove"}
+        </button>
+        {isPrimary ? (
+          <button className="btn btn-ghost py-1.5" type="button" onClick={() => setConfirming(false)}>Cancel</button>
+        ) : null}
+      </div>
       {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
     </form>
   );
 }
 
-export function RevokeCompAccessForm({ membershipId }: { membershipId: string }) {
+export function RevokeCompAccessForm({
+  membershipId,
+  isPrimary = false,
+  adminLabel = "",
+  replacements = [],
+}: {
+  membershipId: string;
+  isPrimary?: boolean;
+  adminLabel?: string;
+  replacements?: ReplacementAdmin[];
+}) {
+  const [confirming, setConfirming] = useState(false);
   const [state, formAction, pending] = useActionState(revokeCompAccess, undefined);
-  return (
-    <form action={formAction}>
-      <input type="hidden" name="membershipId" value={membershipId} />
-      <button className="btn btn-ghost py-1.5" disabled={pending} type="submit">
-        {pending ? "…" : "Remove"}
+  if (isPrimary && !confirming) {
+    return (
+      <button className="btn btn-ghost py-1.5" type="button" onClick={() => setConfirming(true)}>
+        Remove primary
       </button>
+    );
+  }
+  return (
+    <form action={formAction} className={isPrimary ? "space-y-2 rounded-md border border-line bg-blush p-3" : ""}>
+      <input type="hidden" name="membershipId" value={membershipId} />
+      {isPrimary ? (
+        <>
+          <p className="text-sm">Remove <strong>{adminLabel}</strong> as primary admin?</p>
+          {replacements.length ? (
+            <label className="field text-sm">
+              New primary
+              <select name="replacementMembershipId" defaultValue={replacements[0].membershipId}>
+                {replacements.map((replacement) => (
+                  <option key={replacement.membershipId} value={replacement.membershipId}>
+                    {replacement.label}
+                  </option>
+                ))}
+                <option value="unclaimed">Leave unclaimed and rotate claim code</option>
+              </select>
+            </label>
+          ) : (
+            <p className="text-sm text-muted">No approved replacement. This competition will become unclaimed, its claim code will rotate, and live judging will close. Judges and moderator assignments stay in place.</p>
+          )}
+        </>
+      ) : null}
+      <div className="flex gap-2">
+        <button className="btn btn-ghost py-1.5" disabled={pending} type="submit">
+          {pending ? "Removing…" : isPrimary ? "Confirm removal" : "Remove"}
+        </button>
+        {isPrimary ? (
+          <button className="btn btn-ghost py-1.5" type="button" onClick={() => setConfirming(false)}>Cancel</button>
+        ) : null}
+      </div>
       {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
     </form>
   );

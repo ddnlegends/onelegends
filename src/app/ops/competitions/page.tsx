@@ -22,7 +22,7 @@ const JUDGE_STATUS: Record<string, string> = {
 };
 
 export default async function OpsCompetitionsPage() {
-  const { id: userId } = await requirePlatformAdminPage();
+  await requirePlatformAdminPage();
   const competitions = await prisma.competitionProfile.findMany({
     orderBy: { name: "asc" },
     include: {
@@ -242,9 +242,14 @@ export default async function OpsCompetitionsPage() {
                               {membership.isPrimary ? " · Primary" : " · Secondary"}
                             </span>
                           </span>
-                          {!membership.isPrimary && membership.userId !== userId ? (
-                            <RevokeCompAccessForm membershipId={membership.id} />
-                          ) : null}
+                          <RevokeCompAccessForm
+                            membershipId={membership.id}
+                            isPrimary={membership.isPrimary}
+                            adminLabel={membership.user.email}
+                            replacements={approved
+                              .filter((candidate) => candidate.id !== membership.id && candidate.isAdmin)
+                              .map((candidate) => ({ membershipId: candidate.id, label: candidate.user.email }))}
+                          />
                         </li>
                       ))}
                     </ul>
