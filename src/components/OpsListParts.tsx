@@ -9,9 +9,9 @@ export function Chip({
 }) {
   const styles = {
     neutral: "border-line bg-blush text-muted",
-    good: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    warn: "border-amber-200 bg-amber-50 text-amber-800",
-    bad: "border-red-200 bg-red-50 text-red-800",
+    good: "border-success-line bg-success-soft text-success",
+    warn: "border-warning-line bg-warning-soft text-warning",
+    bad: "border-danger-line bg-danger-soft text-danger",
   }[tone];
   return (
     <span

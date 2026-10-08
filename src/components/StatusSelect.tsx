@@ -25,7 +25,7 @@ export function StatusSelect({
 
   return (
     <select
-      className="rounded-md border border-line bg-white px-2 py-1 text-sm"
+      className="rounded-md border border-line bg-card px-2 py-1 text-sm"
       defaultValue={value}
       disabled={pending}
       onChange={(event) => {

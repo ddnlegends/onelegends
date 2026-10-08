@@ -162,8 +162,8 @@ export function RoleGuide({ signedIn }: { signedIn?: boolean }) {
                 onClick={() => setActiveId(item.id)}
                 className={`relative px-3 py-3.5 text-center text-xs font-bold uppercase tracking-[0.14em] transition sm:text-sm ${
                   selected
-                    ? "bg-white text-accent"
-                    : "text-muted hover:bg-white/60 hover:text-ink"
+                    ? "bg-card text-accent"
+                    : "text-muted hover:bg-card/60 hover:text-ink"
                 }`}
               >
                 {item.tab}

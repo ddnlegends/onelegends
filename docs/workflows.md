@@ -12,6 +12,12 @@ Step-by-step recipes for the changes maintainers make most often. Read [setup.md
 4. Add a nav link in `src/components/Nav.tsx` if needed, gated on the same role.
 5. Add the route to `OPS_PAGES` in `e2e/access.spec.ts` if it is tech-admin only, so CI checks logged-out visitors receive no protected data.
 
+## Style a page
+
+Use the semantic colors in `src/app/globals.css`: `bg-paper` for the page, `bg-card` for panels and fields, `bg-blush` for subtle surfaces, and `text-ink`, `text-muted`, `text-accent`, and `border-line`. Status colors use `success`, `warning`, `danger`, `info`, and `ready`, each with `-soft` backgrounds and `-line` borders. These tokens adapt to light and dark themes. Keep `brand` fills for white-label buttons; `accent` is a readable foreground and changes between themes.
+
+The root layout's fixed inline script applies the saved/device preference before paint. `ThemeSelect` handles changes, system updates, and cross-tab storage events. Keep their resolution logic in sync. Check both themes at desktop and phone widths, including focus, errors, dialogs, and unsaved forms. `e2e/theme.spec.ts` runs in the existing Chromium/WebKit CI jobs.
+
 ## Add a server action
 
 1. Put it in the matching file in `src/app/actions/` (each has a header saying what it covers), under `"use server"`.

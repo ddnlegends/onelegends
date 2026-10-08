@@ -34,7 +34,7 @@ export function ExpandableRow({
           aria-hidden
           className={`grid size-9 shrink-0 place-items-center rounded-full border transition ${
             open
-              ? "rotate-180 border-accent bg-accent text-white"
+              ? "rotate-180 border-accent bg-brand text-white"
               : "border-line text-muted"
           }`}
         >

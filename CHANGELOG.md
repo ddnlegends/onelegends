@@ -4,6 +4,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Add system, light, and dark themes with a persistent header selector, cross-tab updates, and themed forms, dialogs, tables, and status indicators. Browser regressions cover preference persistence, pre-hydration styling, blocked storage, and small-screen use.
 - Restrict password test logins to opted-in disposable local environments; revoke hosted legacy/credential sessions and require one fresh login for older sessions.
 - Guard both seed commands and test migrations, remove seeded passwords and published competition codes, and generate local claim codes.
 - Serialize judging writes and release on the competition row; recheck closure during submission and refuse writes that race a completed release.

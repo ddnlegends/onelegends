@@ -56,6 +56,7 @@ The destructive seed guard validates both URLs, the database name, loopback host
 | REG drives wrong team | Browser selects anonymous slot; live API returns only allowed keys; release clears live position | Real Drive video playback on event network and device |
 | Exports broken | Every non-tech role denied; CSV and parsed two-sheet XLSX content before/after release; formula-looking text round trip | Open exports in Excel/Sheets; large realistic datasets |
 | Cross-browser failures | Chromium and WebKit desktop suites | Real iPhone Safari and Android Chrome, touch keyboards and poor network |
+| Theme preference and form state | System changes, explicit override, navigation/reload, cross-tab sync, pre-hydration styling, invalid/blocked storage, 375px layout, unsaved form preservation in both browsers | Check themed dialogs, status badges, judge/REG screens, and embedded Drive playback on actual devices |
 
 The browser test “Register displays the unknown-account notice (no OAuth round trip)” checks the destination notice only. Callback unit tests cover the registration decision separately. Neither completes external Google OAuth. Keep this distinction in release reports.
 

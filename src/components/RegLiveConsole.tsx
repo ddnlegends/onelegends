@@ -159,7 +159,7 @@ export function RegLiveConsole({
                             }
                             className={`grid size-5 shrink-0 place-items-center rounded-full border text-xs font-bold ${
                               judge.complete
-                                ? "border-emerald-600 bg-emerald-50 text-emerald-700"
+                                ? "border-success-line bg-success-soft text-success"
                                 : "border-line bg-blush text-transparent"
                             }`}
                           >
@@ -175,7 +175,7 @@ export function RegLiveConsole({
                   )}
                 </div>
                 {isLive ? (
-                  <span className="rounded-full bg-accent-ember px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-white">
+                  <span className="rounded-full bg-brand-ember px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-white">
                     Live
                   </span>
                 ) : (

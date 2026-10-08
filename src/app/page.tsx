@@ -17,7 +17,7 @@ export default async function HomePage() {
 
   return (
     <div>
-      <section className="relative overflow-hidden border-b border-line bg-white">
+      <section className="relative overflow-hidden border-b border-line bg-paper">
         <Lattice />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img

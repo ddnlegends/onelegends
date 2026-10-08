@@ -175,7 +175,7 @@ export default async function CompDashboardPage() {
                         size="sm"
                       />
                     ) : comp.status === "COMPLETE" && comp.resultsReleasedAt ? (
-                      <p className="text-sm text-emerald-800">
+                      <p className="text-sm text-success">
                         Results released {formatDateTime(comp.resultsReleasedAt)}
                       </p>
                     ) : (
