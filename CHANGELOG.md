@@ -4,6 +4,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Group Prisma CLI and client dependency updates and defer major upgrades until the app migration is ready.
 - Move the theme controls to the fixed top-right corner and use accessible System, Light, and Dark icon buttons.
 - Fixed the competition claim race fixture to use an account without an existing competition, and gave browser CI enough time to install WebKit's Linux system dependencies before its regression suite.
 - Add system, light, and dark themes with a persistent header selector, cross-tab updates, and themed forms, dialogs, tables, and status indicators. Browser regressions cover preference persistence, pre-hydration styling, blocked storage, and small-screen use.
