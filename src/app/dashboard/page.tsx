@@ -14,16 +14,16 @@ import {
   isPlatformAdmin,
   userHasJudgeAccess,
 } from "@/lib/team-access";
-import { getRegistrationCompetitions } from "@/lib/registration";
+import { getModeratorCompetitions } from "@/lib/moderator";
 import {
   setActiveCompAction,
   setActiveTeamAction,
 } from "@/app/actions/team-access";
 import {
   AcceptCompInviteForm,
-  CancelRegistrationInviteForm,
-  GrantRegistrationForm,
-  RemoveRegistrationAccessForm,
+  CancelModeratorInviteForm,
+  GrantModeratorForm,
+  RemoveModeratorAccessForm,
   AcceptJudgeInviteForm,
   AcceptTeamInviteForm,
   CreateCompForm,
@@ -52,13 +52,13 @@ export default async function DashboardPage() {
     teamMemberships,
     compMemberships,
     judging,
-    registrationCompetitions,
+    moderatorCompetitions,
   ] = await Promise.all([
     getPendingInvites(userId, email),
     getApprovedTeamMemberships(userId),
     getApprovedCompMemberships(userId),
     userHasJudgeAccess(userId),
-    getRegistrationCompetitions(userId),
+    getModeratorCompetitions(userId),
   ]);
   const [activeTeamId, activeCompId] = await Promise.all([
     getActiveTeamId(userId),
@@ -152,7 +152,7 @@ export default async function DashboardPage() {
                 team ? `Team · ${team.name}` : null,
                 competition ? `Competition · ${competition.name}` : null,
                 judging ? "Judge" : null,
-                registrationCompetitions.length ? "REG" : null,
+                moderatorCompetitions.length ? "Moderator" : null,
               ]
                 .filter(Boolean)
                 .join(" · ") || "None yet"}
@@ -163,7 +163,7 @@ export default async function DashboardPage() {
           <Link href="/profile" className="btn btn-ghost">
             Profile
           </Link>
-          {!team && !competition && !judging && !registrationCompetitions.length ? (
+          {!team && !competition && !judging && !moderatorCompetitions.length ? (
             <Link href="/claim" className="btn btn-primary">
               Code Claim
             </Link>
@@ -173,7 +173,7 @@ export default async function DashboardPage() {
             </Link>
           )}
         </div>
-        {!team && !competition && !judging && !registrationCompetitions.length ? (
+        {!team && !competition && !judging && !moderatorCompetitions.length ? (
           <p className="mt-3 text-sm text-muted">
             You are not on a team or competition yet. Use Code Claim, or wait
             for an invite on this email.
@@ -216,7 +216,7 @@ export default async function DashboardPage() {
         </section>
       ) : null}
 
-      {registrationCompetitions.length ? (
+      {moderatorCompetitions.length ? (
         <section className="space-y-4">
           <div>
             <h2 className="font-heading text-2xl">Live Viewing</h2>
@@ -225,10 +225,10 @@ export default async function DashboardPage() {
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            {registrationCompetitions.map((competition) => (
+            {moderatorCompetitions.map((competition) => (
               <Link
                 key={competition.id}
-                href={`/reg/${competition.id}`}
+                href={`/moderator/${competition.id}`}
                 className="brand-gradient group flex min-h-44 flex-col justify-between rounded-2xl p-6 text-white shadow-sm transition hover:brightness-110"
               >
                 <span
@@ -243,7 +243,7 @@ export default async function DashboardPage() {
                 </span>
                 <span>
                   <span className="block text-xs uppercase tracking-widest text-white/80">
-                    REG access
+                    Moderator access
                   </span>
                   <span className="mt-1 block font-heading text-2xl tracking-wide">
                     {competition.name}
@@ -326,10 +326,14 @@ export default async function DashboardPage() {
                   competitions={claimedComps.map((c) => ({
                     id: c.id,
                     name: c.name,
+                    isPartner: c.isPartner,
                     dates: c.dates,
                     location: c.location,
                     venue: c.venue,
-                    deadline: c.applicationDeadline
+                    earlyDeadline: c.earlyApplicationDeadline
+                      ? formatDateTime(c.earlyApplicationDeadline)
+                      : undefined,
+                    lateDeadline: c.applicationDeadline
                       ? formatDateTime(c.applicationDeadline)
                       : undefined,
                     acceptingApps: isCompetitionOpen(c),
@@ -496,7 +500,7 @@ async function OpsDashboard({
   name: string;
   userId: string;
 }) {
-  const [competitions, techAdmins, techInvites, regAccess, regInvites] =
+  const [competitions, techAdmins, techInvites, moderatorAccess, moderatorInvites] =
     await Promise.all([
       prisma.competitionProfile.findMany({
         select: { id: true, name: true },
@@ -508,11 +512,11 @@ async function OpsDashboard({
         orderBy: { email: "asc" },
       }),
       prisma.platformAdminInvite.findMany({ orderBy: { createdAt: "desc" } }),
-      prisma.registrationAccess.findMany({
+      prisma.moderatorAccess.findMany({
         include: { user: { select: { email: true } }, competition: { select: { name: true } } },
         orderBy: [{ competition: { name: "asc" } }, { createdAt: "asc" }],
       }),
-      prisma.registrationInvite.findMany({
+      prisma.moderatorInvite.findMany({
         include: { competition: { select: { name: true } } },
         orderBy: [{ competition: { name: "asc" } }, { createdAt: "asc" }],
       }),
@@ -542,20 +546,20 @@ async function OpsDashboard({
       <div className="grid gap-6 lg:grid-cols-2"><CreateTeamForm /><CreateCompForm /></div>
 
       <section className="space-y-4 rounded-xl border border-line bg-card p-6">
-        <h2 className="font-heading text-xl">Registration (REG) access</h2>
+        <h2 className="font-heading text-xl">Moderator access</h2>
         <p className="text-sm text-muted">Grant an account control of live viewing for a competition.</p>
-        <GrantRegistrationForm competitions={competitions} />
-        {regAccess.length === 0 && regInvites.length === 0 ? <p className="text-sm text-muted">No REG accounts yet.</p> : (
+        <GrantModeratorForm competitions={competitions} />
+        {moderatorAccess.length === 0 && moderatorInvites.length === 0 ? <p className="text-sm text-muted">No Moderator accounts yet.</p> : (
           <ul className="divide-y divide-line rounded-lg border border-line">
-            {regAccess.map((row) => <li key={row.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"><span className="text-sm"><span className="font-medium">{row.competition.name}</span><span className="text-muted"> · </span>{row.user.email}</span><RemoveRegistrationAccessForm accessId={row.id} /></li>)}
-            {regInvites.map((invite) => <li key={invite.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"><span className="text-sm"><span className="font-medium">{invite.competition.name}</span><span className="text-muted"> · </span>{invite.email}<span className="text-muted"> · waiting to log in</span></span><CancelRegistrationInviteForm inviteId={invite.id} /></li>)}
+            {moderatorAccess.map((row) => <li key={row.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"><span className="text-sm"><span className="font-medium">{row.competition.name}</span><span className="text-muted"> · </span>{row.user.email}</span><RemoveModeratorAccessForm accessId={row.id} /></li>)}
+            {moderatorInvites.map((invite) => <li key={invite.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"><span className="text-sm"><span className="font-medium">{invite.competition.name}</span><span className="text-muted"> · </span>{invite.email}<span className="text-muted"> · waiting to log in</span></span><CancelModeratorInviteForm inviteId={invite.id} /></li>)}
           </ul>
         )}
       </section>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Link href="/ops/teams" className="group rounded-2xl border border-line bg-card p-6 transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md"><p className="text-xs uppercase tracking-widest text-muted">Circuit management</p><h2 className="mt-1 font-heading text-2xl group-hover:text-accent">Teams</h2><p className="mt-2 text-sm text-muted">Claim codes, owners, profiles, rosters, applications, and application blocks.</p><span className="mt-5 inline-flex text-sm font-semibold text-accent">Manage teams →</span></Link>
-        <Link href="/ops/competitions" className="group rounded-2xl border border-line bg-card p-6 transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md"><p className="text-xs uppercase tracking-widest text-muted">Circuit management</p><h2 className="mt-1 font-heading text-2xl group-hover:text-accent">Competitions</h2><p className="mt-2 text-sm text-muted">Claim codes, owners, event details, REG access, applications, and live-dashboard links.</p><span className="mt-5 inline-flex text-sm font-semibold text-accent">Manage competitions →</span></Link>
+        <Link href="/ops/competitions" className="group rounded-2xl border border-line bg-card p-6 transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md"><p className="text-xs uppercase tracking-widest text-muted">Circuit management</p><h2 className="mt-1 font-heading text-2xl group-hover:text-accent">Competitions</h2><p className="mt-2 text-sm text-muted">Claim codes, owners, event details, Moderator access, applications, and live-dashboard links.</p><span className="mt-5 inline-flex text-sm font-semibold text-accent">Manage competitions →</span></Link>
         <Link href="/ops/export" className="group rounded-2xl border border-line bg-card p-6 transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md"><p className="text-xs uppercase tracking-widest text-muted">Reports</p><h2 className="mt-1 font-heading text-2xl group-hover:text-accent">Export data</h2><p className="mt-2 text-sm text-muted">Download judging scores, results, lineups, rosters, details, and access lists as .xlsx or CSV.</p><span className="mt-5 inline-flex text-sm font-semibold text-accent">Open exports →</span></Link>
       </div>
 

@@ -33,13 +33,14 @@ import {
   setTeamApplyBlock,
   revokeCompAccess,
   revokeTeamAccess,
+  setCompetitionPartnerStatus,
 } from "@/app/actions/team-access";
 import {
   cancelPlatformAdminInvite,
-  cancelRegistrationInvite,
-  grantRegistrationAccess,
+  cancelModeratorInvite,
+  grantModeratorAccess,
   invitePlatformAdmin,
-  removeRegistrationAccess,
+  removeModeratorAccess,
   revokePlatformAdmin,
 } from "@/app/actions/ops-admin";
 import { SaveNotice } from "@/components/SaveNotice";
@@ -127,7 +128,7 @@ export function ClaimCompForm() {
       <div>
         <h2 className="font-heading text-xl">Claim a competition</h2>
         <p className="mt-1 text-sm text-muted">
-          Use the official bid code. First valid claim is the primary admin.
+          Use the official claim code. First valid claim is the primary admin.
         </p>
       </div>
       <form
@@ -503,7 +504,7 @@ export function CreateCompForm() {
       <div>
         <h2 className="font-heading text-xl">Add a competition</h2>
         <p className="mt-1 text-sm text-muted">
-          Creating a competition generates a bid code. Manage it from the
+          Creating a competition generates a claim code. Manage it from the
           Competitions page. Teams cannot apply until someone claims it. This
           app does not email anyone.
         </p>
@@ -518,10 +519,47 @@ export function CreateCompForm() {
           placeholder="Buckeye Mela"
         />
       </div>
+      <div className="field">
+        <label htmlFor="comp-type">Competition type</label>
+        <select id="comp-type" name="type" defaultValue="partner">
+          <option value="partner">Partner</option>
+          <option value="non-partner">Non-partner</option>
+        </select>
+      </div>
       <SaveNotice state={state} scroll={false} />
       <button className="btn btn-primary" disabled={pending} type="submit">
         {pending ? "Creating…" : "Create competition"}
       </button>
+    </form>
+  );
+}
+
+export function CompetitionTypeForm({
+  competitionId,
+  isPartner,
+}: {
+  competitionId: string;
+  isPartner: boolean;
+}) {
+  const [state, formAction, pending] = useActionState(
+    setCompetitionPartnerStatus,
+    undefined,
+  );
+
+  return (
+    <form action={formAction} className="flex flex-wrap items-end gap-3">
+      <input type="hidden" name="competitionId" value={competitionId} />
+      <div className="field">
+        <label htmlFor={`comp-type-${competitionId}`}>Competition type</label>
+        <select id={`comp-type-${competitionId}`} name="type" defaultValue={isPartner ? "partner" : "non-partner"}>
+          <option value="partner">Partner</option>
+          <option value="non-partner">Non-partner</option>
+        </select>
+      </div>
+      <button className="btn btn-ghost" disabled={pending} type="submit">
+        {pending ? "Saving…" : "Save type"}
+      </button>
+      <SaveNotice state={state} scroll={false} />
     </form>
   );
 }
@@ -688,8 +726,8 @@ export function ResetCompClaimForm({
       <input type="hidden" name="competitionId" value={competitionId} />
       <p className="text-sm">
         Are you sure? This removes every admin from{" "}
-        <strong>{competitionName}</strong>, its judges, and REG access, then
-        issues a new bid code (the old one stops working).
+        <strong>{competitionName}</strong>, its judges, and moderator access, then
+        issues a new claim code (the old one stops working).
       </p>
       <div className="flex gap-2">
         <button className="btn btn-primary py-1.5" disabled={pending} type="submit">
@@ -761,13 +799,13 @@ export function CancelPlatformAdminInviteForm({
   );
 }
 
-export function GrantRegistrationForm({
+export function GrantModeratorForm({
   competitions,
 }: {
   competitions: { id: string; name: string }[];
 }) {
   const [state, formAction, pending] = useActionState(
-    grantRegistrationAccess,
+    grantModeratorAccess,
     undefined,
   );
   const [email, setEmail] = useState("");
@@ -778,8 +816,8 @@ export function GrantRegistrationForm({
     <form action={formAction} className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
         <div className="field min-w-0">
-          <label htmlFor="reg-competition">Competition</label>
-          <select id="reg-competition" name="competitionId" required defaultValue="">
+          <label htmlFor="moderator-competition">Competition</label>
+          <select id="moderator-competition" name="competitionId" required defaultValue="">
             <option value="" disabled>
               Pick a competition
             </option>
@@ -791,23 +829,23 @@ export function GrantRegistrationForm({
           </select>
         </div>
         <div className="field min-w-0">
-          <label htmlFor="reg-email">Registration email</label>
+          <label htmlFor="moderator-email">Moderator email</label>
           <input
-            id="reg-email"
+            id="moderator-email"
             name="email"
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="legendstestreg@gmail.com"
+            placeholder="legendstestmoderator@gmail.com"
           />
         </div>
         <button className="btn btn-primary" disabled={pending} type="submit">
-          {pending ? "Granting…" : "Grant REG"}
+          {pending ? "Granting…" : "Grant Moderator"}
         </button>
       </div>
       <p className="text-sm text-muted">
-        No email is sent. REG accounts play the videos and pick the team judges
+        No email is sent. Moderator accounts play the videos and pick the team judges
         score. If the account does not exist yet, access applies when they log
         in or register.
       </p>
@@ -816,9 +854,9 @@ export function GrantRegistrationForm({
   );
 }
 
-export function RemoveRegistrationAccessForm({ accessId }: { accessId: string }) {
+export function RemoveModeratorAccessForm({ accessId }: { accessId: string }) {
   const [state, formAction, pending] = useActionState(
-    removeRegistrationAccess,
+    removeModeratorAccess,
     undefined,
   );
   return (
@@ -832,9 +870,9 @@ export function RemoveRegistrationAccessForm({ accessId }: { accessId: string })
   );
 }
 
-export function CancelRegistrationInviteForm({ inviteId }: { inviteId: string }) {
+export function CancelModeratorInviteForm({ inviteId }: { inviteId: string }) {
   const [state, formAction, pending] = useActionState(
-    cancelRegistrationInvite,
+    cancelModeratorInvite,
     undefined,
   );
   return (

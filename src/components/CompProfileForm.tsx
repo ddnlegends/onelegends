@@ -14,6 +14,7 @@ type Profile = {
   description: string;
   googleSheetUrl: string;
   acceptingApps: boolean;
+  earlyApplicationDeadline: string;
   applicationDeadline: string;
   requiredJudgeCount: number;
 };
@@ -32,7 +33,17 @@ function isoToLocalInput(iso: string): string {
  * datetime-local has no timezone, so the browser converts it to an ISO instant
  * before submit; the server would otherwise read it in its own (UTC) zone.
  */
-function DeadlineField({ iso }: { iso: string }) {
+function DeadlineField({
+  iso,
+  name,
+  label,
+  help,
+}: {
+  iso: string;
+  name: string;
+  label: string;
+  help: string;
+}) {
   const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false);
   const [edited, setEdited] = useState<string | null>(null);
   const local = edited ?? (hydrated ? isoToLocalInput(iso) : null);
@@ -44,19 +55,17 @@ function DeadlineField({ iso }: { iso: string }) {
 
   return (
     <div className="field">
-      <label htmlFor="applicationDeadline">Application deadline</label>
+      <label htmlFor={name}>{label}</label>
       <input
         key={hydrated ? "client" : "server"}
-        id="applicationDeadline"
+        id={name}
         type="datetime-local"
         defaultValue={local ?? ""}
         onChange={(event) => setEdited(event.target.value)}
       />
-      <input type="hidden" name="applicationDeadline" value={submitted} />
+      <input type="hidden" name={name} value={submitted} />
       <p className="text-xs text-muted">
-        {zone ? `In your time zone (${zone}). ` : ""}Shown as Apps close on
-        Home. After this time, Open becomes Closed even if Accepting
-        Applications is still checked. Clear the field for no clock deadline.
+        {zone ? `In your time zone (${zone}). ` : ""}{help}
       </p>
     </div>
   );
@@ -95,7 +104,18 @@ export function CompProfileForm({ profile }: { profile: Profile }) {
           <label htmlFor="location">Location (city)</label>
           <input id="location" name="location" defaultValue={profile.location} />
         </div>
-        <DeadlineField iso={profile.applicationDeadline} />
+        <DeadlineField
+          iso={profile.earlyApplicationDeadline}
+          name="earlyApplicationDeadline"
+          label="Early application deadline"
+          help="Shown to teams as the early deadline. Applications stay open after this time."
+        />
+        <DeadlineField
+          iso={profile.applicationDeadline}
+          name="applicationDeadline"
+          label="Late application deadline"
+          help="Shown as the final deadline. After this time, applications close even if Accepting Applications is checked. Clear it for no automatic close."
+        />
         <div className="field">
           <label htmlFor="requiredJudgeCount">Required judges (N)</label>
           <input

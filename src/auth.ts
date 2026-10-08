@@ -21,7 +21,7 @@ import {
   parseAuthIntent,
 } from "@/lib/auth-policy";
 import { hydrateEmailInvites } from "@/lib/invites";
-import { applyRegistrationInvites } from "@/lib/registration";
+import { applyModeratorInvites } from "@/lib/moderator";
 import {
   applyPlatformAdminInvite,
   googleAuthEnabled,
@@ -63,9 +63,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         await applyPlatformAdminInvite(user.id, user.email);
         try {
-          await applyRegistrationInvites(user.id, user.email);
+          await applyModeratorInvites(user.id, user.email);
         } catch {
-          /* Registration access can wait until the next dashboard load. */
+          /* Moderator access can wait until the next dashboard load. */
         }
 
         const fresh = await prisma.user.findUnique({ where: { id: user.id } });

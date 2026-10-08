@@ -15,7 +15,7 @@ export const E2E = {
     tech: "legendstech@desidancenetwork.org",
     comp: "legendstestcomp@gmail.com",
     team: "legendstestuser@gmail.com",
-    reg: "legendstestreg@gmail.com",
+    moderator: "legendstestmoderator@gmail.com",
     judge: "legendstestadmin@gmail.com",
   },
   comps: {
@@ -65,8 +65,8 @@ async function wipe(prisma: PrismaClient) {
   await prisma.teamProfile.deleteMany();
   await prisma.compInvite.deleteMany();
   await prisma.competitionMembership.deleteMany();
-  await prisma.registrationInvite.deleteMany();
-  await prisma.registrationAccess.deleteMany();
+  await prisma.moderatorInvite.deleteMany();
+  await prisma.moderatorAccess.deleteMany();
   await prisma.platformAdminInvite.deleteMany();
   await prisma.user.deleteMany();
   await prisma.competitionProfile.deleteMany();
@@ -87,7 +87,7 @@ export async function seedE2E() {
     await user(E2E.emails.tech, "E2E Tech Admin", true);
     const compAdmin = await user(E2E.emails.comp, "E2E Comp Admin");
     const teamAdmin = await user(E2E.emails.team, "E2E Team Admin");
-    const reg = await user(E2E.emails.reg, "E2E Registration");
+    const moderator = await user(E2E.emails.moderator, "E2E Moderator");
     const judgeUser = await user(E2E.emails.judge, "E2E Judge");
 
     const nextMonth = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -155,8 +155,8 @@ export async function seedE2E() {
       });
     }
 
-    await prisma.registrationAccess.create({
-      data: { userId: reg.id, competitionId: showcase.id },
+    await prisma.moderatorAccess.create({
+      data: { userId: moderator.id, competitionId: showcase.id },
     });
     await prisma.judgeProfile.create({
       data: {

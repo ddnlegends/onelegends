@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { BrandMark } from "@/components/BrandMark";
+import { CompetitionTypeBadge } from "@/components/CompetitionTypeBadge";
 import { Lattice } from "@/components/Lattice";
 import { RoleGuide } from "@/components/RoleGuide";
 import { isCompetitionOpen } from "@/lib/judging";
@@ -80,13 +81,13 @@ export default async function HomePage() {
           </h2>
           <p className="mt-2 max-w-xl text-muted">
             The full season list from each competition’s live details. Event
-            date, city, venue, stage, and when apps close — then apply from
+            date, city, venue, stage, and early and late deadlines — then apply from
             your team profile.
           </p>
         </div>
 
         <div className="overflow-x-auto rounded-xl border border-line bg-card shadow-[0_12px_40px_rgba(142,28,66,0.06)]">
-          <table className="w-full min-w-[52rem] text-left text-sm">
+          <table className="w-full min-w-[62rem] text-left text-sm">
             <thead className="border-b border-line bg-blush text-xs uppercase tracking-wide text-muted">
               <tr>
                 <th className="px-4 py-3 font-medium">Competition</th>
@@ -94,7 +95,8 @@ export default async function HomePage() {
                 <th className="px-4 py-3 font-medium">Location</th>
                 <th className="px-4 py-3 font-medium">Venue</th>
                 <th className="px-4 py-3 font-medium">Stage</th>
-                <th className="px-4 py-3 font-medium">Apps close</th>
+                <th className="px-4 py-3 font-medium">Early deadline</th>
+                <th className="px-4 py-3 font-medium">Late deadline</th>
                 <th className="px-4 py-3 font-medium">Apps</th>
               </tr>
             </thead>
@@ -102,17 +104,25 @@ export default async function HomePage() {
               {competitions.map((comp) => (
                 <tr key={comp.id} className="border-b border-line last:border-0">
                   <td className="px-4 py-3">
-                    <Link
-                      href={`/comps/${comp.id}`}
-                      className="font-semibold text-accent hover:underline"
-                    >
-                      {comp.name}
-                    </Link>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link
+                        href={`/comps/${comp.id}`}
+                        className="font-semibold text-accent hover:underline"
+                      >
+                        {comp.name}
+                      </Link>
+                      <CompetitionTypeBadge isPartner={comp.isPartner} />
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-muted">{comp.dates || "TBA"}</td>
                   <td className="px-4 py-3 text-muted">{comp.location || "TBA"}</td>
                   <td className="px-4 py-3 text-muted">{comp.venue || "TBA"}</td>
                   <td className="px-4 py-3 text-muted">{comp.stageSize || "TBA"}</td>
+                  <td className="px-4 py-3 text-muted">
+                    {comp.earlyApplicationDeadline
+                      ? formatDateTime(comp.earlyApplicationDeadline)
+                      : "—"}
+                  </td>
                   <td className="px-4 py-3 text-muted">
                     {comp.applicationDeadline
                       ? formatDateTime(comp.applicationDeadline)

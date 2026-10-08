@@ -8,7 +8,7 @@ export type SeasonComp = {
   acceptingApps?: boolean;
 };
 
-/** Listing metadata only. Seed generates fresh claim codes in a disposable database. */
+/** Partner listing metadata only. Seed generates fresh claim codes in a disposable database. */
 export const SEASON_COMPS: SeasonComp[] = [
   {
     slug: "legends",

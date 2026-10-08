@@ -2,6 +2,8 @@
 
 **Status: not approved for production.** This review starts at commit `f5f4530753bc03e20c46b10afefdf5f1bd015676`. The local `release/readiness-hardening` branch contains proposed fixes and checks. A successful local test run does not activate GitHub or Vercel controls. See [release-runbook.md](release-runbook.md) for activation and sign-off.
 
+**7 October integration update:** the branch is published and now incorporates main's Moderator naming, payment recipient, competition partner labels, logo wording, and early/late deadlines, plus dark mode. The evidence below records the original 6 October audit; current merge validation is recorded in the pull request and its Actions run. Repository ruleset listing currently returns no rulesets. Production migration, external OAuth, capacity, and hosting-control verification remain separate release requirements.
+
 ## Launch blockers
 
 | Priority | Finding and evidence | Required closure |
@@ -30,7 +32,7 @@ The original production dependency findings are resolved locally by a supported 
 2. **Additional races:** concurrent invitations, role changes, resetting owned listings, application deadline changes, and judging approval changes need targeted concurrency coverage. The added transaction tests cover specific judging and claiming invariants, not every mutation.
 3. **Google Sheets:** sync failures are caught and discarded. After a release, an external Sheet can be stale without a durable retry. If Sheets are operationally required, add a retry/outbox and visible failure status; otherwise use the app/export as the source of truth for launch.
 4. **Lock contention:** the hardening serializes short scoring transactions per competition. Measure concurrent score-save latency and transaction timeouts during the staging rehearsal; database correctness does not establish throughput.
-5. **Payments:** the action-item document identifies a placeholder PayPal destination. Board must supply the actual recipient or remove/disable that path before asking teams to pay.
+5. **Payments:** main now supplies the manual Zelle/PayPal recipient `legends@desidancenetwork.org`. Confirm the amount, recipient, and payment memo with the board before collecting payments; automated payment confirmation remains outside the app.
 6. **Privacy:** decide whether public team photos and production details are intended. Automated export tests now inspect CSV and parsed XLSX before and after release; repeat the operational acceptance with realistic synthetic data and intended access roles.
 7. **Operations:** add attributable audit records for access grants, score submission, results release, claim reset, and data export. Confirm exception alerts, a live event support contact, and rollback access.
 

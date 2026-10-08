@@ -21,8 +21,9 @@ export default async function CompProfilePage() {
         <h1 className="font-heading text-4xl">Competition Details</h1>
         <p className="mt-2 max-w-2xl text-muted">
           Dates, venue, stage size, lighting, and production notes show on the
-          public listing. Set your own application deadline. Toggle “accepting
-          applications” when you are ready.
+          public listing. Set early and late application deadlines. The late
+          deadline closes applications. Toggle “accepting applications” when
+          you are ready.
         </p>
       </div>
       <CompProfileForm
@@ -37,6 +38,7 @@ export default async function CompProfilePage() {
           description: competition.description,
           googleSheetUrl: competition.googleSheetUrl,
           acceptingApps: competition.acceptingApps,
+          earlyApplicationDeadline: competition.earlyApplicationDeadline?.toISOString() ?? "",
           applicationDeadline: competition.applicationDeadline?.toISOString() ?? "",
           requiredJudgeCount: competition.requiredJudgeCount,
         }}

@@ -49,7 +49,7 @@ model User {
   judge                  JudgeProfile?
   memberships            TeamMembership[]
   competitionMemberships CompetitionMembership[]
-  registrationAccess     RegistrationAccess[]
+  moderatorAccess     ModeratorAccess[]
 }
 
 model PlatformAdminInvite {
@@ -140,7 +140,9 @@ model CompetitionProfile {
   claimCode           String    @unique
   claimedAt           DateTime?
   name                String
+  isPartner           Boolean   @default(true)
   acceptingApps       Boolean   @default(true)
+  earlyApplicationDeadline DateTime?
   applicationDeadline DateTime?
   requiredJudgeCount  Int       @default(3)
   resultsReleasedAt   DateTime?
@@ -165,11 +167,11 @@ model CompetitionProfile {
   memberships         CompetitionMembership[]
   invites             CompInvite[]
   judgeInvites        JudgeInvite[]
-  registrationAccess  RegistrationAccess[]
-  registrationInvites RegistrationInvite[]
+  moderatorAccess  ModeratorAccess[]
+  moderatorInvites ModeratorInvite[]
 }
 
-model RegistrationAccess {
+model ModeratorAccess {
   id            String             @id @default(cuid())
   userId        String
   user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -177,19 +179,21 @@ model RegistrationAccess {
   competition   CompetitionProfile @relation(fields: [competitionId], references: [id], onDelete: Cascade)
   createdAt     DateTime           @default(now())
 
-  @@unique([userId, competitionId])
-  @@index([competitionId])
+  @@unique([userId, competitionId], map: "RegistrationAccess_userId_competitionId_key")
+  @@index([competitionId], map: "RegistrationAccess_competitionId_idx")
+  @@map("RegistrationAccess")
 }
 
-model RegistrationInvite {
+model ModeratorInvite {
   id            String             @id @default(cuid())
   competitionId String
   competition   CompetitionProfile @relation(fields: [competitionId], references: [id], onDelete: Cascade)
   email         String
   createdAt     DateTime           @default(now())
 
-  @@unique([competitionId, email])
-  @@index([email])
+  @@unique([competitionId, email], map: "RegistrationInvite_competitionId_email_key")
+  @@index([email], map: "RegistrationInvite_email_idx")
+  @@map("RegistrationInvite")
 }
 
 model CompetitionMembership {

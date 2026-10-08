@@ -139,14 +139,14 @@ export async function saveTeamProfile(
   if (photo instanceof File && photo.size > 0) {
     try {
       const stored = await storeTeamPhoto(teamId, photo);
-      if ("error" in stored) return { error: stored.error ?? "Could not save the photo." };
+      if ("error" in stored) return { error: stored.error ?? "Could not save the logo." };
       photoUrl = stored.url;
     } catch {
-      return { error: "Could not save the photo. Try again." };
+      return { error: "Could not save the logo. Try again." };
     }
   }
   if (!hasTeamPhoto(photoUrl)) {
-    return { error: "Upload a team photo." };
+    return { error: "Upload a team logo." };
   }
 
   await prisma.teamProfile.update({

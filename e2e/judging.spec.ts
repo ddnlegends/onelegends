@@ -21,7 +21,7 @@ async function scoreTeam(page: Page, scores: Record<string, string>) {
   await expect(page.getByText(/Saved total:/)).toBeVisible();
 }
 
-test("ops opens judging, REG drives the screen, a judge scores, and results release", async ({
+test("ops opens judging, moderator drives the screen, a judge scores, and results release", async ({
   browser,
 }) => {
   test.setTimeout(180_000);
@@ -30,14 +30,14 @@ test("ops opens judging, REG drives the screen, a judge scores, and results rele
   const ops = await pageAs(browser, "tech");
   await ops.goto(`/ops/comps/${id}`);
   await ops.getByRole("button", { name: "Open judging" }).click();
-  await expect(ops.getByText(/Judging is open\. REG can start/)).toBeVisible();
+  await expect(ops.getByText(/Judging is open\. The moderator can start/)).toBeVisible();
 
-  const reg = await pageAs(browser, "reg");
-  await reg.goto(`/reg/${id}`);
-  await expect(reg.getByRole("heading", { name: "Ready when you are" })).toBeVisible();
-  await expectNoTeamNames(reg);
-  await reg.getByRole("button", { name: "Show Team 1" }).click();
-  await expect(reg.getByRole("heading", { name: "Team 1" })).toBeVisible();
+  const moderator = await pageAs(browser, "moderator");
+  await moderator.goto(`/moderator/${id}`);
+  await expect(moderator.getByRole("heading", { name: "Ready when you are" })).toBeVisible();
+  await expectNoTeamNames(moderator);
+  await moderator.getByRole("button", { name: "Show Team 1" }).click();
+  await expect(moderator.getByRole("heading", { name: "Team 1" })).toBeVisible();
 
   const judge = await pageAs(browser, "judge");
   await judge.goto(`/judge/${id}`);
@@ -60,10 +60,10 @@ test("ops opens judging, REG drives the screen, a judge scores, and results rele
   await expectNoTeamNames(comp);
 
   await expect(async () => {
-    await reg.reload();
-    await expect(reg.getByLabel("E2E Judge completed Team 2")).toBeVisible({ timeout: 2_000 });
+    await moderator.reload();
+    await expect(moderator.getByLabel("E2E Judge completed Team 2")).toBeVisible({ timeout: 2_000 });
   }).toPass();
-  await expectNoTeamNames(reg);
+  await expectNoTeamNames(moderator);
 
   await expect(async () => {
     await judge.goto(`/judge/${id}`);
@@ -96,6 +96,6 @@ test("ops opens judging, REG drives the screen, a judge scores, and results rele
   }
   await expect(comp.getByText("Strong opener")).toBeVisible();
 
-  await reg.reload();
-  await expect(reg.getByText("Judging is complete for this competition.")).toBeVisible();
+  await moderator.reload();
+  await expect(moderator.getByText("Judging is complete for this competition.")).toBeVisible();
 });

@@ -35,7 +35,7 @@ export function JudgingControls({
         <p className="mt-1 text-sm text-muted">
           {!claimed
             ? "A competition admin has to claim it before you can open judging or watch live scores."
-            : "Only tech admins can open or close judging. Opening it sets the shared team order; REG and judges are locked while it is closed."}
+            : "Only tech admins can open or close judging. Opening it sets the shared team order; the moderator and judges are locked while it is closed."}
         </p>
       </div>
       <SaveNotice state={state} />

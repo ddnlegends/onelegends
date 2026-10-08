@@ -45,7 +45,7 @@ async function submitTeamProfile(
       return { error: TEAM_PHOTO_TOO_LARGE };
     }
     return {
-      error: "Could not save the photo. Try again.",
+      error: "Could not save the logo. Try again.",
     };
   }
 }
@@ -179,12 +179,12 @@ export function TeamProfileForm({ profile }: { profile: Profile }) {
         </div>
         <div className="sm:col-span-2 space-y-2">
           <span className="text-xs font-semibold uppercase tracking-wide text-muted">
-            Team photo
+            Team logo
           </span>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <TeamPhoto
               src={photoSrc}
-              name={profile.name || "Team photo"}
+              name={profile.name || "Your team"}
               size="md"
             />
             <div className="min-w-0 flex-1 space-y-2">
@@ -195,13 +195,13 @@ export function TeamProfileForm({ profile }: { profile: Profile }) {
                 </p>
               ) : photoSrc ? (
                 <p className="text-sm font-semibold text-success">
-                  Photo saved.
+                  Logo saved.
                 </p>
               ) : (
-                <p className="text-sm text-muted">No photo yet.</p>
+                <p className="text-sm text-muted">No logo yet.</p>
               )}
               <label className="btn btn-ghost w-fit cursor-pointer py-1.5">
-                {photoSrc || pickedName ? "Replace photo" : "Upload photo"}
+                {photoSrc || pickedName ? "Replace logo" : "Upload logo"}
                 <input
                   ref={photoInput}
                   id="photo"

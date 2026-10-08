@@ -9,7 +9,7 @@ const XLSX = "/api/ops/export?dataset=teams&dataset=competitions&format=xlsx";
 test("exports require a signed-in tech admin", async ({ page, request }) => {
   expect((await request.get(CSV)).status()).toBe(401);
 
-  for (const role of ["team", "comp", "reg", "judge"] as const) {
+  for (const role of ["team", "comp", "moderator", "judge"] as const) {
     await login(page, role);
     expect((await page.request.get(CSV)).status()).toBe(403);
     await page.context().clearCookies();
@@ -41,7 +41,7 @@ test("CSV and XLSX keep judging names sealed until results release", async ({ pa
   await login(page, "tech");
   await page.goto(`/ops/comps/${id}`);
   await page.getByRole("button", { name: "Open judging" }).click();
-  await expect(page.getByText(/Judging is open\. REG can start/)).toBeVisible();
+  await expect(page.getByText(/Judging is open\. The moderator can start/)).toBeVisible();
   const assignment = await db.judgeAssignment.findFirstOrThrow({ where: { competitionId: id }, include: { slots: true } });
   expect(assignment.slots).toHaveLength(2);
   for (const slot of assignment.slots) {

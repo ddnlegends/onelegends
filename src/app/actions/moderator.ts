@@ -1,16 +1,16 @@
 "use server";
 
 /**
- * REG puts a team on screen. Every judge's sheet follows `livePosition`.
+ * Moderator puts a team on screen. Every judge's sheet follows `livePosition`.
  *
- * Requires registration access to the competition (and not being one of its
+ * Requires moderator access to the competition (and not being one of its
  * judges) while judging is open. Positions are anonymous Team numbers.
  */
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
 import { isJudgingOpen, judgingLockMessage } from "@/lib/judging";
-import { hasRegistrationAccess } from "@/lib/registration";
+import { hasModeratorAccess } from "@/lib/moderator";
 
 export async function setLiveTeam(
   _prev: { error?: string; ok?: boolean; message?: string } | undefined,
@@ -26,8 +26,8 @@ export async function setLiveTeam(
     return { error: "Pick a team from the list." };
   }
 
-  if (!(await hasRegistrationAccess(user.id, competitionId))) {
-    return { error: "Only REG accounts for this competition can run live viewing." };
+  if (!(await hasModeratorAccess(user.id, competitionId))) {
+    return { error: "Only moderators for this competition can run live viewing." };
   }
   const competition = await prisma.competitionProfile.findUnique({
     where: { id: competitionId },
@@ -55,7 +55,7 @@ export async function setLiveTeam(
   });
 
   if (updated.count === 0) return { error: "Judging is no longer open." };
-  revalidatePath(`/reg/${competitionId}`);
+  revalidatePath(`/moderator/${competitionId}`);
   revalidatePath("/ops/comps", "layout");
   return {
     ok: true,

@@ -35,3 +35,39 @@ test("a complete team applies to an open competition only", async ({ page }) => 
   await page.reload();
   await expect(page.getByText("Already applied")).toBeVisible();
 });
+
+test("competition admin sets ordered early and late deadlines", async ({ page }) => {
+  const original = await db.competitionProfile.findUniqueOrThrow({
+    where: { slug: E2E.comps.showcase.slug },
+    select: { id: true, earlyApplicationDeadline: true, applicationDeadline: true },
+  });
+  try {
+    await login(page, "comp");
+    await page.goto("/comp/profile");
+    await page.getByLabel("Early application deadline").fill("2027-01-20T12:00");
+    await page.getByLabel("Late application deadline").fill("2027-01-10T12:00");
+    await page.getByRole("button", { name: "Save Details" }).click();
+    await expect(page.locator(".notice-error")).toContainText("early deadline must be before the late deadline");
+
+    await page.getByLabel("Late application deadline").fill("2027-01-30T12:00");
+    await page.getByRole("button", { name: "Save Details" }).click();
+    await expect(page.locator(".notice-ok")).toContainText("Competition details saved");
+
+    const updated = await db.competitionProfile.findUniqueOrThrow({ where: { id: original.id } });
+    expect(updated.earlyApplicationDeadline).not.toBeNull();
+    expect(updated.applicationDeadline).not.toBeNull();
+    expect(updated.earlyApplicationDeadline!.getTime()).toBeLessThan(updated.applicationDeadline!.getTime());
+
+    await page.goto(`/comps/${original.id}`);
+    await expect(page.getByText("Early application deadline")).toBeVisible();
+    await expect(page.getByText("Late application deadline")).toBeVisible();
+  } finally {
+    await db.competitionProfile.update({
+      where: { id: original.id },
+      data: {
+        earlyApplicationDeadline: original.earlyApplicationDeadline,
+        applicationDeadline: original.applicationDeadline,
+      },
+    });
+  }
+});

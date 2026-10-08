@@ -1,19 +1,19 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { getRegistrationCompetitions } from "@/lib/registration";
+import { getModeratorCompetitions } from "@/lib/moderator";
 import { COMP_STATUS_LABEL, competitionStatus } from "@/lib/judging";
 import { CompStatusPill } from "@/components/CompStatusPill";
 
-export default async function RegHomePage() {
+export default async function ModeratorHomePage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  const competitions = await getRegistrationCompetitions(session.user.id);
+  const competitions = await getModeratorCompetitions(session.user.id);
 
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-xs uppercase tracking-wide text-muted">Registration</p>
+        <p className="text-xs uppercase tracking-wide text-muted">Moderator</p>
         <h1 className="font-heading text-4xl">Live Viewing</h1>
         <p className="mt-2 max-w-2xl text-muted">
           You run the videos from the competition page. Pick the live team by
@@ -45,7 +45,7 @@ export default async function RegHomePage() {
                   </p>
                 </div>
                 <Link
-                  href={`/reg/${comp.id}`}
+                  href={`/moderator/${comp.id}`}
                   className={
                     status === "LIVE" || status === "READY"
                       ? "btn btn-primary"

@@ -46,7 +46,7 @@ function revalidateAccessPaths() {
   revalidatePath("/ops/comps", "layout");
   revalidatePath("/ops/competitions", "layout");
   revalidatePath("/ops/teams", "layout");
-  revalidatePath("/reg", "layout");
+  revalidatePath("/moderator", "layout");
   revalidatePath("/judge");
   revalidatePath("/teams");
 }
@@ -352,8 +352,8 @@ export async function acceptJudgeInvite(
     where: { id: inviteId, email: dbUser.email },
   });
   if (!invite) return { error: "That judging invite was not found." };
-  const [regAccess, regInvite] = await Promise.all([
-    prisma.registrationAccess.findUnique({
+  const [moderatorAccess, moderatorInvite] = await Promise.all([
+    prisma.moderatorAccess.findUnique({
       where: {
         userId_competitionId: {
           userId: user.id,
@@ -362,7 +362,7 @@ export async function acceptJudgeInvite(
       },
       select: { id: true },
     }),
-    prisma.registrationInvite.findUnique({
+    prisma.moderatorInvite.findUnique({
       where: {
         competitionId_email: {
           competitionId: invite.competitionId,
@@ -372,8 +372,8 @@ export async function acceptJudgeInvite(
       select: { id: true },
     }),
   ]);
-  if (regAccess || regInvite) {
-    return { error: "Registration staff for this competition cannot judge it." };
+  if (moderatorAccess || moderatorInvite) {
+    return { error: "Moderators for this competition cannot judge it." };
   }
 
   const name = dbUser.name.trim() || dbUser.email.split("@")[0] || "Judge";
@@ -617,21 +617,21 @@ export async function inviteJudge(
   if (account?.judge?.assignments.some((a) => a.competitionId === competitionId && a.status === "APPROVED")) {
     return { error: "That email is already an approved judge for this competition." };
   }
-  const [regAccess, regInvite] = await Promise.all([
+  const [moderatorAccess, moderatorInvite] = await Promise.all([
     account
-      ? prisma.registrationAccess.findUnique({
+      ? prisma.moderatorAccess.findUnique({
           where: { userId_competitionId: { userId: account.id, competitionId } },
           select: { id: true },
         })
       : Promise.resolve(null),
-    prisma.registrationInvite.findUnique({
+    prisma.moderatorInvite.findUnique({
       where: { competitionId_email: { competitionId, email } },
       select: { id: true },
     }),
   ]);
-  if (regAccess || regInvite) {
+  if (moderatorAccess || moderatorInvite) {
     return {
-      error: "That email runs registration for this competition, so it can see the videos and cannot judge.",
+      error: "That email is assigned as moderator for this competition, so it can see the videos and cannot judge.",
     };
   }
 
@@ -794,8 +794,14 @@ export async function createCompetition(
   }
 
   const parsed = z
-    .object({ name: z.string().min(2, "Competition name is required.") })
-    .safeParse({ name: String(formData.get("name") ?? "").trim() });
+    .object({
+      name: z.string().min(2, "Competition name is required."),
+      type: z.enum(["partner", "non-partner"]),
+    })
+    .safeParse({
+      name: String(formData.get("name") ?? "").trim(),
+      type: String(formData.get("type") ?? "partner"),
+    });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid form." };
   }
@@ -805,9 +811,10 @@ export async function createCompetition(
   const competition = await prisma.competitionProfile.create({
     data: {
       name: parsed.data.name,
+      isPartner: parsed.data.type === "partner",
       slug,
       claimCode,
-      description: `${parsed.data.name}. Claim this listing with the official bid code after you log in.`,
+      description: `${parsed.data.name}. Claim this listing with the official claim code after you log in.`,
     },
   });
 
@@ -820,6 +827,37 @@ export async function createCompetition(
     competitionId: competition.id,
     message: `Created ${competition.name}.`,
   };
+}
+
+export async function setCompetitionPartnerStatus(
+  _prev: { error?: string; ok?: boolean; message?: string } | undefined,
+  formData: FormData,
+): Promise<{ error?: string; ok?: boolean; message?: string }> {
+  const user = await requireUser();
+  if (!user) return { error: "You must be signed in." };
+  if (!(await isPlatformAdmin(user.id))) {
+    return { error: "Only circuit ops can change competition types." };
+  }
+
+  const parsed = z.object({
+    competitionId: z.string().min(1),
+    type: z.enum(["partner", "non-partner"]),
+  }).safeParse({
+    competitionId: String(formData.get("competitionId") ?? ""),
+    type: String(formData.get("type") ?? ""),
+  });
+  if (!parsed.success) return { error: "Choose a valid competition type." };
+
+  const updated = await prisma.competitionProfile.updateMany({
+    where: { id: parsed.data.competitionId },
+    data: { isPartner: parsed.data.type === "partner" },
+  });
+  if (!updated.count) return { error: "Competition not found." };
+
+  revalidateAccessPaths();
+  revalidatePath("/");
+  revalidatePath(`/comps/${parsed.data.competitionId}`);
+  return { ok: true, message: "Competition type saved." };
 }
 
 export async function resetTeamClaim(
@@ -907,8 +945,8 @@ export async function resetCompClaim(
     prisma.competitionMembership.deleteMany({ where: { competitionId } }),
     prisma.compInvite.deleteMany({ where: { competitionId } }),
     prisma.judgeInvite.deleteMany({ where: { competitionId } }),
-    prisma.registrationAccess.deleteMany({ where: { competitionId } }),
-    prisma.registrationInvite.deleteMany({ where: { competitionId } }),
+    prisma.moderatorAccess.deleteMany({ where: { competitionId } }),
+    prisma.moderatorInvite.deleteMany({ where: { competitionId } }),
     ...(competition.resultsReleasedAt
       ? []
       : [prisma.judgeAssignment.deleteMany({ where: { competitionId } })]),

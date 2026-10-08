@@ -32,16 +32,11 @@ export default async function PaymentsPage() {
         <ol className="list-decimal space-y-4 rounded-xl border border-line bg-card px-8 py-6 text-sm">
           <li>Confirm the amount and the correct recipient with circuit ops or the competition host.</li>
           <li>
-            Ask for that recipient’s official payment link. The{" "}
-            <a
-              href="https://www.paypal.com/paypalme/"
-              target="_blank"
-              rel="noreferrer"
-              className="text-accent underline"
-            >
-              PayPal link shown here
-            </a>{" "}
-            is a generic placeholder and does not identify a recipient.
+            Pay via Zelle or PayPal to{" "}
+            <a href="mailto:legends@desidancenetwork.org" className="text-accent underline">
+              legends@desidancenetwork.org
+            </a>
+            .
           </li>
           <li>
             Put this exact text in the payment memo or note:

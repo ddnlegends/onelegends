@@ -1,7 +1,7 @@
 /**
- * Live viewing state that judge and REG pages poll every few seconds.
+ * Live viewing state that judge and Moderator pages poll every few seconds.
  *
- * Only that competition's approved judges, its REG staff, and platform admins
+ * Only that competition's approved judges, its Moderator staff, and platform admins
  * may read it. Returns anonymous data only: whether judging is open and which
  * Team number is on screen.
  */
@@ -26,7 +26,7 @@ export async function GET(
   // `platformAdmin` on the session is re-read from the database by the jwt
   // callback on every request.
   const ops = Boolean(session.user.platformAdmin);
-  const [judge, reg, competition] = await Promise.all([
+  const [judge, moderator, competition] = await Promise.all([
     ops
       ? null
       : prisma.judgeAssignment.findFirst({
@@ -35,7 +35,7 @@ export async function GET(
         }),
     ops
       ? null
-      : prisma.registrationAccess.findUnique({
+      : prisma.moderatorAccess.findUnique({
           where: { userId_competitionId: { userId, competitionId } },
           select: { id: true },
         }),
@@ -53,7 +53,7 @@ export async function GET(
       },
     }),
   ]);
-  if (!judge && !reg && !ops) {
+  if (!judge && !moderator && !ops) {
     return NextResponse.json({ error: "Not allowed." }, { status: 403 });
   }
   if (!competition) {

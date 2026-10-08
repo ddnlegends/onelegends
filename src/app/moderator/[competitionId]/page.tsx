@@ -6,7 +6,7 @@ import { AutoRefresh } from "@/components/AutoRefresh";
 import { CompStatusPill } from "@/components/CompStatusPill";
 import { DriveAvPlayer } from "@/components/DriveAvPlayer";
 import { LiveProgress } from "@/components/LiveProgress";
-import { RegLiveConsole } from "@/components/RegLiveConsole";
+import { ModeratorLiveConsole } from "@/components/ModeratorLiveConsole";
 import {
   competitionStatus,
   ensureSharedViewingOrder,
@@ -14,9 +14,9 @@ import {
   isScoreComplete,
   judgingLockMessage,
 } from "@/lib/judging";
-import { hasRegistrationAccess } from "@/lib/registration";
+import { hasModeratorAccess } from "@/lib/moderator";
 
-export default async function RegCompetitionPage({
+export default async function ModeratorCompetitionPage({
   params,
 }: {
   params: Promise<{ competitionId: string }>;
@@ -24,7 +24,7 @@ export default async function RegCompetitionPage({
   const { competitionId } = await params;
   const session = await auth();
   if (!session?.user) redirect("/login");
-  if (!(await hasRegistrationAccess(session.user.id, competitionId))) notFound();
+  if (!(await hasModeratorAccess(session.user.id, competitionId))) notFound();
 
   const base = await prisma.competitionProfile.findUnique({
     where: { id: competitionId },
@@ -78,7 +78,7 @@ export default async function RegCompetitionPage({
       <AutoRefresh active={!competition.resultsReleasedAt} intervalMs={6000} />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-2">
-          <Link href="/reg" className="text-sm text-muted underline">
+          <Link href="/moderator" className="text-sm text-muted underline">
             All competitions
           </Link>
           <div className="flex flex-wrap items-center gap-3">
@@ -113,7 +113,7 @@ export default async function RegCompetitionPage({
       ) : teams.length === 0 ? (
         <p className="text-muted">No teams applied to this competition.</p>
       ) : (
-        <RegLiveConsole
+        <ModeratorLiveConsole
           competitionId={competition.id}
           teams={teams.map(({ position, judges }) => ({
             position,
@@ -133,7 +133,7 @@ export default async function RegCompetitionPage({
               The video for the team you show appears here.
             </div>
           )}
-        </RegLiveConsole>
+        </ModeratorLiveConsole>
       )}
     </div>
   );

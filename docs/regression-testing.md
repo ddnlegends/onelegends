@@ -48,15 +48,15 @@ The destructive seed guard validates both URLs, the database name, loopback host
 | Public test passwords | Unit policy/provider/session checks; actual hosted-mode callback and legacy session rejection | Real Google admin sign-in and recovery procedure |
 | Google account registration | Actual callback unit tests enforce verified email, explicit Register intent, and existing-user login | External OAuth consent/callback, cookie behavior, and account creation in staging |
 | Claim-code guessing/races | PostgreSQL shared request budget, 30 concurrent attempts, expiry, user isolation, unavailable limiter, competing claimants, code rotation during claim | Distributed-account abuse monitoring and real staff retry UX |
-| Cross-competition access | REG/judge live API limited to assigned competition; team and comp admin refused | Other role/resource pairs, invitations, changed/revoked memberships |
+| Cross-competition access | Moderator/judge live API limited to assigned competition; team and comp admin refused | Other role/resource pairs, invitations, changed/revoked memberships |
 | Incomplete or duplicate application | Blocked team cannot apply; complete team applies only to open comp; duplicate shown | Server-side concurrent duplicate/deadline/roster-change cases |
 | Lost/invalid scores | DB checks invalid fields/ownership, incomplete packets, close/submit ordering, duplicate submission; browser verifies persisted rubric | Network interruption/reconnect, concurrent distinct judges, mobile background/foreground |
 | Results released early | DB configured threshold, idempotent release, sealed writes; browser page and CSV/XLSX names hidden until release | Approval/threshold changes during release; operational rehearsal |
 | Judging/application state conflicts | PostgreSQL CHECK rejects simultaneous application and judging flags; clean migrations and claim-limit upgrade with synthetic existing rows | Production-sized sanitized upgrade/restore rehearsal |
-| REG drives wrong team | Browser selects anonymous slot; live API returns only allowed keys; release clears live position | Real Drive video playback on event network and device |
+| Moderator drives wrong team | Browser selects anonymous slot; live API returns only allowed keys; release clears live position | Real Drive video playback on event network and device |
 | Exports broken | Every non-tech role denied; CSV and parsed two-sheet XLSX content before/after release; formula-looking text round trip | Open exports in Excel/Sheets; large realistic datasets |
 | Cross-browser failures | Chromium and WebKit desktop suites | Real iPhone Safari and Android Chrome, touch keyboards and poor network |
-| Theme preference and form state | System changes, explicit override, navigation/reload, cross-tab sync, pre-hydration styling, invalid/blocked storage, 375px layout, unsaved form preservation in both browsers | Check themed dialogs, status badges, judge/REG screens, and embedded Drive playback on actual devices |
+| Theme preference and form state | System changes, explicit override, navigation/reload, cross-tab sync, pre-hydration styling, invalid/blocked storage, 375px layout, unsaved form preservation in both browsers | Check themed dialogs, status badges, judge/Moderator screens, and embedded Drive playback on actual devices |
 
 The browser test “Register displays the unknown-account notice (no OAuth round trip)” checks the destination notice only. Callback unit tests cover the registration decision separately. Neither completes external Google OAuth. Keep this distinction in release reports.
 
@@ -70,8 +70,8 @@ Record deployment SHA/URL, tester, device, time, pass/fail, evidence, and cleanu
 | Existing user | Google login, logout, switch Google account, reload deep link | Correct account/role each time; logout and invalid session cannot access protected data |
 | Team primary | Claim synthetic listing, finish profile/roster, apply twice, switch between teams | Only owned teams editable; one application per team/comp; block/deadline enforced on server |
 | Competition primary | Inspect applicants before release; invite/approve judge; attempt another competition ID | Names/order remain sealed as specified; invitations scoped; other competition refused |
-| Tech admin | Grant/revoke REG, open/close judging, inspect live dashboard, export | Only admin can operate these; mutually exclusive app/judging state; revoked access stops working |
-| REG | Open assigned comp, play Drive audition, switch live team, try judging same comp | All judges follow anonymous slot; video works; REG cannot also judge it |
+| Tech admin | Grant/revoke Moderator, open/close judging, inspect live dashboard, export | Only admin can operate these; mutually exclusive app/judging state; revoked access stops working |
+| Moderator | Open assigned comp, play Drive audition, switch live team, try judging same comp | All judges follow anonymous slot; video works; Moderator cannot also judge it |
 | Judge | Save partial rubric, reload, change score, disconnect/reconnect, complete and submit twice | Persisted values match; visible save failure/recovery; no incomplete submission; sealed packet immutable |
 | Final judge/comp | Submit final required packet while another judge submits; refresh results and exports | One release; consistent rankings and names; judging/live state closes; no lost score |
 | Operator | Lose network during live viewing; restore it; switch browser/device | Staff can recover from persisted state and know whether an operation saved |

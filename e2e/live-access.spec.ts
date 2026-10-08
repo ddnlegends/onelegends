@@ -13,7 +13,7 @@ test("live state refuses anonymous, team, and competition-admin callers", async 
   }
 });
 
-for (const role of ["reg", "judge"] as const) {
+for (const role of ["moderator", "judge"] as const) {
   test(`${role} can read only assigned competitions, with anonymous fields`, async ({ page }) => {
     await login(page, role);
     const assigned = await competitionId(E2E.comps.showcase.slug);

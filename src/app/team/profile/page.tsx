@@ -31,7 +31,7 @@ export default async function TeamProfilePage() {
       <div>
         <h1 className="font-heading text-4xl">Team Profile</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          Required before you can apply: team photo, blurb, AV Drive file,
+          Required before you can apply: team logo, blurb, AV Drive file,
           captains, years, roster count, and at least one dancer with a t-shirt
           size. Every selected competition receives this same packet.
         </p>

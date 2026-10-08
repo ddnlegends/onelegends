@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { CompStatusPill } from "@/components/CompStatusPill";
+import { CompetitionTypeBadge } from "@/components/CompetitionTypeBadge";
 import { LiveProgress } from "@/components/LiveProgress";
 import {
   COMP_STATUS_LABEL,
@@ -32,9 +33,11 @@ export default async function CompDashboardPage() {
     select: {
       id: true,
       name: true,
+      isPartner: true,
       location: true,
       eventDate: true,
       acceptingApps: true,
+      earlyApplicationDeadline: true,
       applicationDeadline: true,
       claimedAt: true,
       userId: true,
@@ -44,7 +47,7 @@ export default async function CompDashboardPage() {
       resultsReleasedAt: true,
       requiredJudgeCount: true,
       _count: {
-        select: { applications: true, registrationAccess: true },
+        select: { applications: true, moderatorAccess: true },
       },
       judgeAssignments: {
         where: { status: "APPROVED" },
@@ -76,7 +79,7 @@ export default async function CompDashboardPage() {
           </p>
           <h1 className="font-heading text-4xl">Comp Dashboard</h1>
           <p className="mt-2 max-w-2xl text-muted">
-            Every competition in the system. Live boxes show the team REG has
+            Every competition in the system. Live boxes show the team the moderator has
             on screen. Open a box for each judge’s scores by Team number.
           </p>
         </div>
@@ -135,6 +138,7 @@ export default async function CompDashboardPage() {
                       <h2 className="truncate font-heading text-xl group-hover:text-accent">
                         {comp.name}
                       </h2>
+                      <CompetitionTypeBadge isPartner={comp.isPartner} />
                       <p className="truncate text-xs text-muted">
                         {[comp.location, comp.eventDate ? formatDate(comp.eventDate) : ""]
                           .filter(Boolean)
@@ -183,11 +187,16 @@ export default async function CompDashboardPage() {
                         {comp.status === "UNCLAIMED"
                           ? "Waiting for a competition admin to claim it."
                           : comp.status === "APPS_OPEN"
-                            ? comp.applicationDeadline
-                              ? `Apps close ${formatDateTime(comp.applicationDeadline)}`
-                              : "Teams can still apply."
-                            : comp._count.registrationAccess === 0
-                              ? "No REG account yet. Grant one before viewing."
+                            ? [
+                                comp.earlyApplicationDeadline
+                                  ? `Early deadline ${formatDateTime(comp.earlyApplicationDeadline)}`
+                                  : null,
+                                comp.applicationDeadline
+                                  ? `Late deadline ${formatDateTime(comp.applicationDeadline)}`
+                                  : null,
+                              ].filter(Boolean).join(" · ") || "Teams can still apply."
+                            : comp._count.moderatorAccess === 0
+                              ? "No moderator assigned yet. Grant access before viewing."
                               : "Open judging when viewing starts."}
                       </p>
                     )}

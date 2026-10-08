@@ -1,4 +1,5 @@
 import { PageShell } from "@/components/PageShell";
+import { CompetitionTypeBadge } from "@/components/CompetitionTypeBadge";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
@@ -40,10 +41,16 @@ export default async function CompPublicPage({
     ["Lighting", comp.lighting],
     ["Production", comp.productionNotes],
     [
-      "Application deadline",
+      "Early application deadline",
+      comp.earlyApplicationDeadline
+        ? formatDateTime(comp.earlyApplicationDeadline)
+        : "Not set",
+    ],
+    [
+      "Late application deadline",
       comp.applicationDeadline
         ? formatDateTime(comp.applicationDeadline)
-        : "No clock deadline",
+        : "No automatic close",
     ],
   ];
 
@@ -53,6 +60,7 @@ export default async function CompPublicPage({
       <div>
         <p className="text-xs uppercase tracking-wide text-muted">Competition</p>
         <h1 className="font-heading text-4xl">{comp.name}</h1>
+        <div className="mt-2"><CompetitionTypeBadge isPartner={comp.isPartner} /></div>
         <p className="mt-2 text-sm">
           {open ? (
             <span className="font-medium text-accent">Accepting applications</span>

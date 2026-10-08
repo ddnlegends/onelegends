@@ -6,7 +6,7 @@ vi.mock("next/headers", () => ({ cookies: vi.fn() }));
 vi.mock("@/lib/prisma", () => ({ prisma: { user: { findUnique: vi.fn() } } }));
 vi.mock("@/lib/cached-user", () => ({ getCachedUser: vi.fn() }));
 vi.mock("@/lib/invites", () => ({ hydrateEmailInvites: vi.fn() }));
-vi.mock("@/lib/registration", () => ({ applyRegistrationInvites: vi.fn() }));
+vi.mock("@/lib/moderator", () => ({ applyModeratorInvites: vi.fn() }));
 vi.mock("@/lib/ops-admin", () => ({ applyPlatformAdminInvite: vi.fn(), googleAuthEnabled: () => false, upsertGoogleUser: vi.fn() }));
 
 import "./auth";

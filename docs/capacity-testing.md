@@ -1,6 +1,6 @@
 # Capacity and event rehearsal
 
-No staging or production capacity result has been measured by this change. A count of registered users cannot establish capacity. Confirm peak simultaneous public visitors, team admins submitting, judges saving, REG operators, dashboard viewers, and expected session length with the event organizer.
+No staging or production capacity result has been measured by this change. A count of registered users cannot establish capacity. Confirm peak simultaneous public visitors, team admins submitting, judges saving, Moderator operators, dashboard viewers, and expected session length with the event organizer.
 
 ## Model the load
 
@@ -18,17 +18,17 @@ LOAD_BASE_URL=https://YOUR-STAGING-HOST \
 LOAD_TEST_ACK_STAGING=1 LOAD_USERS=50 LOAD_SECONDS=300 npm run test:load
 
 # Authorized live-state scenario: same host, with a short-lived synthetic
-# judge/REG session cookie supplied securely in LOAD_SESSION_COOKIE and the
+# judge/Moderator session cookie supplied securely in LOAD_SESSION_COOKIE and the
 # synthetic competition ID supplied in LOAD_COMPETITION_ID.
 # Do not paste cookies into shared command history, issues, or CI logs.
 ```
 
-The authorized scenario requires both variables and checks the JSON contract, so a redirect to login or a 403 cannot be mistaken for a fast success. One shared account cookie tests read pressure, not distinct-session behavior. Run a real multi-account judge/REG rehearsal separately. Do not use the public-page baseline to infer authenticated scoring capacity.
+The authorized scenario requires both variables and checks the JSON contract, so a redirect to login or a 403 cannot be mistaken for a fast success. One shared account cookie tests read pressure, not distinct-session behavior. Run a real multi-account judge/Moderator rehearsal separately. Do not use the public-page baseline to infer authenticated scoring capacity.
 
 ## Full rehearsal and acceptance
 
 1. Warm up for five minutes; record cold-start behavior separately. Ramp through expected and double-peak scenarios; maintain the peak for at least 30 minutes.
-2. Have distinct synthetic judges score simultaneously, REG switch teams, comp admins view progress, and one tech admin export a realistically sized dataset. Exercise double-submit, background tabs, refresh, delayed requests, and a short network interruption. Do not send real Google sign-in through a load generator.
+2. Have distinct synthetic judges score simultaneously, Moderator switch teams, comp admins view progress, and one tech admin export a realistically sized dataset. Exercise double-submit, background tabs, refresh, delayed requests, and a short network interruption. Do not send real Google sign-in through a load generator.
 3. Compare every submitted score and packet with expected values in the database. Verify no duplicate application, early release, wrong-competition access, or lost write. Stress tests need correctness assertions, not just response times.
 4. Measure browser save/refresh time, HTTP p50/p95/p99, errors, app memory/CPU, database connections, CPU, memory, slow queries/locks, pool timeouts, and provider limits. Capture deployment SHA and configuration along with the results.
 5. Proposed initial acceptance: score-save and live-read p95 under 1 second, page p95 under 2 seconds, errors below 1%, zero data-integrity failures, no pool timeouts, and at least 20% connection headroom. The release lead must accept targets against real event needs.

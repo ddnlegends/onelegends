@@ -39,7 +39,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Fill Team Profile and roster",
-        body: "Every field is required: blurb, captains, uploaded team photo, years established, roster size, and a Drive file AV. List each dancer with a t-shirt size. You cannot apply until this is saved.",
+        body: "Every field is required: blurb, captains, uploaded team logo, years established, roster size, and a Drive file AV. List each dancer with a t-shirt size. You cannot apply until this is saved.",
       },
       {
         title: "Apply with checkboxes",
@@ -84,14 +84,14 @@ const GUIDES: Guide[] = [
   {
     id: "COMP",
     tab: "Competitions",
-    kicker: "Bid code · then invite",
+    kicker: "Claim code · then invite",
     title: "How competitions run apps",
     intro:
-      "Everyone signs in with Google. Existing test accounts retain password login. Circuit ops creates the competition listing and a bid code. The first person to enter that code becomes the primary admin. You see counts until anonymous judging is done.",
+      "Everyone signs in with Google. Existing test accounts retain password login. Circuit ops creates the competition listing and a claim code. The first person to enter that code becomes the primary admin. You see counts until anonymous judging is done.",
     steps: [
       {
-        title: "Register, then claim with the bid code",
-        body: "Only Legends Admin can create a competition. Creating one generates a bid code. The app does not email anyone — ops gives you the code. First successful claim becomes primary admin and uses the code up. If it is already claimed, you will see that plus a blurred admin email.",
+        title: "Register, then claim with the claim code",
+        body: "Only Legends Admin can create a competition. Creating one generates a claim code. The app does not email anyone — ops gives you the code. First successful claim becomes primary admin and uses the code up. If it is already claimed, you will see that plus a blurred admin email.",
       },
       {
         title: "Invite secondary admins",
@@ -99,7 +99,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Set Comp Details",
-        body: "Dates, city, venue, stage, lighting, production notes, application deadline, and required judge count (N). The competition name stays locked to the official listing.",
+        body: "Dates, city, venue, stage, lighting, production notes, early and late application deadlines, and required judge count (N). The late deadline closes applications. The competition name stays locked to the official listing.",
       },
       {
         title: "Invite judges by email",

@@ -66,11 +66,11 @@ export default async function CompDashboardDetailPage({
         orderBy: { judge: { name: "asc" } },
       },
       judgeInvites: { orderBy: { createdAt: "asc" } },
-      registrationAccess: {
+      moderatorAccess: {
         include: { user: { select: { email: true } } },
         orderBy: { createdAt: "asc" },
       },
-      registrationInvites: { orderBy: { createdAt: "asc" } },
+      moderatorInvites: { orderBy: { createdAt: "asc" } },
     },
   });
   if (!competition) notFound();
@@ -122,7 +122,7 @@ export default async function CompDashboardDetailPage({
         <p className="max-w-2xl text-sm text-muted">
           {released
             ? "Judging is complete. Team names are unsealed below."
-            : "Teams stay as Team 1, Team 2, … until results release. No videos play here; REG runs them."}
+            : "Teams stay as Team 1, Team 2, … until results release. No videos play here; the moderator runs them."}
         </p>
       </div>
 
@@ -131,7 +131,7 @@ export default async function CompDashboardDetailPage({
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-xs uppercase tracking-widest text-muted">
-                {live ? "On screen now" : "Waiting for REG"}
+                {live ? "On screen now" : "Waiting for moderator"}
               </p>
               <p className="font-heading text-5xl text-accent">
                 {livePosition != null ? `Team ${livePosition}` : "—"}
@@ -191,13 +191,13 @@ export default async function CompDashboardDetailPage({
           hint={released ? "Results released" : "Required to release results"}
         />
         <Stat
-          label="REG"
-          value={String(competition.registrationAccess.length)}
+          label="Moderator"
+          value={String(competition.moderatorAccess.length)}
           hint={
-            competition.registrationAccess.length
-              ? competition.registrationAccess.map((row) => row.user.email).join(", ")
-              : competition.registrationInvites.length
-                ? `${competition.registrationInvites.length} waiting to log in`
+            competition.moderatorAccess.length
+              ? competition.moderatorAccess.map((row) => row.user.email).join(", ")
+              : competition.moderatorInvites.length
+                ? `${competition.moderatorInvites.length} waiting to log in`
                 : "Grant one on circuit ops home"
           }
         />

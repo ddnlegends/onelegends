@@ -3,14 +3,17 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { applyToCompetitions } from "@/app/actions/team";
+import { CompetitionTypeBadge } from "@/components/CompetitionTypeBadge";
 
 type Comp = {
   id: string;
   name: string;
+  isPartner: boolean;
   dates: string;
   location: string;
   venue: string;
-  deadline?: string;
+  earlyDeadline?: string;
+  lateDeadline?: string;
   acceptingApps: boolean;
   alreadyApplied: boolean;
 };
@@ -29,15 +32,11 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
         One application, many comps. Check the ones you want — your complete
         team profile, AV Drive link, roster, dietary notes, and shirt sizes go
         with it.{" "}
-        <a
-          href="https://www.paypal.com/paypalme/"
-          className="text-accent underline"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Pay on PayPal
+        Pay via Zelle or PayPal to{" "}
+        <a href="mailto:legends@desidancenetwork.org" className="text-accent underline">
+          legends@desidancenetwork.org
         </a>
-        {" "}(placeholder link). See the{" "}
+        . See the{" "}
         <Link href="/payments" className="text-accent underline">
           payment instructions
         </Link>{" "}
@@ -63,7 +62,10 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
             />
             <label htmlFor={`comp-${comp.id}`} className="flex-1 cursor-pointer">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <span className="font-medium">{comp.name}</span>
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium">{comp.name}</span>
+                  <CompetitionTypeBadge isPartner={comp.isPartner} />
+                </span>
                 <Link
                   href={`/comps/${comp.id}`}
                   className="text-xs text-muted underline"
@@ -75,7 +77,8 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
               <p className="text-sm text-muted">
                 {[comp.dates, comp.location, comp.venue].filter(Boolean).join(" · ") ||
                   "Details TBA"}
-                {comp.deadline ? ` · Apps close ${comp.deadline}` : ""}
+                {comp.earlyDeadline ? ` · Early deadline ${comp.earlyDeadline}` : ""}
+                {comp.lateDeadline ? ` · Late deadline ${comp.lateDeadline}` : ""}
               </p>
               {comp.alreadyApplied ? (
                 <p className="mt-1 text-xs font-medium text-accent">Already applied</p>
@@ -95,8 +98,10 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
             {closed.map((comp) => (
               <li key={comp.id}>
                 {comp.name}
+                {" "}<CompetitionTypeBadge isPartner={comp.isPartner} />
                 {comp.dates ? ` — ${comp.dates}` : ""}
-                {comp.deadline ? ` · Apps close ${comp.deadline}` : ""}
+                {comp.earlyDeadline ? ` · Early deadline ${comp.earlyDeadline}` : ""}
+                {comp.lateDeadline ? ` · Late deadline ${comp.lateDeadline}` : ""}
               </li>
             ))}
           </ul>
