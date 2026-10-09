@@ -162,8 +162,8 @@ const GUIDES: Guide[] = [
         body: "Review team and competition admins, grant Partner competition moderator access, and rotate claim codes or reset access when needed.",
       },
       {
-        title: "Open judging",
-        body: "Once applications close and teams have applied, open judging for the competition. The app fixes the shared anonymous viewing order; moderators show videos and judges score them.",
+        title: "Reconcile payments and open judging",
+        body: "After applications close, compare each competition’s applicants on the Comp Dashboard with payment confirmations from its host. Remove unpaid applications there before opening judging. The app then fixes the shared anonymous viewing order from the remaining teams; moderators show videos and judges score them.",
       },
       {
         title: "Monitor and export",

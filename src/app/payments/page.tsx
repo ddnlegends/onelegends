@@ -52,8 +52,9 @@ export default async function PaymentsPage() {
 
         <p className="rounded-xl border border-line bg-blush p-4 text-sm text-muted">
           Circuit ops can block a team from new applications while dues or a
-          circuit issue is unresolved. Contact them after paying so they can
-          verify and remove a dues block.
+          circuit issue is unresolved. After applications close, they can also
+          remove an unpaid application before judging starts. Contact them after
+          paying so they can verify your payment.
         </p>
 
         <Link href={team ? "/team" : "/"} className="btn btn-ghost">
