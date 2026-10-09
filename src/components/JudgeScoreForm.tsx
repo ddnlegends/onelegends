@@ -208,7 +208,7 @@ export function JudgeScoreForm({
         ))}
       </div>
       <div className="field px-4">
-        <label htmlFor="comment">Comment for the competition</label>
+        <label htmlFor="comment">Comments on this team’s video</label>
         <textarea
           id="comment"
           maxLength={1000}

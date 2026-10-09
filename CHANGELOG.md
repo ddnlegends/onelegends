@@ -4,6 +4,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Rename the judge scoresheet comment label to “Comments on this team’s video” and clarify the matching judge guide text.
 - Circuit ops can remove one team or competition admin, including a primary. An approved replacement can become primary, or the listing can be left unclaimed with a rotated claim code while other access and data remain.
 - Approved Non-partner competition admins automatically receive moderator controls for their competition. Partner competitions still use assigned moderators; both types keep the same application and judging flow.
 - Group Prisma CLI and client dependency updates and defer major upgrades until the app migration is ready.
