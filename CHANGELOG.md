@@ -4,6 +4,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Align Prisma CLI and client at 6.19.3, update pinned GitHub Actions to Node 24 releases, and group future action updates into one Dependabot PR.
 - Refine all five role walkthroughs for shared judge/moderator viewing, separate team saves, invitations, and automatic results release. Add keyboard navigation and a How it works page reachable after login. Record the five-role QA findings and remaining acceptance work in `docs/qa-role-audit-2026-10-09.md`.
 - Add an optional Point of Contact flag to each roster dancer, including full roster views and CSV/XLSX exports; existing dancers default to unchecked.
 - Restore temporary production password login for four named demonstration roles, with shortcuts on Log In. Other production emails and preview deployments remain password-disabled; the four accounts must already exist with passwords and role access.
