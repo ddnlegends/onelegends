@@ -42,8 +42,6 @@ export default defineConfig({
       AUTH_GOOGLE_SECRET: "",
       GOOGLE_CLIENT_ID: "",
       GOOGLE_CLIENT_SECRET: "",
-      GOOGLE_SERVICE_ACCOUNT_EMAIL: "",
-      GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: "",
       AUTH_SECRET: process.env.AUTH_SECRET ?? "e2e-only-secret-not-for-production-use",
       AUTH_TRUST_HOST: "true",
     },

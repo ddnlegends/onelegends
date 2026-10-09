@@ -29,8 +29,6 @@ In the hosting dashboard (for example Vercel), paste values **without quotes** a
 | `AUTH_GOOGLE_ID` | launch | Google OAuth client ID. Shows Continue with Google when set with the secret. |
 | `AUTH_GOOGLE_SECRET` | launch | Google OAuth client secret. Redirect URI is `{AUTH_URL}/api/auth/callback/google`. |
 | `AUTH_ENABLE_TEST_LOGIN` | local tests only | Explicit `true`, loopback AUTH_URL, and both URLs targeting local `onelegends_e2e`; always refused on Vercel. |
-| `GOOGLE_SERVICE_ACCOUNT_EMAIL` | no | Optional applicant Sheet sync. Not needed for tech-admin downloads. |
-| `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` | no | Optional Sheet sync. Keep `\n` as in the JSON key. |
 
 URI-encode special characters in the database password (`@` → `%40`).
 
@@ -47,11 +45,7 @@ Open [http://localhost:3000](http://localhost:3000). For a disposable local `one
 
 ## Data exports
 
-Circuit tech admins download any data as .xlsx or CSV from **Dashboard → Export data** (`/ops/export`). This needs no setup or Google keys. See [board-guide.md](board-guide.md#exports).
-
-## Optional Google Sheets
-
-The site works without this. For a live per-comp applicant sheet: create a Google Cloud service account, turn on the Sheets API, and share the sheet with that email as Editor. A competition admin pastes the sheet URL on **Comp Details**. The sheet fills automatically when results release and updates whenever the competition changes an application status. It stays empty before release so team names never leak. Drive audition videos do not use these keys — teams paste a public file link.
+Circuit tech admins download any data as .xlsx or CSV from **Dashboard → Export data** (`/ops/export`). This needs no setup or Google keys. See [board-guide.md](board-guide.md#exports). Drive audition videos only need a public file link from the team.
 
 ## Scripts
 

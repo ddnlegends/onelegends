@@ -10,7 +10,7 @@ import {
 import { CompStatusPill } from "@/components/CompStatusPill";
 import { CompetitionTypeBadge } from "@/components/CompetitionTypeBadge";
 import { ExpandableRow } from "@/components/ExpandableRow";
-import { Chip, ExternalLink, InfoGrid, PanelSection } from "@/components/OpsListParts";
+import { Chip, InfoGrid, PanelSection } from "@/components/OpsListParts";
 import { prisma } from "@/lib/prisma";
 import { competitionStatus } from "@/lib/judging";
 import { formatDate, formatDateTime, statusLabel } from "@/lib/utils";
@@ -208,14 +208,6 @@ export default async function OpsCompetitionsPage() {
                         value: competition.resultsReleasedAt
                           ? formatDateTime(competition.resultsReleasedAt)
                           : "Not yet",
-                      },
-                      {
-                        label: "Applicant Google Sheet",
-                        value: competition.googleSheetUrl ? (
-                          <ExternalLink href={competition.googleSheetUrl}>Open sheet</ExternalLink>
-                        ) : (
-                          ""
-                        ),
                       },
                       {
                         label: "Listing",

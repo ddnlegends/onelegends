@@ -57,7 +57,7 @@ The new code appears in the confirmation message and on the row in **Teams** or 
 Circuit tech admins can download data from **Dashboard → Export data**, or from the **Export** link on a competition row to limit the file to that competition.
 
 1. Tick the datasets you need, or use a preset: **Everything** or **Judging pack** (lineups, judges, scores, results).
-2. **Download .xlsx** gives one tab per dataset. To use it in Google Sheets, upload it to Drive and open it, or use File → Import.
+2. **Download .xlsx** gives one tab per dataset and opens in spreadsheet apps.
 3. Each dataset card also has a **CSV** link for a single table.
 
 Exports respect the anonymity gate: before a competition releases results, scores list teams as Team 1, Team 2, and so on, and lineups hide the viewing order. Files can contain emails, rosters, dietary restrictions, and claim codes. Keep them in the board's private Drive and do not post them publicly.

@@ -31,6 +31,6 @@ Team 1 refers to the same application for every judge. The UI never sends team n
 - **Comp Dashboard** (ops only): every rubric cell, total, and note for every team and judge, updating as judges autosave.
 - **Viewing Results** (competition): unlocks when N invited judges have submitted. Rank is average z-score of totals, then average total. If fewer judges finish, the competition can lower N.
 
-Releasing results ends the live session and locks further scoring. It happens exactly once, even if the last judges submit at the same moment. Applications and the required judge count cannot change after release. If the competition set an applicant Google Sheet, it fills at release and updates when the competition changes an application status. It stays empty before release.
+Releasing results ends the live session and locks further scoring. It happens exactly once, even if the last judges submit at the same moment. Applications and the required judge count cannot change after release. Circuit tech admins can download released data from **Export data**.
 
 Until that moment, the competition login does not list which teams applied. After release, **Applied Teams** shows full profiles and rosters only for that competition's applicants; circuit tech admins use **Teams** to inspect every registered team.

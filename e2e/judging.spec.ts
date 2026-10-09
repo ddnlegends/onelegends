@@ -26,6 +26,12 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
 }) => {
   test.setTimeout(180_000);
   const id = await competitionId(E2E.comps.showcase.slug);
+  const savedScore = (position: number) => db.judgeScore.findFirst({
+    where: {
+      assignment: { competitionId: id, judge: { user: { email: E2E.emails.judge } } },
+      slot: { position },
+    },
+  });
 
   const ops = await pageAs(browser, "tech");
   await ops.goto(`/ops/comps/${id}`);
@@ -62,9 +68,15 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
   await moderator.getByRole("button", { name: /Next: Team 2/ }).click();
   await expect(judge).toHaveURL(/\/team\/2/);
   await scoreTeam(judge, SCORES[2]);
+  await expect.poll(async () => (await savedScore(2))?.overallImpression).toBe(6);
+  await expect(judge.getByText("Saving…")).toHaveCount(0);
   await judge.getByRole("link", { name: "Team 1" }).click();
+  await expect(judge).toHaveURL(/\/team\/1\?stay=1/);
+  await judge.reload();
   await expect(judge.locator("#choreography")).toBeEnabled();
   await judge.locator("#choreography").selectOption("9");
+  await expect.poll(async () => (await savedScore(1))?.choreography).toBe(9);
+  await expect(judge.getByText("Saving…")).toHaveCount(0);
 
   const comp = await pageAs(browser, "comp");
   await comp.goto("/comp/results");

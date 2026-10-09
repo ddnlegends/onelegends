@@ -27,7 +27,6 @@ What the board asked for, what is done, and what is still open. The [README](../
 | [Partner competitions by year](#partner-competitions-by-year) | Tech | Not built |
 | [MOU tracking](#mou-tracking) | Board | Nice-to-have |
 | [Owner decisions from the audit](#owner-decisions-from-the-audit) | Board | Needs a decision |
-| [Cleanup](#cleanup) | Tech | Small |
 
 ### Payments
 
@@ -91,7 +90,3 @@ These work as built, but the board should confirm each one is intended:
 - The release-hardening branch limits each signed-in account to 20 claim/preview requests per 15 minutes, shared across teams and competitions. A normal preview and confirmation use two requests. Confirm this allowance with event staff; distributed-account abuse still needs hosting controls and monitoring.
 - Declined applications still get a place in the viewing order.
 - The public competition listing shows production details such as stage size and lighting.
-
-### Cleanup
-
-`src/components/SyncSheetButton.tsx` is not used anywhere since the applicant sheet started syncing on its own at results release. Delete it, or put the button back on **Comp Details** if a manual sync is wanted.

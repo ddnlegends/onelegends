@@ -36,7 +36,6 @@ export default async function CompProfilePage() {
           productionNotes: competition.productionNotes,
           lighting: competition.lighting,
           description: competition.description,
-          googleSheetUrl: competition.googleSheetUrl,
           acceptingApps: competition.acceptingApps,
           earlyApplicationDeadline: competition.earlyApplicationDeadline?.toISOString() ?? "",
           applicationDeadline: competition.applicationDeadline?.toISOString() ?? "",

@@ -3,7 +3,6 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 const session = vi.hoisted(() => ({ userId: "" }));
 vi.mock("@/app/actions/auth", () => ({ requireUser: async () => session.userId ? { id: session.userId } : null }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
-vi.mock("@/lib/sheets", () => ({ syncCompetitionSheet: vi.fn().mockResolvedValue(undefined) }));
 
 import { seedE2E, E2E } from "../prisma/e2e-seed";
 import { prisma } from "@/lib/prisma";
@@ -11,7 +10,6 @@ import { ensureCompetitionJudgeSlots } from "@/lib/judging";
 import { saveTeamScores, submitJudgingPacket } from "@/app/actions/judge";
 import { setLiveTeam } from "@/app/actions/moderator";
 import { maybeReleaseResults } from "@/lib/release";
-import { syncCompetitionSheet } from "@/lib/sheets";
 
 let competitionId: string;
 let assignmentId: string;
@@ -157,7 +155,6 @@ describe("judging with real PostgreSQL transactions", () => {
     const released = await prisma.competitionProfile.findUniqueOrThrow({ where: { id: competitionId } });
     expect(released.resultsReleasedAt).not.toBeNull();
     expect(released.judgingOpen).toBe(false);
-    expect(syncCompetitionSheet).toHaveBeenCalledTimes(1);
     const before = await prisma.judgeScore.findMany({ orderBy: { id: "asc" } });
     expect(await saveTeamScores(undefined, form())).toHaveProperty("error");
     expect(await prisma.judgeScore.findMany({ orderBy: { id: "asc" } })).toEqual(before);
@@ -167,7 +164,6 @@ describe("judging with real PostgreSQL transactions", () => {
     await completePacket();
     expect(await submitJudgingPacket(undefined, form())).toMatchObject({ ok: true });
     expect(await maybeReleaseResults(competitionId)).toBe(false);
-    expect(syncCompetitionSheet).not.toHaveBeenCalled();
   });
   it("the database rejects accepting applications while judging is open", async () => {
     await expect(prisma.competitionProfile.update({ where: { id: competitionId }, data: { acceptingApps: true } })).rejects.toThrow();

@@ -31,6 +31,23 @@ test("a tech admin downloads CSV and xlsx", async ({ page }) => {
   const body = await xlsx.body();
   expect(body.subarray(0, 2).toString()).toBe("PK");
 
+  await page.goto("/ops/export");
+  await page.getByRole("button", { name: "Clear" }).click();
+  await expect(page.locator('input[name="dataset"]:checked')).toHaveCount(0);
+  await page.getByRole("button", { name: "Everything" }).click();
+  const allDatasets = await page.locator('input[name="dataset"]:checked').evaluateAll(
+    (inputs) => inputs.map((input) => (input as HTMLInputElement).value),
+  );
+  expect(allDatasets).toHaveLength(8);
+  const allQuery = new URLSearchParams({ format: "xlsx" });
+  for (const dataset of allDatasets) allQuery.append("dataset", dataset);
+  const allResponse = await page.request.get(`/api/ops/export?${allQuery}`);
+  expect(allResponse.status()).toBe(200);
+  const allWorkbook = new ExcelJS.Workbook();
+  await allWorkbook.xlsx.load(new Uint8Array(await allResponse.body()).buffer);
+  expect(allWorkbook.worksheets).toHaveLength(allDatasets.length);
+  expect(allWorkbook.getWorksheet("Competition details")?.getRow(1).values).not.toContain("Applicant sheet");
+
   const tooMany = await page.request.get("/api/ops/export?dataset=teams&dataset=judges&format=csv");
   expect(tooMany.status()).toBe(400);
 });

@@ -12,7 +12,6 @@ type Profile = {
   productionNotes: string;
   lighting: string;
   description: string;
-  googleSheetUrl: string;
   acceptingApps: boolean;
   earlyApplicationDeadline: string;
   applicationDeadline: string;
@@ -160,19 +159,6 @@ export function CompProfileForm({ profile }: { profile: Profile }) {
             name="description"
             defaultValue={profile.description}
           />
-        </div>
-        <div className="field sm:col-span-2">
-          <label htmlFor="googleSheetUrl">Applicant Google Sheet URL or ID</label>
-          <input
-            id="googleSheetUrl"
-            name="googleSheetUrl"
-            defaultValue={profile.googleSheetUrl}
-            placeholder="https://docs.google.com/spreadsheets/d/..."
-          />
-          <p className="text-xs text-muted">
-            Optional. Share the sheet with the service account as Editor so
-            applicant rows (including AV Drive links) can sync automatically.
-          </p>
         </div>
       </div>
       {state?.error ? <p className="notice notice-error">{state.error}</p> : null}

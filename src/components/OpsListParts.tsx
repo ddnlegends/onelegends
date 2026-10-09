@@ -64,12 +64,3 @@ export function PanelSection({
     </section>
   );
 }
-
-export function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
-  if (!/^https?:\/\//i.test(href)) return <>{href}</>;
-  return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className="text-accent underline">
-      {children}
-    </a>
-  );
-}

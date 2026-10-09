@@ -139,7 +139,6 @@ async function competitionsTable(competitionId?: string): Promise<ExportCell[][]
       "Packets submitted",
       "Packets required",
       "Results released",
-      "Applicant sheet",
       "Created",
     ],
     ...competitions.map((comp) => [
@@ -164,7 +163,6 @@ async function competitionsTable(competitionId?: string): Promise<ExportCell[][]
       comp.judgeAssignments.filter((assignment) => assignment.submittedAt).length,
       comp.requiredJudgeCount,
       stamp(comp.resultsReleasedAt),
-      comp.googleSheetUrl,
       stamp(comp.createdAt),
     ]),
   ];

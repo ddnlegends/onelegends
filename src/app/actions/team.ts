@@ -12,7 +12,6 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
-import { syncCompetitionSheet } from "@/lib/sheets";
 import { isCompetitionOpen } from "@/lib/judging";
 import { parseDriveUrl } from "@/lib/drive";
 import {
@@ -278,14 +277,6 @@ export async function applyToCompetitions(
   if (skipped > 0 && toCreate.length) {
     parts.push(`${skipped} already on file were skipped.`);
   }
-
-  await Promise.all(
-    toCreate.map((c) =>
-      c.googleSheetId || c.googleSheetUrl
-        ? syncCompetitionSheet(c.id).catch(() => null)
-        : Promise.resolve(null),
-    ),
-  );
 
   revalidatePath("/team");
   revalidatePath("/team/apply");

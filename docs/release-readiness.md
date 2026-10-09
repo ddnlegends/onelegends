@@ -30,11 +30,10 @@ The original production dependency findings are resolved locally by a supported 
 
 1. **Claim abuse:** the new limit is per account, not per network or coordinated attacker. Confirm the allowance with ops and add hosting abuse monitoring. A preview plus confirmation uses two requests; normal cooldown lasts at most 15 minutes.
 2. **Additional races:** concurrent invitations, role changes, resetting owned listings, application deadline changes, and judging approval changes need targeted concurrency coverage. The added transaction tests cover specific judging and claiming invariants, not every mutation.
-3. **Google Sheets:** sync failures are caught and discarded. After a release, an external Sheet can be stale without a durable retry. If Sheets are operationally required, add a retry/outbox and visible failure status; otherwise use the app/export as the source of truth for launch.
-4. **Lock contention:** the hardening serializes short scoring transactions per competition. Measure concurrent score-save latency and transaction timeouts during the staging rehearsal; database correctness does not establish throughput.
-5. **Payments:** main now supplies the manual Zelle/PayPal recipient `legends@desidancenetwork.org`. Confirm the amount, recipient, and payment memo with the board before collecting payments; automated payment confirmation remains outside the app.
-6. **Privacy:** decide whether public team photos and production details are intended. Automated export tests now inspect CSV and parsed XLSX before and after release; repeat the operational acceptance with realistic synthetic data and intended access roles.
-7. **Operations:** add attributable audit records for access grants, score submission, results release, claim reset, and data export. Confirm exception alerts, a live event support contact, and rollback access.
+3. **Lock contention:** the hardening serializes short scoring transactions per competition. Measure concurrent score-save latency and transaction timeouts during the staging rehearsal; database correctness does not establish throughput.
+4. **Payments:** main now supplies the manual Zelle/PayPal recipient `legends@desidancenetwork.org`. Confirm the amount, recipient, and payment memo with the board before collecting payments; automated payment confirmation remains outside the app.
+5. **Privacy:** decide whether public team photos and production details are intended. Automated export tests now inspect CSV and parsed XLSX before and after release; repeat the operational acceptance with realistic synthetic data and intended access roles.
+6. **Operations:** add attributable audit records for access grants, score submission, results release, claim reset, and data export. Confirm exception alerts, a live event support contact, and rollback access.
 
 ## Evidence boundaries
 

@@ -153,8 +153,6 @@ model CompetitionProfile {
   productionNotes     String    @default("")
   lighting            String    @default("")
   description         String    @default("")
-  googleSheetId       String    @default("")
-  googleSheetUrl      String    @default("")
   eventDate           DateTime?
   judgingOpen         Boolean   @default(false)
   livePosition        Int?

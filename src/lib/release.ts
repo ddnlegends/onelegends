@@ -1,6 +1,5 @@
 /** Release is serialized with scoring, closing, and judge-count updates. */
 import { prisma } from "@/lib/prisma";
-import { syncCompetitionSheet } from "@/lib/sheets";
 
 export async function maybeReleaseResults(competitionId: string) {
   const result = await prisma.$transaction(async (tx) => {
@@ -28,8 +27,5 @@ export async function maybeReleaseResults(competitionId: string) {
     });
     return "released";
   });
-  if (result === "released") {
-    await syncCompetitionSheet(competitionId).catch(() => null);
-  }
   return result !== "waiting";
 }

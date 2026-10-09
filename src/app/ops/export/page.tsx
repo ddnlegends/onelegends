@@ -28,7 +28,7 @@ export default async function OpsExportPage({
         <h1 className="font-heading text-4xl">Export data</h1>
         <p className="max-w-2xl text-muted">
           Download judging scores, results, lineups, rosters, competition
-          details, and access lists. The .xlsx opens in Google Sheets with one
+          details, and access lists. The .xlsx opens in spreadsheet apps with one
           tab per table (File → Import, or drop it into Drive). Team names in
           scores and results stay sealed as Team 1, Team 2, … until that
           competition’s results are released.
