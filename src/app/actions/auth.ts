@@ -3,13 +3,13 @@
 /**
  * Sign-in, sign-out, and account settings.
  *
- * Password login only works for emails in the legacy allowlist
- * (`src/lib/auth-policy.ts`); everyone else uses Google. `googleSignInAction`
+ * Password login is limited to the named demonstration accounts in production
+ * and a broader local-only fixture allowlist; everyone else uses Google. `googleSignInAction`
  * records whether the user pressed Google on Log In or Register so the
  * `signIn` callback in `src/auth.ts` can refuse to create accounts from Log In.
  * `requireUser` is the session check every other action starts with.
  */
-import { testPasswordLoginEnabled } from "@/lib/test-environment";
+import { testPasswordLoginAllowed, testPasswordLoginEnabled } from "@/lib/test-environment";
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
 import { revalidatePath } from "next/cache";
@@ -21,7 +21,6 @@ import { passwordMeetsRules, passwordRuleMessage } from "@/lib/password";
 import { dashboardPath } from "@/lib/roles";
 import {
   AUTH_INTENT_COOKIE,
-  isLegacyTestLogin,
   parseAuthIntent,
 } from "@/lib/auth-policy";
 
@@ -52,8 +51,8 @@ export async function loginAction(
   if (!parsed.success) {
     return { error: "Enter email and password." };
   }
-  if (!isLegacyTestLogin(parsed.data.email)) {
-    return { error: "Use Google to sign in. Password login is only for existing test accounts." };
+  if (!testPasswordLoginAllowed(parsed.data.email)) {
+    return { error: "Use Google to sign in. Password login is only for the listed test accounts." };
   }
 
   try {
@@ -185,7 +184,7 @@ export async function changePasswordAction(
   if (!user) {
     return { error: "Account not found." };
   }
-  if (!isLegacyTestLogin(user.email)) {
+  if (!testPasswordLoginAllowed(user.email)) {
     return { error: "Password changes are only available for existing test accounts." };
   }
   if (!user.passwordHash) {

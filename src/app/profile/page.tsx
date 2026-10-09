@@ -5,8 +5,7 @@ import {
   ProfileDetailsForm,
 } from "@/components/ProfileForms";
 import { redirect } from "next/navigation";
-import { testPasswordLoginEnabled } from "@/lib/test-environment";
-import { isLegacyTestLogin } from "@/lib/auth-policy";
+import { testPasswordLoginAllowed } from "@/lib/test-environment";
 
 export default async function ProfilePage() {
   const session = await auth();
@@ -28,7 +27,7 @@ export default async function ProfilePage() {
       </div>
       <section className="grid gap-4 lg:grid-cols-2">
         <ProfileDetailsForm name={user.name} email={user.email} />
-        {testPasswordLoginEnabled() && user.passwordHash && isLegacyTestLogin(user.email) ? (
+        {user.passwordHash && testPasswordLoginAllowed(user.email) ? (
           <ChangePasswordForm />
         ) : (
           <div className="space-y-4 rounded-xl border border-line bg-card p-6">

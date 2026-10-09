@@ -4,7 +4,10 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
-- Correct homepage instructions for the shared judge/moderator session, separate team saves, invitations, and automatic results release. Add Moderator and Circuit ops walkthroughs with keyboard navigation and a How it works page reachable after login. Record the five-role QA findings and remaining acceptance work in `docs/qa-role-audit-2026-10-09.md`.
+- Refine all five role walkthroughs for shared judge/moderator viewing, separate team saves, invitations, and automatic results release. Add keyboard navigation and a How it works page reachable after login. Record the five-role QA findings and remaining acceptance work in `docs/qa-role-audit-2026-10-09.md`.
+- Add an optional Point of Contact flag to each roster dancer, including full roster views and CSV/XLSX exports; existing dancers default to unchecked.
+- Restore temporary production password login for four named demonstration roles, with shortcuts on Log In. Other production emails and preview deployments remain password-disabled; the four accounts must already exist with passwords and role access.
+- Rewrite the landing page walkthrough for Teams, Judges, Moderators, Competitions, and Circuit ops to match live viewing, applicant visibility, and roster requirements.
 - Moderators can view read-only named final rankings for their assigned competition after results release, using the same rank calculation as competition results. Judging remains anonymous until release, and moderator access does not grant roster or decision controls.
 - Approved Partner and Non-partner competition admins can see applicant team names, application dates, and dancer counts before results release for manual payment checks. Full profiles, viewing order, scores, and decisions remain gated until release; judges and moderator-only accounts retain anonymous access.
 - Remove applicant Google Sheet links, automatic/manual sync, service-account configuration, and stored Sheet fields. Keep tech-admin XLSX/CSV exports, including the Everything preset.

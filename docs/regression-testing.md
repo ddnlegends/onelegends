@@ -9,7 +9,7 @@ Use one suite in this repository. Agent-driven explorations should produce repro
 | Static and unit | `npm run check` | ESLint, generated Next route types, TypeScript, rules/formatting/security-policy tests |
 | Database | `npm run test:integration` | Real PostgreSQL actions and constraints; auth identity, Next revalidation, and Sheets are mocked |
 | Browser | `npm run test:e2e` | Production build, real Auth.js/Prisma, Chromium and WebKit, independent fixtures per test/retry |
-| Hosted auth boundary | `npm run test:e2e:production` | Same build with hosted settings; direct credential callback rejection and existing session revocation |
+| Hosted auth boundary | `npm run test:e2e:production` | Same build with hosted settings; four demonstration logins work, other password callbacks and sessions are rejected |
 | Dependency gate | `npm audit --omit=dev --audit-level=high` | Current production dependency advisory check; scoped fixes and development-tooling finding in [dependency-security.md](dependency-security.md) |
 | Capacity baseline | `npm run test:load` | Bounded read requests only; see [capacity-testing.md](capacity-testing.md) |
 
@@ -45,7 +45,7 @@ The destructive seed guard validates both URLs, the database name, loopback host
 | Risk | Automated coverage | Remaining acceptance |
 | --- | --- | --- |
 | Privileged access exposed | Logged-out HTML checked for sensitive data; team denied ops; export 401/403 | Exercise each non-admin role and crafted server-action IDs for every mutation |
-| Public test passwords | Unit policy/provider/session checks; actual hosted-mode callback and legacy session rejection | Real Google admin sign-in and recovery procedure |
+| Public test passwords | Unit allowlist/provider/session checks; hosted-mode login for four named accounts and denial for unrelated users | Confirm production account hashes and role assignments; rotate or remove the temporary test passwords after testing |
 | Google account registration | Actual callback unit tests enforce verified email, explicit Register intent, and existing-user login | External OAuth consent/callback, cookie behavior, and account creation in staging |
 | Claim-code guessing/races | PostgreSQL shared request budget, 30 concurrent attempts, expiry, user isolation, unavailable limiter, competing claimants, code rotation during claim | Distributed-account abuse monitoring and real staff retry UX |
 | Cross-competition access | Moderator/judge live API limited to assigned competition; team and comp admin refused | Other role/resource pairs, invitations, changed/revoked memberships |

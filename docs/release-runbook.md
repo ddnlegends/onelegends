@@ -18,9 +18,9 @@ Name a release lead, technical approver, competition-operations tester, and inci
 | --- | --- | --- |
 | Local/CI | Disposable loopback `onelegends_e2e`, generated fixtures, fake auth secret, no Google/Sheets keys | Automated tests, destructive seed, migrations from empty DB |
 | Staging/preview | Separate Supabase project, synthetic data, separate OAuth client/service credentials | Real Google login, device rehearsal, upgrade/restore rehearsal, capacity tests |
-| Production | Production-only DB and OAuth settings, test passwords disabled | Real users; limited controlled smoke checks |
+| Production | Production-only DB and OAuth settings, four temporary demonstration passwords | Real users and controlled role testing; remove demonstration access after testing |
 
-Preview deployments must never inherit production database URLs. Preview code is executable code with access to its environment secrets. Hosted staging uses Google too; the local password guard is intentionally unavailable there.
+Preview deployments must never inherit production database URLs. Preview code is executable code with access to its environment secrets. Hosted staging uses Google; password login is unavailable there. Production temporarily permits only the four demonstration emails listed in `src/lib/auth-policy.ts`; those account rows and password hashes must already exist.
 
 ## Activate the release gates (owner action)
 
@@ -57,6 +57,8 @@ Record date/time in Eastern Time, release SHA, Vercel deployment ID/URL, previou
 ## Schema and rollout
 
 Apply only reviewed, backward-compatible migrations with `npm run db:migrate` using the intended protected environment. Confirm `npx prisma migrate status` before and after. Never run seed/reset against production. The local guard is a second line of defense, not a reason to put production URLs in a developer shell.
+
+The Point of Contact change adds `20261009120000_dancer_point_of_contact`. Apply it before deploying code that reads the new column. Existing roster rows receive `false`; the previous app ignores the column if a code rollback is needed. Confirm the four production demonstration accounts exist with password hashes and the intended access before inviting testers.
 
 Test both a clean migration and an upgrade of a restored, sanitized prior schema with representative rows. For destructive schema work, use expand/migrate/contract: add compatible schema, deploy code that handles both, backfill and verify, then remove old schema in a later release. Do not make the app deploy depend on a migration that has not completed.
 

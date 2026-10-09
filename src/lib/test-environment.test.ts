@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assertDisposableDatabase, isDisposableDatabase, testPasswordLoginEnabled } from "./test-environment";
+import { assertDisposableDatabase, isDisposableDatabase, testPasswordLoginAllowed, testPasswordLoginEnabled } from "./test-environment";
 
 const local = {
   AUTH_ENABLE_TEST_LOGIN: "true",
@@ -34,11 +34,31 @@ describe("local password login", () => {
   });
   it.each([
     { AUTH_ENABLE_TEST_LOGIN: undefined }, { AUTH_ENABLE_TEST_LOGIN: "false" },
-    { VERCEL: "1" }, { VERCEL_ENV: "production" }, { VERCEL_ENV: "preview" },
+    { VERCEL: "1" }, { VERCEL_ENV: "preview" },
     { AUTH_URL: "https://onelegends.vercel.app" }, { AUTH_URL: undefined },
     { DATABASE_URL: "postgresql://production.example/postgres" },
     { DIRECT_URL: "postgresql://production.example/postgres" },
   ])("denies hosted or incompletely configured environments: %j", (overrides) => {
     expect(testPasswordLoginEnabled({ ...local, ...overrides })).toBe(false);
+  });
+});
+
+describe("temporary production test login", () => {
+  const production = { ...local, VERCEL: "1", VERCEL_ENV: "production", AUTH_ENABLE_TEST_LOGIN: "false" };
+
+  it.each([
+    "legendstestadmin@gmail.com", "legendstestcomp@gmail.com",
+    "legendstestmoderator@gmail.com", "legendstestuser@gmail.com",
+  ])("accepts the named demonstration account %s", (email) => {
+    expect(testPasswordLoginAllowed(email, production)).toBe(true);
+  });
+
+  it.each(["legendstech@desidancenetwork.org", "legendstestreg@gmail.com", "new@example.org"])(
+    "refuses other production emails: %s",
+    (email) => expect(testPasswordLoginAllowed(email, production)).toBe(false),
+  );
+
+  it("keeps preview deployments Google-only", () => {
+    expect(testPasswordLoginAllowed("legendstestadmin@gmail.com", { ...production, VERCEL_ENV: "preview" })).toBe(false);
   });
 });

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { googleSignInAction, loginAction } from "@/app/actions/auth";
+import { PUBLIC_TEST_ACCOUNTS } from "@/lib/auth-policy";
 
 export function AuthForm({
   mode,
@@ -14,6 +15,7 @@ export function AuthForm({
   testLoginEnabled?: boolean;
 }) {
   const [state, testLoginAction, pending] = useActionState(loginAction, undefined);
+  const [testEmail, setTestEmail] = useState("");
 
   return (
     <div className="mx-auto max-w-md space-y-5 rounded-xl border border-line bg-card p-6">
@@ -53,8 +55,20 @@ export function AuthForm({
           </summary>
           <form action={testLoginAction} className="mt-4 space-y-4">
             <p className="text-xs text-muted">
-              Password sign-in is kept only for the existing demonstration accounts.
+              Choose a test role, then enter that account&apos;s password.
             </p>
+            <div className="grid grid-cols-2 gap-2">
+              {PUBLIC_TEST_ACCOUNTS.map((account) => (
+                <button
+                  key={account.email}
+                  type="button"
+                  className="btn btn-ghost px-2 py-2 text-xs"
+                  onClick={() => setTestEmail(account.email)}
+                >
+                  {account.label}
+                </button>
+              ))}
+            </div>
             <div className="field">
               <label htmlFor="test-email">Email</label>
               <input
@@ -63,6 +77,8 @@ export function AuthForm({
                 type="email"
                 required
                 autoComplete="email"
+                value={testEmail}
+                onChange={(event) => setTestEmail(event.target.value)}
               />
             </div>
             <div className="field">
