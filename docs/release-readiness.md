@@ -4,6 +4,8 @@
 
 **7 October integration update:** the branch is published and now incorporates main's Moderator naming, payment recipient, competition partner labels, logo wording, and early/late deadlines, plus dark mode. The evidence below records the original 6 October audit; current merge validation is recorded in the pull request and its Actions run. Repository ruleset listing currently returns no rulesets. Production migration, external OAuth, capacity, and hosting-control verification remain separate release requirements.
 
+**9 October follow-up:** a later, user-requested change temporarily restores production password login for four named demonstration accounts so other people can test each role. The local-only password guard and hosted-auth evidence below describe the earlier state. Current policy and tests are in `src/lib/test-environment.ts`, `src/lib/auth-policy.ts`, and `e2e-production/auth.spec.ts`. Verify the four account hashes and permissions, rotate exposed credentials, and remove this access after testing.
+
 ## Launch blockers
 
 | Priority | Finding and evidence | Required closure |

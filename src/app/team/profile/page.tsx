@@ -45,6 +45,7 @@ export default async function TeamProfilePage() {
             dietaryRestrictions: d.dietaryRestrictions,
             tshirtSize: d.tshirtSize,
             inAV: d.inAV,
+            pointOfContact: d.pointOfContact,
           }))}
         />
       </div>

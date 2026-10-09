@@ -1,8 +1,9 @@
 /**
  * Auth.js configuration (JWT sessions; separate from Supabase Auth).
  *
- * Google is the normal sign-in. Password sign-in exists only for the legacy
- * test emails in `src/lib/auth-policy.ts`, only against opted-in local fixtures.
+ * Google is the normal sign-in. Production temporarily accepts password
+ * sign-in for four named demonstration accounts in `src/lib/auth-policy.ts`;
+ * additional legacy fixtures work only against an opted-in local database.
  * The `signIn` callback creates new Google users only when the intent cookie says Register; from Log In an
  * unknown email is sent to `/register?error=no-account`. The session carries
  * `id`, `role`, and `platformAdmin`, kept in sync with the user row.
@@ -13,11 +14,10 @@ import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { testPasswordLoginEnabled } from "@/lib/test-environment";
+import { testPasswordLoginAllowed, testPasswordLoginEnabled } from "@/lib/test-environment";
 import { getCachedUser } from "@/lib/cached-user";
 import {
   AUTH_INTENT_COOKIE,
-  isLegacyTestLogin,
   parseAuthIntent,
 } from "@/lib/auth-policy";
 import { hydrateEmailInvites } from "@/lib/invites";
@@ -51,7 +51,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           .toLowerCase();
         const password = String(credentials?.password ?? "");
 
-        if (!email || !password || !isLegacyTestLogin(email)) {
+        if (!email || !password || !testPasswordLoginAllowed(email)) {
           return null;
         }
 
@@ -116,7 +116,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // Old sessions have no provenance; require one fresh login on rollout.
       if (
         token.authProvider !== "google" &&
-        !(token.authProvider === "credentials" && testPasswordLoginEnabled())
+        !(token.authProvider === "credentials" &&
+          testPasswordLoginAllowed(String(user?.email ?? token.email ?? "")))
       ) return null;
       if (account?.provider === "google") {
         const email = user?.email?.trim().toLowerCase();

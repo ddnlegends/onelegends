@@ -17,7 +17,7 @@ const config = () => captured.config as NextAuthConfig;
 
 beforeEach(() => { vi.resetAllMocks(); vi.unstubAllEnvs(); });
 
-it("denies direct credentials authorization before querying production data", async () => {
+it("denies staff credentials authorization before querying production data", async () => {
   vi.stubEnv("VERCEL_ENV", "production");
   vi.stubEnv("AUTH_ENABLE_TEST_LOGIN", "true");
   const provider = config().providers[0] as unknown as { options: { authorize: (credentials: Record<string, string>, request: Request) => Promise<unknown> } };
@@ -29,7 +29,7 @@ it("denies direct credentials authorization before querying production data", as
 it.each([undefined, "credentials", "unknown"])("revokes hosted sessions with unsafe provider provenance: %s", async (authProvider) => {
   vi.stubEnv("VERCEL_ENV", "production");
   const jwt = config().callbacks!.jwt!;
-  const result = await jwt({ token: { id: "old-admin", role: "TEAM", authProvider } } as unknown as Parameters<typeof jwt>[0]);
+  const result = await jwt({ token: { id: "old-admin", email: "legendstech@desidancenetwork.org", role: "TEAM", authProvider } } as unknown as Parameters<typeof jwt>[0]);
   expect(result).toBeNull();
   expect(getCachedUser).not.toHaveBeenCalled();
 });

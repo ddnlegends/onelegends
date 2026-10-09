@@ -12,11 +12,11 @@ Change `AUTH_SECRET` before a public deploy (`openssl rand -base64 32`). Keep `.
 
 ## Environment
 
-Login uses Auth.js, while Supabase hosts Postgres. You need Postgres URIs, not Supabase anon keys. Google is the only sign-in path for regular accounts. Password test accounts only work against the disposable local database when explicitly enabled; all hosted deployments use Google. New password accounts cannot be created.
+Login uses Auth.js, while Supabase hosts Postgres. You need Postgres URIs, not Supabase anon keys. Google is the sign-in path for regular accounts. Production temporarily allows password sign-in for the four named demonstration accounts shown on Log In; preview deployments remain Google-only. Those four user rows must already have password hashes and the intended role assignments. The app does not create them or set their passwords.
 
 Google on **Register** creates an account. Google on **Log In** only signs in an email that already has an account; an unknown email is sent to `/register?error=no-account` and nothing is created.
 
-Before launch, create a Google OAuth 2.0 Web client. Set the authorized JavaScript origin to the exact site origin and the authorized redirect URI to `{AUTH_URL}/api/auth/callback/google`. Set `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` in the deployment environment, as well as `AUTH_SECRET` and the production `AUTH_URL`. Add localhost origin and callback to the client if local Google sign-in is needed. Restart or redeploy after setting these values. Without them, hosted sign-in is unavailable; password test accounts cannot bypass this.
+Before launch, create a Google OAuth 2.0 Web client. Set the authorized JavaScript origin to the exact site origin and the authorized redirect URI to `{AUTH_URL}/api/auth/callback/google`. Set `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` in the deployment environment, as well as `AUTH_SECRET` and the production `AUTH_URL`. Add localhost origin and callback to the client if local Google sign-in is needed. Restart or redeploy after setting these values. Without them, regular hosted sign-in is unavailable.
 
 In the hosting dashboard (for example Vercel), paste values **without quotes** and without trailing spaces, and set `AUTH_URL` with **no trailing slash** (`https://example.org`, not `https://example.org/`). Quoted or padded values are the usual cause of Google's `invalid_client` error in production while local works.
 
@@ -28,7 +28,7 @@ In the hosting dashboard (for example Vercel), paste values **without quotes** a
 | `AUTH_URL` | yes | Site origin (`http://localhost:3000` locally). |
 | `AUTH_GOOGLE_ID` | launch | Google OAuth client ID. Shows Continue with Google when set with the secret. |
 | `AUTH_GOOGLE_SECRET` | launch | Google OAuth client secret. Redirect URI is `{AUTH_URL}/api/auth/callback/google`. |
-| `AUTH_ENABLE_TEST_LOGIN` | local tests only | Explicit `true`, loopback AUTH_URL, and both URLs targeting local `onelegends_e2e`; always refused on Vercel. |
+| `AUTH_ENABLE_TEST_LOGIN` | local tests only | Explicit `true`, loopback AUTH_URL, and both URLs targeting local `onelegends_e2e`. Production's four named demonstration accounts are enabled by code, independently of this flag; preview passwords stay disabled. |
 
 URI-encode special characters in the database password (`@` → `%40`).
 

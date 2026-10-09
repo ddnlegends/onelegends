@@ -6,7 +6,7 @@ What the board asked for, what is done, and what is still open. The [README](../
 
 | Item | Where it lives |
 | --- | --- |
-| Google sign-in replaces the shared test accounts | **Register** creates an account with Google; **Log In** only works for existing accounts. See [setup.md](setup.md#environment). |
+| Google sign-in for regular accounts | **Register** creates an account with Google; **Log In** only works for existing accounts. Four named demonstration accounts temporarily retain password sign-in for production role testing. See [setup.md](setup.md#environment). |
 | Accepting applications and judging can no longer both be on | Opening judging closes applications, and a database `CHECK` rejects both flags being true (`prisma/migrations/20261004150000_block_reasons_and_judging_gate`). |
 | Tech admins can see every team's full info and roster | **Teams** and **Competitions** pages with expandable rows, plus **Export data** (.xlsx or CSV). See [board-guide.md](board-guide.md#exports). |
 | Code lives in the DDN GitHub | `github.com/ddnlegends/onelegends`, deployed from `main`. |
@@ -22,7 +22,7 @@ What the board asked for, what is done, and what is still open. The [README](../
 | [DDN app integration](#ddn-app-integration) | Board and app team | Needs a decision |
 | [Branding review](#branding-review) | Sreya and MD | Not started |
 | [Regression workflow merge](#regression-workflow-merge) | Rushi and tech | Expanded suite prepared; merge/CI activation pending |
-| [Test-account passwords](#test-account-passwords) | Tech | Launch blocker; local-only guard prepared, production activation pending |
+| [Test-account passwords](#test-account-passwords) | Tech | Four temporary production demonstration logins need account verification, password rotation, and a removal date |
 | [Transfer primary admin](#transfer-primary-admin) | Tech | Not built |
 | [Partner competitions by year](#partner-competitions-by-year) | Tech | Not built |
 | [MOU tracking](#mou-tracking) | Board | Nice-to-have |
@@ -56,7 +56,7 @@ The existing Vitest/Playwright suite is the canonical suite. The release-hardeni
 
 ### Test-account passwords
 
-**Resolve before this launch.** The release-hardening branch removes literal seed passwords, disables hosted password authentication, and invalidates legacy/credential sessions on hosted deployments. Verify a real tech admin's Google login before rollout. Rotate exposed passwords wherever reused and inspect privileged access. Published competition claim codes also need review and rotation if active; removing them from source does not revoke database values. See [release-readiness.md](release-readiness.md) for all launch blockers.
+Production temporarily permits password login for only `legendstestadmin@gmail.com`, `legendstestcomp@gmail.com`, `legendstestmoderator@gmail.com`, and `legendstestjudge@gmail.com`. Verify each has a unique password hash and its intended access, rotate any previously exposed passwords, and set a removal date after role testing. Regular staff accounts remain Google-only. Published competition claim codes also need review and rotation if active; removing them from source does not revoke database values. See [release-readiness.md](release-readiness.md) for the earlier audit and [release-runbook.md](release-runbook.md) for the current rollout.
 
 ### Transfer primary admin
 

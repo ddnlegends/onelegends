@@ -38,7 +38,7 @@ Step-by-step recipes for pages, actions, migrations, permissions, exports, tests
 
 ## Operations and troubleshooting
 
-- **Google button absent:** `AUTH_GOOGLE_ID` or `AUTH_GOOGLE_SECRET` is missing. Set both on the host and redeploy. Confirm `AUTH_URL` and the exact callback `{AUTH_URL}/api/auth/callback/google` in the Google OAuth Web client. Hosted deployments have no password exception; verify Google admin access before deploying auth changes.
+- **Google button absent:** `AUTH_GOOGLE_ID` or `AUTH_GOOGLE_SECRET` is missing. Set both on the host and redeploy. Confirm `AUTH_URL` and the exact callback `{AUTH_URL}/api/auth/callback/google` in the Google OAuth Web client. Production's four temporary demonstration passwords do not replace Google access for regular accounts; verify Google admin access before deploying auth changes.
 - **OAuth callback error:** Check the registered origin and redirect URI, deployment URL, client ID/secret, and Google OAuth consent configuration. Use the same canonical host for `AUTH_URL` and the redirect.
 - **`Error 401: invalid_client` in production only:** The host's `AUTH_GOOGLE_ID`/`AUTH_GOOGLE_SECRET` were pasted with quotes or spaces, or belong to a different OAuth client. Re-enter them bare, set `AUTH_URL` with no trailing slash, and redeploy.
 - **"No account" notice on Register:** That Google email has no OneLegends account. The user should press Continue with Google on Register, not Log In.

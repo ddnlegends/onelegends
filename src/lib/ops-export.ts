@@ -39,7 +39,7 @@ export const EXPORT_DATASETS = [
   {
     key: "rosters",
     label: "Rosters",
-    description: "Every dancer with AV, dietary restrictions, and T-shirt size.",
+    description: "Every dancer with AV, point of contact, dietary restrictions, and T-shirt size.",
   },
   {
     key: "judges",
@@ -268,11 +268,12 @@ async function rostersTable(competitionId?: string): Promise<ExportCell[][]> {
     include: { team: { select: { name: true } } },
   });
   return [
-    ["Team", "Dancer", "In AV", "Dietary restrictions", "T-shirt size"],
+    ["Team", "Dancer", "In AV", "Point of Contact", "Dietary restrictions", "T-shirt size"],
     ...dancers.map((dancer) => [
       dancer.team.name,
       dancer.name,
       yesNo(dancer.inAV),
+      yesNo(dancer.pointOfContact),
       dancer.dietaryRestrictions,
       dancer.tshirtSize,
     ]),
