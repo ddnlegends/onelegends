@@ -31,6 +31,18 @@ for (const role of ["moderator", "judge"] as const) {
   });
 }
 
+test("moderator rankings stay sealed until release and are scoped to the assignment", async ({ page }) => {
+  await login(page, "moderator");
+  const assigned = await competitionId(E2E.comps.showcase.slug);
+  const other = await competitionId(E2E.comps.open.slug);
+  for (const id of [assigned, other]) {
+    const response = await page.request.get(`/moderator/${id}/results`, { maxRedirects: 0 });
+    for (const name of SEALED_NAMES) expect(await response.text()).not.toContain(name);
+    await page.goto(`/moderator/${id}/results`);
+    await expect(page.getByText("404", { exact: true })).toBeVisible();
+  }
+});
+
 test("non-partner admins get moderator controls while pending admins and judges do not", async ({ browser }) => {
   const id = await competitionId(E2E.comps.showcase.slug);
   const secondary = await db.user.findUniqueOrThrow({ where: { email: E2E.emails.team } });

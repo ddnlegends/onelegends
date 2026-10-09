@@ -9,7 +9,7 @@ Every judge watches the same kind of audition and scores without knowing who the
 | **Teams** | One profile, one Drive audition file, apply to many comps. |
 | **Competition admins** | Claim a listing, set details and required judge count N, invite judges. See applicant names, application dates, and dancer counts for manual payment checks. After release, see rankings, scores, comments, full rosters, and accept / waitlist / decline. |
 | **Judges** | Approve an invite and score anonymous teams in the same shuffled order as every other judge. Their sheets follow the team the moderator is showing. |
-| **Moderator** | Runs the audition videos and selects the live team. The moderator sees team numbers, videos, and a checkmark for each judge who has finished each team. The moderator never sees team names and cannot judge that competition. |
+| **Moderator** | Runs the audition videos and selects the live team. During judging, sees anonymous team numbers, videos, and a checkmark for each judge who has finished each team. After results release, sees a read-only table of named final rankings. Cannot judge that competition. |
 | **Circuit ops** | Create teams and listings, open/close judging on a **claimed** comp (apps must be closed first), monitor every subscore in Comp Dashboard, and export data. |
 
 This app does not send email. Invites wait on the person’s next login.
@@ -30,6 +30,7 @@ Team 1 refers to the same application for every judge. The UI never sends team n
 
 - **Comp Dashboard** (ops only): every rubric cell, total, and note for every team and judge, updating as judges autosave.
 - **Viewing Results** (competition): unlocks when N invited judges have submitted. Rank is average z-score of totals, then average total. If fewer judges finish, the competition can lower N.
+- **Final rankings** (moderator): unlocks at the same release. Shows rank, team name, average total, average z-score, and judge count for the assigned competition. It has no roster, judge notes, or application decision controls.
 
 Releasing results ends the live session and locks further scoring. It happens exactly once, even if the last judges submit at the same moment. Applications and the required judge count cannot change after release. Circuit tech admins can download released data from **Export data**.
 

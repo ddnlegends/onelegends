@@ -42,6 +42,11 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
   await moderator.goto(`/moderator/${id}`);
   await expect(moderator.getByRole("heading", { name: "Ready when you are" })).toBeVisible();
   await expectNoTeamNames(moderator);
+  const sealedRankings = await moderator.request.get(`/moderator/${id}/results`, { maxRedirects: 0 });
+  for (const name of SEALED_NAMES) expect(await sealedRankings.text()).not.toContain(name);
+  await moderator.goto(`/moderator/${id}/results`);
+  await expect(moderator.getByText("404", { exact: true })).toBeVisible();
+  await moderator.goto(`/moderator/${id}`);
   await moderator.getByRole("button", { name: "Show Team 1" }).click();
   await expect(moderator.getByRole("heading", { name: "Team 1" })).toBeVisible();
   await expect(moderator.getByRole("button", { name: /Next: Team 2/ })).toBeDisabled();
@@ -80,7 +85,7 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
 
   const comp = await pageAs(browser, "comp");
   await comp.goto("/comp/results");
-  await expect(comp.getByText(/Team names are still hidden/)).toBeVisible();
+  await expect(comp.getByText(/Rankings and scores are still hidden/)).toBeVisible();
   await expectNoTeamNames(comp);
 
   await expect(async () => {
@@ -124,4 +129,20 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
 
   await moderator.reload();
   await expect(moderator.getByText("Judging is complete for this competition.")).toBeVisible();
+  await moderator.getByRole("link", { name: "View final rankings" }).click();
+  await expect(moderator.getByRole("heading", { name: "Final rankings" })).toBeVisible();
+  const firstTeam = await db.application.findUniqueOrThrow({
+    where: { id: stored.slots[0].applicationId },
+    select: { team: { select: { name: true } } },
+  });
+  const winner = moderator.getByRole("row").filter({ hasText: firstTeam.team.name });
+  await expect(winner.getByRole("cell").first()).toHaveText("1");
+  for (const name of SEALED_NAMES) {
+    await expect(moderator.getByRole("cell", { name, exact: true })).toBeVisible();
+  }
+  await expect(moderator.getByText("Strong opener")).toHaveCount(0);
+  await expect(moderator.getByText("Dancer One")).toHaveCount(0);
+  await expect(moderator.getByRole("combobox")).toHaveCount(0);
+  const judgeRankings = await judge.request.get(`/moderator/${id}/results`, { maxRedirects: 0 });
+  expect(await judgeRankings.text()).not.toContain(firstTeam.team.name);
 });

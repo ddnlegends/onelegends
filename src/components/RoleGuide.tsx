@@ -75,7 +75,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Submit Judging when every slot is filled",
-        body: "Save as you go. Submit locks your packet. You will not see rankings, other judges’ scores, or team names. If judging is closed, you cannot change scores until circuit ops opens it again. After N judges submit, only the competition login sees named results.",
+        body: "Save as you go. Submit locks your packet. You will not see rankings, other judges’ scores, or team names. If judging is closed, you cannot change scores until circuit ops opens it again. After results release, competition admins see detailed results and moderators see read-only final rankings.",
       },
     ],
     cta: { href: "/register", label: "Create an account" },

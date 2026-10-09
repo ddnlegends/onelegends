@@ -86,8 +86,8 @@ export default async function ModeratorCompetitionPage({
             <CompStatusPill status={status} />
           </div>
           <p className="max-w-2xl text-sm text-muted">
-            Teams stay anonymous while judging is open. This page shows team
-            numbers, videos, and each judge’s completion check only.
+            Teams stay anonymous while judging is open. After results release,
+            you can view the final rankings.
           </p>
         </div>
         {open && teams.length ? (
@@ -106,9 +106,14 @@ export default async function ModeratorCompetitionPage({
           </p>
           <p className="mt-1 text-sm text-muted">
             {competition.resultsReleasedAt
-              ? "Results are with the competition."
+              ? "Final rankings are available to moderators and competition admins."
               : (lockMessage ?? "Circuit ops opens judging when it is time.")}
           </p>
+          {competition.resultsReleasedAt ? (
+            <Link href={`/moderator/${competitionId}/results`} className="btn btn-primary mt-4 inline-flex">
+              View final rankings
+            </Link>
+          ) : null}
         </div>
       ) : teams.length === 0 ? (
         <p className="text-muted">No teams applied to this competition.</p>

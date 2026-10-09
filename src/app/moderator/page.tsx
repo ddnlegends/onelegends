@@ -45,14 +45,14 @@ export default async function ModeratorHomePage() {
                   </p>
                 </div>
                 <Link
-                  href={`/moderator/${comp.id}`}
+                  href={comp.resultsReleasedAt ? `/moderator/${comp.id}/results` : `/moderator/${comp.id}`}
                   className={
                     status === "LIVE" || status === "READY"
                       ? "btn btn-primary"
                       : "btn btn-ghost"
                   }
                 >
-                  Open live viewing
+                  {comp.resultsReleasedAt ? "View final rankings" : "Open live viewing"}
                 </Link>
               </li>
             );
