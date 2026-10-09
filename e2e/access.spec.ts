@@ -53,7 +53,13 @@ test("circuit ops can create and relabel a non-partner competition", async ({ pa
     await form.getByRole("button", { name: "Create competition" }).click();
     await expect(form.locator(".notice-ok")).toContainText(name);
 
-    await page.goto("/ops/competitions");
+    // The create action also refreshes /dashboard; a page.goto here can race
+    // that refresh (WebKit aborts it). The router queues a link click instead.
+    await page
+      .getByRole("navigation")
+      .getByRole("link", { name: "Competitions", exact: true })
+      .click();
+    await expect(page).toHaveURL(/\/ops\/competitions$/);
     const row = page.locator("article").filter({ hasText: name });
     await expect(row.getByText("Non-partner", { exact: true })).toBeVisible();
     await row.getByRole("button", { name: /E2E Non-partner Competition/ }).click();
