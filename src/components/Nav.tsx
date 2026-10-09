@@ -28,6 +28,7 @@ export async function Nav() {
             <NavLink href="/">Home</NavLink>
           )}
           {session ? <NavLink href="/profile">Profile</NavLink> : null}
+          <NavLink href="/guide">How it works</NavLink>
           <NavLink href="/payments">Payments</NavLink>
           {teamAccess ? (
             <NavLink href="/team/profile" match="prefix">

@@ -4,6 +4,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Correct homepage instructions for the shared judge/moderator session, separate team saves, invitations, and automatic results release. Add Moderator and Circuit ops walkthroughs with keyboard navigation and a How it works page reachable after login. Record the five-role QA findings and remaining acceptance work in `docs/qa-role-audit-2026-10-09.md`.
 - Moderators can view read-only named final rankings for their assigned competition after results release, using the same rank calculation as competition results. Judging remains anonymous until release, and moderator access does not grant roster or decision controls.
 - Approved Partner and Non-partner competition admins can see applicant team names, application dates, and dancer counts before results release for manual payment checks. Full profiles, viewing order, scores, and decisions remain gated until release; judges and moderator-only accounts retain anonymous access.
 - Remove applicant Google Sheet links, automatic/manual sync, service-account configuration, and stored Sheet fields. Keep tech-admin XLSX/CSV exports, including the Everything preset.
