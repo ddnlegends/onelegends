@@ -379,7 +379,8 @@ export default async function DashboardPage() {
                 {isCompetitionOpen(competition)
                   ? "Accepting applications."
                   : "Applications closed."}{" "}
-                Team names stay sealed until judging is complete.
+                Applied Teams shows names, application dates, and dancer counts.
+                Full team details and results unlock after judging.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -391,6 +392,9 @@ export default async function DashboardPage() {
               </Link>
               <Link href="/comp/results" className="btn btn-primary">
                 Viewing Results
+              </Link>
+              <Link href="/comp/applicants" className="btn btn-ghost">
+                Applied Teams
               </Link>
               <Link href="/comp/access" className="btn btn-ghost">
                 Admins

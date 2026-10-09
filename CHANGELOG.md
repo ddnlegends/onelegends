@@ -4,6 +4,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Approved Partner and Non-partner competition admins can see applicant team names, application dates, and dancer counts before results release for manual payment checks. Full profiles, viewing order, scores, and decisions remain gated until release; judges and moderator-only accounts retain anonymous access.
 - Remove applicant Google Sheet links, automatic/manual sync, service-account configuration, and stored Sheet fields. Keep tech-admin XLSX/CSV exports, including the Everything preset.
 - Unlock judge scoring only through the live team while allowing edits to earlier teams until packet submission. Block moderator progression until all approved judges have completed every earlier team's five rubric scores.
 - Rename the judge scoresheet comment label to “Comments on this team’s video” and clarify the matching judge guide text.

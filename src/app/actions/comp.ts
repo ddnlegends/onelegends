@@ -146,6 +146,9 @@ export async function setApplicationStatus(
 
   const competition = await requireActiveCompetition(user.id);
   if (!competition) return { error: "Competition profile missing." };
+  if (!competition.resultsReleasedAt) {
+    return { error: "Application decisions unlock after results are released." };
+  }
 
   const app = await prisma.application.findFirst({
     where: { id: applicationId, competitionId: competition.id },

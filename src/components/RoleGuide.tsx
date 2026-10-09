@@ -87,7 +87,7 @@ const GUIDES: Guide[] = [
     kicker: "Claim code · then invite",
     title: "How competitions run apps",
     intro:
-      "Everyone signs in with Google. Circuit ops creates the competition listing and a claim code. The first person to enter that code becomes the primary admin. You see counts until anonymous judging is done.",
+      "Everyone signs in with Google. Circuit ops creates the competition listing and a claim code. The first person to enter that code becomes the primary admin. Applied Teams shows names, application dates, and dancer counts for payment checks.",
     steps: [
       {
         title: "Register, then claim with the claim code",
@@ -107,7 +107,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Release Viewing Results",
-        body: "When N invited judges have submitted, ranked names unlock: scores, z-scores, judge comments, live AVs, and accept / waitlist / decline. Judges still cannot see that table. Until then, even you do not get the named list. Circuit ops can open judging, then use Live View for every subscore as judges autosave.",
+        body: "When N invited judges have submitted, ranked results unlock: scores, z-scores, judge comments, AVs, full team details, and accept / waitlist / decline. Judges still cannot see that table. Before release, competition admins can see only applicant names, application dates, and dancer counts. Circuit ops can open judging, then use Live View for every subscore as judges autosave.",
       },
     ],
     cta: { href: "/register", label: "Create an account" },

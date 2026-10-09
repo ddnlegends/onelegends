@@ -1,13 +1,13 @@
 # Judging
 
-Every judge watches the same kind of audition and scores without knowing who the team is. Circuit ops controls when scoring is open. Competition admins do not see names until the required number of judges have submitted.
+Every judge watches the same kind of audition and scores without knowing who the team is. Circuit ops controls when scoring is open. Competition admins can see who applied before judging ends, but ranked results and full team details unlock only after the required judges submit.
 
 ## Roles
 
 | Who | What they do |
 | --- | --- |
 | **Teams** | One profile, one Drive audition file, apply to many comps. |
-| **Competition admins** | Claim a listing, set details and required judge count N, invite judges. See counts until results unlock. Then ranked names, scores, comments, and accept / waitlist / decline. |
+| **Competition admins** | Claim a listing, set details and required judge count N, invite judges. See applicant names, application dates, and dancer counts for manual payment checks. After release, see rankings, scores, comments, full rosters, and accept / waitlist / decline. |
 | **Judges** | Approve an invite and score anonymous teams in the same shuffled order as every other judge. Their sheets follow the team the moderator is showing. |
 | **Moderator** | Runs the audition videos and selects the live team. The moderator sees team numbers, videos, and a checkmark for each judge who has finished each team. The moderator never sees team names and cannot judge that competition. |
 | **Circuit ops** | Create teams and listings, open/close judging on a **claimed** comp (apps must be closed first), monitor every subscore in Comp Dashboard, and export data. |
@@ -33,4 +33,4 @@ Team 1 refers to the same application for every judge. The UI never sends team n
 
 Releasing results ends the live session and locks further scoring. It happens exactly once, even if the last judges submit at the same moment. Applications and the required judge count cannot change after release. Circuit tech admins can download released data from **Export data**.
 
-Until that moment, the competition login does not list which teams applied. After release, **Applied Teams** shows full profiles and rosters only for that competition's applicants; circuit tech admins use **Teams** to inspect every registered team.
+Before release, **Applied Teams** lists each applicant's team name, application date, and dancer count for approved admins of the active competition. It does not expose viewing order, AV links, scores, full rosters, or decision controls. A Non-partner admin may also moderate that competition, so they can know applicants' names while operating the anonymous viewing flow. Judge accounts and moderator-only accounts still receive no named applicant list. After release, **Applied Teams** links to full profiles and rosters only for that competition's applicants; circuit tech admins use **Teams** to inspect every registered team.

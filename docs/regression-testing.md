@@ -69,7 +69,7 @@ Record deployment SHA/URL, tester, device, time, pass/fail, evidence, and cleanu
 | New user | Google **Log In** with unknown email; then explicit **Register** | Login creates nothing and points to Register; Register creates one identity; second registration does not duplicate it |
 | Existing user | Google login, logout, switch Google account, reload deep link | Correct account/role each time; logout and invalid session cannot access protected data |
 | Team primary | Claim synthetic listing, finish profile/roster, apply twice, switch between teams | Only owned teams editable; one application per team/comp; block/deadline enforced on server |
-| Competition primary | Inspect applicants before release; invite/approve judge; attempt another competition ID | Names/order remain sealed as specified; invitations scoped; other competition refused |
+| Competition primary | Inspect applicants before release; invite/approve judge; attempt another competition ID | Own applicant names, application dates, and dancer counts visible; viewing order, rosters, and scores sealed; other competition refused |
 | Tech admin | Grant/revoke Moderator, open/close judging, inspect live dashboard, export | Only admin can operate these; mutually exclusive app/judging state; revoked access stops working |
 | Moderator | Open assigned comp, play Drive audition, switch live team, try judging same comp | All judges follow anonymous slot; video works; Moderator cannot also judge it |
 | Judge | Save partial rubric, reload, change score, disconnect/reconnect, complete and submit twice | Persisted values match; visible save failure/recovery; no incomplete submission; sealed packet immutable |

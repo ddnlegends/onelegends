@@ -37,7 +37,7 @@ export default async function CompResultsPage() {
       <div>
         <h1 className="font-heading text-4xl">Viewing Results</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          Names stay sealed until{" "}
+          Rankings and scores stay sealed until{" "}
           {competition.requiredJudgeCount === 1
             ? "1 judge submits"
             : `${competition.requiredJudgeCount} judges submit`}
@@ -50,14 +50,14 @@ export default async function CompResultsPage() {
         submitted
         {released && competition.resultsReleasedAt
           ? ` · Unlocked ${formatDateTime(competition.resultsReleasedAt)}`
-          : " · Team names are still hidden"}
+          : " · Rankings and scores are still hidden"}
         . Lower N on Judges if you need to release early.
       </div>
 
       {!released ? (
         <p className="text-muted">
-          Keep this screen closed to names until the packet is complete. Stats
-          stay on Application Stats.
+          Rankings and scores unlock when the required packets are complete.
+          Applicant names, dates, and dancer counts are available in Applied Teams.
         </p>
       ) : ranked.length === 0 ? (
         <div className="space-y-4">

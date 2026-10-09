@@ -131,10 +131,11 @@ export default async function CompDashboardPage() {
 
       <div className="rounded-xl border border-line bg-blush p-5">
         <p className="text-sm text-ink/80">
-          This login shows <strong>how many</strong> teams applied and aggregate
-          stats only. Team names stay sealed until the required number of judges
-          submit. Approve judges and read ranked results from the Judges and
-          Viewing Results pages.
+          Applied Teams shows applicant names, application dates, and dancer
+          counts so you can check payments manually. Viewing order, full team
+          details, and ranked results unlock after the required judges submit.
+          Manage judges and read ranked results from the Judges and Viewing
+          Results pages.
         </p>
       </div>
 
