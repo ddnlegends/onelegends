@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { AutoRefresh } from "@/components/AutoRefresh";
+import { CompetitionApplicationReview } from "@/components/CompetitionApplicationReview";
 import { CompStatusPill } from "@/components/CompStatusPill";
 import { JudgingControls } from "@/components/JudgingControls";
 import { LiveProgress } from "@/components/LiveProgress";
@@ -20,7 +21,7 @@ import {
   scoreComment,
 } from "@/lib/judging";
 import { rankTeams } from "@/lib/results";
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTime, statusLabel } from "@/lib/utils";
 import { isPlatformAdmin } from "@/lib/team-access";
 
 export default async function CompDashboardDetailPage({
@@ -216,6 +217,24 @@ export default async function CompDashboardDetailPage({
         judgingOpen={competition.judgingOpen}
         appsOpen={appsOpen}
         claimed={claimed}
+      />
+
+      <CompetitionApplicationReview
+        competitionId={competition.id}
+        competitionName={competition.name}
+        applications={competition.applications
+          .map((app) => ({
+            id: app.id,
+            teamName: app.team.name,
+            status: statusLabel(app.status),
+          }))
+          .sort((a, b) => a.teamName.localeCompare(b.teamName))}
+        canRemove={!appsOpen && !competition.judgingOpen && !released && !hasOrder}
+        removalBlockedReason={
+          appsOpen
+            ? "Close applications before removing a team so it cannot reapply."
+            : "The judging order has started. Existing scores and team numbers are preserved."
+        }
       />
 
       {released ? (

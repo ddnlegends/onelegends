@@ -64,13 +64,15 @@ export async function setJudgingOpen(
     if (isCompetitionOpen(competition)) {
       return { error: "Close applications before opening judging." };
     }
+    // Order creation shares a lock with application removal. Count after it so
+    // a last-minute removal cannot leave judging open with zero teams.
+    await ensureCompetitionJudgeSlots(competition.id);
     const apps = await prisma.application.count({
       where: { competitionId: competition.id },
     });
     if (apps === 0) {
       return { error: "No applications to judge yet." };
     }
-    await ensureCompetitionJudgeSlots(competition.id);
     const updated = await prisma.competitionProfile.updateMany({
       where: { id: competition.id, resultsReleasedAt: null },
       data: { judgingOpen: true, acceptingApps: false },
