@@ -27,7 +27,7 @@ const GUIDES: Guide[] = [
     steps: [
       {
         title: "Register with Google",
-        body: "Create your account, then open Code Claim from the dashboard. Registering does not create a team.",
+        body: "New here? Choose Create account with Google. Returning users choose Log In with the same account. Then open Code Claim from the dashboard; signing in does not create a team.",
       },
       {
         title: "Claim the team with the code",
@@ -39,11 +39,11 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Fill Team Profile and roster",
-        body: "Save the team blurb, captains, logo, years established, roster size, and a shareable Google Drive file for the audition video. Add each dancer with a shirt size; mark anyone serving as Point of Contact. The profile and roster must be complete before applying.",
+        body: "Save Team Profile with the blurb, captains, logo, years established, roster size, and a shareable Google Drive file for the audition video. Separately add each dancer with a shirt size, mark anyone serving as Point of Contact, and Save roster. Both saves must be complete before applying.",
       },
       {
         title: "Apply with checkboxes",
-        body: "Select every open competition you want and submit. Each has its own deadline. Follow the payment instructions separately; the app does not verify payment.",
+        body: "Select every open competition you want and submit once. Check its early and late deadlines; the late deadline closes applications. Confirm the Pending status, then follow payment instructions separately. The app does not verify payment.",
       },
     ],
     cta: { href: "/register", label: "Create an account" },
@@ -67,15 +67,15 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Wait for judging to open",
-        body: "Circuit ops closes applications and opens judging. Your packet stays locked until then; each team is identified only by number.",
+        body: "Circuit ops closes applications and opens judging. Join the moderator's video-sharing session; the moderator plays the videos and chooses the live team. Your packet stays locked until judging opens, and each team is identified only by number.",
       },
       {
         title: "Score Team 1, Team 2, …",
-        body: "The moderator selects the live team, and your sheet follows. Score choreography, formations, technique, sync & cleanliness, and overall impression from 0–10 each. You may edit earlier teams until submission; future teams stay locked. Comments are optional.",
+        body: "The moderator selects the live team, and your sheet follows. Score choreography, formations, technique, sync & cleanliness, and overall impression from 0–10 each. Scores save automatically; wait for Saving… to finish and resolve errors before moving on. You may edit earlier teams until submission; future teams stay locked. Comments are optional.",
       },
       {
         title: "Submit Judging when every slot is filled",
-        body: "Save as you go. Once every team has all five scores, submit your packet to lock it. Judges do not see team names, other judges’ scores, or rankings.",
+        body: "Once every team has all five scores, submit your packet to lock it. Closing judging also pauses edits, and results release locks all scoring. Judges do not see team names, other judges’ scores, or rankings.",
       },
     ],
     cta: { href: "/register", label: "Create an account" },
@@ -91,7 +91,7 @@ const GUIDES: Guide[] = [
     steps: [
       {
         title: "Sign in with your assigned email",
-        body: "Circuit ops grants moderator access for a Partner competition. For a Non-partner competition, approved competition admins also get moderator controls. There is no moderator claim code or judge packet for this role.",
+        body: "Circuit ops grants moderator access for a Partner competition. Use an account separate from circuit admins and judges scoring that competition. For a Non-partner competition, approved competition admins also get moderator controls. There is no moderator claim code or judge packet for this role.",
       },
       {
         title: "Open Live Viewing",
@@ -99,11 +99,11 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Show each anonymous team",
-        body: "Select Team 1 to load its audition video, then play it for the judges on a shared screen. Their score sheets move to the same Team number automatically.",
+        body: "Select Team 1 to load its audition video, then play it for the judges on a shared screen. Keep team names and identifying file titles out of the judges' view. Their score sheets move to the same Team number automatically.",
       },
       {
         title: "Watch judging progress",
-        body: "You can return to an earlier team. Moving ahead waits until every approved judge has completed all five scores for each earlier team.",
+        body: "You can return to an earlier team or use Clear screen to pause the live selection. Moving ahead waits until every approved judge has completed all five scores for each earlier team.",
       },
       {
         title: "View final rankings",
@@ -131,7 +131,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Set Comp Details",
-        body: "Set event details, production notes, early and late application deadlines, and the required number of judge packets. The late deadline closes applications; the competition name stays tied to the official listing.",
+        body: "Save event details, production notes, early and late application deadlines, and the required number of judge packets. The early deadline is informational; the late deadline closes applications. Check the labeled timezone. The competition name stays tied to the official listing. Finish edits before switching competitions or tabs.",
       },
       {
         title: "Invite judges and check applicants",
@@ -139,7 +139,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Review released results",
-        body: "Circuit ops opens judging after applications close. When the required judge packets are submitted, rankings, comments, videos, full applicant rosters, and accept / waitlist / decline decisions unlock. Non-partner admins can also run live viewing; Partner competitions use moderators assigned by circuit ops.",
+        body: "Circuit ops opens judging after applications close. Results release automatically when the required number of approved judges submit: rankings, comments, videos, full applicant rosters, and accept / waitlist / decline decisions unlock. Non-partner admins can also run live viewing; Partner competitions use moderators assigned by circuit ops.",
       },
     ],
     cta: { href: "/register", label: "Create an account" },
@@ -175,8 +175,10 @@ const GUIDES: Guide[] = [
   },
 ];
 
-export function RoleGuide({ signedIn }: { signedIn?: boolean }) {
+export function RoleGuide({ signedIn, standalone }: { signedIn?: boolean; standalone?: boolean }) {
   const [activeId, setActiveId] = useState<GuideId>("TEAM");
+  const Heading = standalone ? "h1" : "h2";
+  const GuideHeading = standalone ? "h2" : "h3";
   const index = GUIDES.findIndex((g) => g.id === activeId);
   const guide = GUIDES[index] ?? GUIDES[0];
 
@@ -185,16 +187,17 @@ export function RoleGuide({ signedIn }: { signedIn?: boolean }) {
     setActiveId(GUIDES[next].id);
   }
 
-  const cta =
-    signedIn && guide.signedInCta ? guide.signedInCta : guide.cta;
+  const cta = standalone && signedIn
+    ? { href: "/dashboard", label: "Your dashboard" }
+    : signedIn && guide.signedInCta ? guide.signedInCta : guide.cta;
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-10">
       <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="font-heading text-2xl tracking-[0.12em]">
+          <Heading className="font-heading text-2xl tracking-[0.12em]">
             How it works
-          </h2>
+          </Heading>
           <p className="mt-2 max-w-2xl text-muted">
             Regular accounts use Google sign-in; temporary test accounts have
             a separate password option. Teams and competitions use claim codes,
@@ -208,7 +211,7 @@ export function RoleGuide({ signedIn }: { signedIn?: boolean }) {
         <div
           role="tablist"
           aria-label="Choose a walkthrough"
-          className="flex overflow-x-auto border-b border-line bg-blush"
+          className="grid grid-cols-2 border-b border-line bg-blush sm:grid-cols-3 lg:grid-cols-5"
         >
           {GUIDES.map((item) => {
             const selected = item.id === activeId;
@@ -218,10 +221,23 @@ export function RoleGuide({ signedIn }: { signedIn?: boolean }) {
                 type="button"
                 role="tab"
                 aria-selected={selected}
+                tabIndex={selected ? 0 : -1}
                 id={`guide-tab-${item.id}`}
                 aria-controls={`guide-panel-${item.id}`}
                 onClick={() => setActiveId(item.id)}
-                className={`relative min-w-[8.5rem] flex-1 px-3 py-3.5 text-center text-xs font-bold uppercase tracking-[0.14em] transition sm:text-sm ${
+                onKeyDown={(event) => {
+                  const current = GUIDES.findIndex((entry) => entry.id === item.id);
+                  const next = event.key === "ArrowRight" ? (current + 1) % GUIDES.length
+                    : event.key === "ArrowLeft" ? (current - 1 + GUIDES.length) % GUIDES.length
+                    : event.key === "Home" ? 0
+                    : event.key === "End" ? GUIDES.length - 1
+                    : null;
+                  if (next === null) return;
+                  event.preventDefault();
+                  setActiveId(GUIDES[next].id);
+                  document.getElementById(`guide-tab-${GUIDES[next].id}`)?.focus();
+                }}
+                className={`relative px-3 py-3.5 text-center text-xs font-bold uppercase tracking-[0.14em] transition sm:text-sm ${
                   selected
                     ? "bg-card text-accent"
                     : "text-muted hover:bg-card/60 hover:text-ink"
@@ -245,9 +261,9 @@ export function RoleGuide({ signedIn }: { signedIn?: boolean }) {
           <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-accent">
             {guide.kicker}
           </p>
-          <h3 className="mt-2 font-heading text-xl tracking-[0.08em] sm:text-2xl">
+          <GuideHeading className="mt-2 font-heading text-xl tracking-[0.08em] sm:text-2xl">
             {guide.title}
-          </h3>
+          </GuideHeading>
           <p className="mt-2 max-w-2xl text-sm text-ink/80 sm:text-base">
             {guide.intro}
           </p>
