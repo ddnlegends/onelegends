@@ -23,6 +23,7 @@ function ShowButton({
   position,
   label,
   primary = false,
+  blocked = false,
 }: {
   action: (formData: FormData) => void;
   pending: boolean;
@@ -30,6 +31,7 @@ function ShowButton({
   position: number | "";
   label: string;
   primary?: boolean;
+  blocked?: boolean;
 }) {
   return (
     <form action={action}>
@@ -37,7 +39,7 @@ function ShowButton({
       <input type="hidden" name="position" value={position} />
       <button
         type="submit"
-        disabled={pending}
+        disabled={pending || blocked}
         className={`btn ${primary ? "btn-primary" : "btn-ghost"} py-1.5`}
       >
         {label}
@@ -64,6 +66,13 @@ export function ModeratorLiveConsole({
   const next =
     index >= 0 ? (teams[index + 1] ?? null) : (teams[0] ?? null);
   const shared = { action: formAction, pending, competitionId };
+  const canShow = (position: number) => {
+    if (livePosition != null && position <= livePosition) return true;
+    return teams
+      .filter((team) => team.position < position)
+      .every((team) => team.judges.length > 0 && team.judges.every((judge) => judge.complete));
+  };
+  const nextBlocked = next != null && !canShow(next.position);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
@@ -112,6 +121,7 @@ export function ModeratorLiveConsole({
                 position={next.position}
                 label={live ? `Next: Team ${next.position} →` : `Show Team ${next.position}`}
                 primary
+                blocked={nextBlocked}
               />
             ) : live ? (
               <span className="self-center text-sm text-muted">
@@ -120,6 +130,11 @@ export function ModeratorLiveConsole({
             ) : null}
           </div>
         </div>
+        {nextBlocked ? (
+          <p className="text-sm text-muted">
+            Wait for every approved judge to finish the earlier teams before moving ahead.
+          </p>
+        ) : null}
         <SaveNotice state={state} refresh={false} scroll={false} />
         {pending ? <p className="text-xs text-muted">Switching judges…</p> : null}
       </section>
@@ -179,7 +194,7 @@ export function ModeratorLiveConsole({
                     Live
                   </span>
                 ) : (
-                  <ShowButton {...shared} position={team.position} label="Show" />
+                  <ShowButton {...shared} position={team.position} label="Show" blocked={!canShow(team.position)} />
                 )}
               </li>
             );

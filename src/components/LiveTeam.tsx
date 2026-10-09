@@ -16,13 +16,13 @@ import { usePollWhileVisible } from "@/components/usePollWhileVisible";
 
 const POLL_MS = 3000;
 
-type LiveState = { judgingOpen: boolean; livePosition: number | null };
+export type LiveState = { judgingOpen: boolean; livePosition: number | null };
 
 /**
  * Polls the live pointer while `enabled`. When judging opens, pauses, or ends,
  * the server-rendered page (slots, lock state, packet button) is refreshed too.
  */
-function useLiveState(
+export function useLiveState(
   competitionId: string,
   initial: LiveState,
   enabled: boolean,
@@ -71,20 +71,17 @@ export function LiveTeamFollower({
   position,
   positions,
   pinned,
-  initial,
+  live,
   locked,
-  submitted,
 }: {
   competitionId: string;
   position: number;
   positions: number[];
   pinned: boolean;
-  initial: LiveState;
+  live: LiveState;
   locked: boolean;
-  submitted: boolean;
 }) {
   const router = useRouter();
-  const live = useLiveState(competitionId, initial, !submitted);
   const livePosition =
     live.judgingOpen &&
     live.livePosition != null &&
@@ -146,8 +143,9 @@ export function LiveTeamFollower({
           Live is on Team {livePosition}.
         </span>{" "}
         <span className="text-muted">
-          You’re looking at Team {position}, so this sheet won’t switch on its
-          own.
+          {position < livePosition
+            ? `You’re reviewing an earlier team. Its scores stay editable until you submit.`
+            : `Team ${position} has not been shown yet. Return to the live team to score.`}
         </span>
       </span>
       <Link
@@ -188,7 +186,7 @@ export function LiveTeamBanner({
     return (
       <div className="flex flex-wrap items-center gap-3 rounded-xl border border-line bg-blush px-4 py-4 text-sm text-muted">
         <span className="h-2.5 w-2.5 rounded-full bg-muted/50" />
-        Waiting for moderator to put the first team on screen.
+        Waiting for the moderator to put a team on screen.
       </div>
     );
   }

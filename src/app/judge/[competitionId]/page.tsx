@@ -64,7 +64,8 @@ export default async function JudgePacketPage({
         <p className="mt-2 max-w-2xl text-muted">
           The moderator plays each video on a shared screen. Your sheet follows
           the team on screen, labeled Team 1, Team 2, … in the same order for
-          every judge. You never see names.
+          every judge. You can return to earlier teams, but future teams unlock
+          only when the moderator shows them. You never see names.
         </p>
         {fresh.decidedAt ? (
           <p className="mt-1 text-sm text-muted">
@@ -104,6 +105,9 @@ export default async function JudgePacketPage({
           <ul className="divide-y divide-line rounded-xl border border-line bg-card">
             {fresh.slots.map((slot) => {
               const isLive = slot.position === livePosition;
+              const canOpen = locked || !scoringOpen || Boolean(slot.score) ||
+                (livePosition != null && slot.position <= livePosition);
+              const canScore = scoringOpen && !locked && livePosition != null && slot.position <= livePosition;
               return (
                 <li
                   key={slot.id}
@@ -130,18 +134,20 @@ export default async function JudgePacketPage({
                           : "Not scored"}
                     </p>
                   </div>
-                  <Link
-                    href={`/judge/${competitionId}/team/${slot.position}${
-                      isLive ? "" : "?stay=1"
-                    }`}
-                    className="btn btn-ghost py-1.5"
-                  >
-                    {scoringOpen && !locked
-                      ? isScoreComplete(slot.score)
-                        ? "Edit / Review"
-                        : "Score"
-                      : "Review"}
-                  </Link>
+                  {canOpen ? (
+                    <Link
+                      href={`/judge/${competitionId}/team/${slot.position}${
+                        isLive ? "" : "?stay=1"
+                      }`}
+                      className="btn btn-ghost py-1.5"
+                    >
+                      {canScore
+                        ? isScoreComplete(slot.score) ? "Edit / Review" : "Score"
+                        : "Review"}
+                    </Link>
+                  ) : (
+                    <span className="text-sm text-muted">Waiting for live video</span>
+                  )}
                 </li>
               );
             })}

@@ -79,7 +79,7 @@ export async function setJudgingOpen(
     revalidateJudging(competition.id);
     return {
       ok: true,
-      message: "Judging is open. The moderator can start live viewing and judges can score.",
+      message: "Judging is open. The moderator can start live viewing; judges score as teams are shown.",
     };
   }
 

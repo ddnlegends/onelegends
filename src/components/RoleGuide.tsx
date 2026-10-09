@@ -71,7 +71,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Score Team 1, Team 2, …",
-        body: "Score 0–10 for choreography, formations, technique, sync & cleanliness, and overall impression (50 total). Watch the Drive AV on your laptop and jump between teams. Leave optional comments on each team’s video; the competition sees them after results unlock, and other judges never see them.",
+        body: "Score 0–10 for choreography, formations, technique, sync & cleanliness, and overall impression (50 total). The moderator unlocks each live team; you can return to earlier teams to edit scores until you submit. Future teams stay locked. Leave optional comments on each team’s video; the competition sees them after results unlock, and other judges never see them.",
       },
       {
         title: "Submit Judging when every slot is filled",

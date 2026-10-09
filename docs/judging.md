@@ -17,9 +17,9 @@ This app does not send email. Invites wait on the person’s next login.
 ## Packet
 
 1. Ops opens judging. The competition gets one shuffled order shared by the moderator and every approved judge. From then until results release, a team cannot change its AV link; if a video will not play, fix sharing on the same Drive file.
-2. The moderator opens the competition from **Live Viewing** on the dashboard and screen-shares the video area. Check that the Drive file title does not identify the team. The moderator presses **Show Team N**, then **Next**; every judge's sheet switches to that anonymous number. The sidebar shows a checkmark when each judge finishes each team.
+2. The moderator opens the competition from **Live Viewing** on the dashboard and screen-shares the video area. Check that the Drive file title does not identify the team. The moderator presses **Show Team N**, then **Next**; every judge's sheet switches to that anonymous number. The sidebar shows a checkmark when each judge finishes each team. Moving ahead stays blocked until every approved judge has saved all five scores for every earlier team. The moderator can pause or go backward, but pausing does not bypass this check.
 3. Rubric, whole numbers 0–10: Choreography, Formations, Technique, Sync & Cleanliness, Overall Impression (50 max). Scores autosave when a judge picks a number or leaves a field; comments save after a short pause and when the sheet switches. Saves land in the order they were made. Comments are optional and only the competition sees them after reveal.
-4. A judge can open another team to fix a score. That sheet stays put until they return to the live team.
+4. A judge can return to an earlier team to edit its scores until submitting the packet. Future teams cannot be scored or opened from the packet list until the moderator shows them. A pinned earlier sheet stays put until the judge returns to the live team.
 5. Submit is blocked until every team in that packet has all five scores. After submit, that judge is locked.
 
 Judge and moderator pages refresh on their own when ops opens, pauses, or ends judging, so nobody needs to reload while waiting.

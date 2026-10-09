@@ -2,8 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { JudgeScoreForm } from "@/components/JudgeScoreForm";
-import { LiveTeamFollower } from "@/components/LiveTeam";
+import { JudgeLiveScoring } from "@/components/JudgeLiveScoring";
 import {
   ensureViewingSlots,
   isJudgingOpen,
@@ -76,32 +75,27 @@ export default async function JudgeTeamPage({
           Packet List
         </Link>
       </div>
-      <LiveTeamFollower
-        competitionId={competitionId}
-        position={position}
-        positions={positions}
-        pinned={pinned}
-        locked={locked}
-        submitted={Boolean(assignment.submittedAt)}
-        initial={{
-          judgingOpen: scoringOpen,
-          livePosition: scoringOpen ? assignment.competition.livePosition : null,
-        }}
-      />
       {lockMessage ? (
         <p className="rounded-xl border border-line bg-blush p-4 text-sm">
           {lockMessage}
         </p>
       ) : null}
-      <JudgeScoreForm
+      <JudgeLiveScoring
         key={`${assignment.id}-${position}`}
         competitionId={competitionId}
         assignmentId={assignment.id}
         position={position}
+        positions={positions}
         prevPosition={prev}
         nextPosition={next}
+        pinned={pinned}
+        submitted={Boolean(assignment.submittedAt)}
         saved={slot.score}
         locked={locked}
+        initial={{
+          judgingOpen: scoringOpen,
+          livePosition: scoringOpen ? assignment.competition.livePosition : null,
+        }}
       />
     </div>
   );

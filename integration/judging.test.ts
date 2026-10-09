@@ -9,14 +9,15 @@ import { seedE2E, E2E } from "../prisma/e2e-seed";
 import { prisma } from "@/lib/prisma";
 import { ensureCompetitionJudgeSlots } from "@/lib/judging";
 import { saveTeamScores, submitJudgingPacket } from "@/app/actions/judge";
+import { setLiveTeam } from "@/app/actions/moderator";
 import { maybeReleaseResults } from "@/lib/release";
 import { syncCompetitionSheet } from "@/lib/sheets";
 
 let competitionId: string;
 let assignmentId: string;
-function form(position = 1) {
+function form(position = 1, forAssignment = assignmentId) {
   const data = new FormData();
-  data.set("assignmentId", assignmentId);
+  data.set("assignmentId", forAssignment);
   data.set("position", String(position));
   for (const key of ["choreography", "formations", "technique", "syncCleanliness", "overallImpression"]) data.set(key, "8");
   return data;
@@ -31,15 +32,75 @@ beforeEach(async () => {
   assignmentId = assignment.id;
   competitionId = assignment.competitionId;
   await ensureCompetitionJudgeSlots(competitionId);
-  await prisma.competitionProfile.update({ where: { id: competitionId }, data: { judgingOpen: true } });
+  await prisma.competitionProfile.update({ where: { id: competitionId }, data: { judgingOpen: true, livePosition: 1 } });
 });
 afterAll(async () => { await prisma.$disconnect(); });
 
 async function completePacket() {
-  for (const position of [1, 2]) expect(await saveTeamScores(undefined, form(position))).toMatchObject({ ok: true });
+  expect(await saveTeamScores(undefined, form(1))).toMatchObject({ ok: true });
+  await prisma.competitionProfile.update({ where: { id: competitionId }, data: { livePosition: 2 } });
+  expect(await saveTeamScores(undefined, form(2))).toMatchObject({ ok: true });
+}
+
+function liveForm(position: number | null) {
+  const data = new FormData();
+  data.set("competitionId", competitionId);
+  data.set("position", position == null ? "" : String(position));
+  return data;
 }
 
 describe("judging with real PostgreSQL transactions", () => {
+  it("blocks future scores, allows earlier score edits, and preserves late comments", async () => {
+    expect(await saveTeamScores(undefined, form(2))).toHaveProperty("error");
+    expect(await prisma.judgeScore.count()).toBe(0);
+    expect(await saveTeamScores(undefined, form(1))).toMatchObject({ ok: true });
+    await prisma.competitionProfile.update({ where: { id: competitionId }, data: { livePosition: 2 } });
+    const edited = form(1);
+    edited.set("choreography", "9");
+    expect(await saveTeamScores(undefined, edited)).toMatchObject({ ok: true });
+    await prisma.competitionProfile.update({ where: { id: competitionId }, data: { livePosition: null } });
+    expect(await saveTeamScores(undefined, edited)).toHaveProperty("error");
+    const comment = form(1);
+    comment.set("mode", "comment");
+    comment.set("comment", "Audio briefly cut out");
+    expect(await saveTeamScores(undefined, comment)).toMatchObject({ ok: true });
+    const score = await prisma.judgeScore.findFirstOrThrow({ where: { assignmentId } });
+    expect(score.choreography).toBe(9);
+    expect(score.comment).toBe("Audio briefly cut out");
+  });
+
+  it("requires every approved judge to finish earlier teams before the moderator advances", async () => {
+    const moderator = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.moderator } });
+    const secondUser = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.team } });
+    const second = await prisma.judgeProfile.create({
+      data: {
+        userId: secondUser.id,
+        name: "Second judge",
+        assignments: { create: { competitionId, status: "APPROVED" } },
+      },
+      include: { assignments: true },
+    });
+    await ensureCompetitionJudgeSlots(competitionId);
+    session.userId = moderator.id;
+    expect(await setLiveTeam(undefined, liveForm(2))).toHaveProperty("error");
+    session.userId = (await prisma.judgeAssignment.findUniqueOrThrow({
+      where: { id: assignmentId }, include: { judge: true },
+    })).judge.userId;
+    expect(await saveTeamScores(undefined, form(1))).toMatchObject({ ok: true });
+    session.userId = moderator.id;
+    expect(await setLiveTeam(undefined, liveForm(2))).toHaveProperty("error");
+    expect(await setLiveTeam(undefined, liveForm(null))).toMatchObject({ ok: true });
+    expect(await setLiveTeam(undefined, liveForm(2))).toHaveProperty("error");
+    session.userId = secondUser.id;
+    expect(await saveTeamScores(undefined, form(1, second.assignments[0].id))).toHaveProperty("error");
+    session.userId = moderator.id;
+    expect(await setLiveTeam(undefined, liveForm(1))).toMatchObject({ ok: true });
+    session.userId = secondUser.id;
+    expect(await saveTeamScores(undefined, form(1, second.assignments[0].id))).toMatchObject({ ok: true });
+    session.userId = moderator.id;
+    expect(await setLiveTeam(undefined, liveForm(2))).toMatchObject({ ok: true });
+    expect((await prisma.competitionProfile.findUniqueOrThrow({ where: { id: competitionId } })).livePosition).toBe(2);
+  });
   it("refuses another user's assignment without changing scores", async () => {
     session.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.team } })).id;
     expect(await saveTeamScores(undefined, form())).toHaveProperty("error");

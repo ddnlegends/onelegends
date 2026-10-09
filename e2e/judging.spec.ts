@@ -38,6 +38,7 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
   await expectNoTeamNames(moderator);
   await moderator.getByRole("button", { name: "Show Team 1" }).click();
   await expect(moderator.getByRole("heading", { name: "Team 1" })).toBeVisible();
+  await expect(moderator.getByRole("button", { name: /Next: Team 2/ })).toBeDisabled();
 
   const judge = await pageAs(browser, "judge");
   await judge.goto(`/judge/${id}`);
@@ -46,13 +47,24 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
 
   await judge.goto(`/judge/${id}/team/1`);
   await expectNoTeamNames(judge);
+  await expect(judge.getByRole("link", { name: "Team 2" })).toHaveCount(0);
+  await judge.goto(`/judge/${id}/team/2?stay=1`);
+  await expect(judge.locator("#choreography")).toBeDisabled();
+  await judge.goto(`/judge/${id}/team/1`);
   await scoreTeam(judge, SCORES[1]);
   await judge.locator("#comment").fill("Strong opener");
   await judge.locator("#comment").blur();
 
-  await judge.getByRole("link", { name: "Team 2" }).click();
+  await expect(async () => {
+    await moderator.reload();
+    await expect(moderator.getByRole("button", { name: /Next: Team 2/ })).toBeEnabled({ timeout: 2_000 });
+  }).toPass();
+  await moderator.getByRole("button", { name: /Next: Team 2/ }).click();
   await expect(judge).toHaveURL(/\/team\/2/);
   await scoreTeam(judge, SCORES[2]);
+  await judge.getByRole("link", { name: "Team 1" }).click();
+  await expect(judge.locator("#choreography")).toBeEnabled();
+  await judge.locator("#choreography").selectOption("9");
 
   const comp = await pageAs(browser, "comp");
   await comp.goto("/comp/results");
@@ -83,7 +95,9 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
   for (const slot of stored.slots) {
     const expected = SCORES[slot.position as keyof typeof SCORES];
     for (const [field, value] of Object.entries(expected)) {
-      expect(slot.score?.[field as keyof typeof slot.score]).toBe(Number(value));
+      expect(slot.score?.[field as keyof typeof slot.score]).toBe(
+        slot.position === 1 && field === "choreography" ? 9 : Number(value),
+      );
     }
   }
   await judge.goto(`/judge/${id}/team/1`);

@@ -86,6 +86,8 @@ export function JudgeScoreForm({
   nextPosition,
   saved,
   locked,
+  scoreAvailable,
+  livePosition,
 }: {
   competitionId: string;
   assignmentId: string;
@@ -94,6 +96,8 @@ export function JudgeScoreForm({
   nextPosition: number | null;
   saved: Saved | null;
   locked: boolean;
+  scoreAvailable: boolean;
+  livePosition: number | null;
 }) {
   const [state, setState] = useState<SaveState>(undefined);
   const [inFlight, setInFlight] = useState(0);
@@ -102,6 +106,8 @@ export function JudgeScoreForm({
   const commentTimer = useRef<number | null>(null);
   const pendingComment = useRef<Draft | null>(null);
   const filled = filledFromDraft(draft);
+  const scoreLocked = locked || !scoreAvailable;
+  const commentLocked = locked || (scoreLocked && filled === 0 && !saved);
   const complete = isScoreComplete({
     choreography: draft.choreography === "" ? null : Number(draft.choreography),
     formations: draft.formations === "" ? null : Number(draft.formations),
@@ -112,10 +118,11 @@ export function JudgeScoreForm({
       draft.overallImpression === "" ? null : Number(draft.overallImpression),
   });
 
-  function toFormData(draftToSave: Draft) {
+  function toFormData(draftToSave: Draft, mode: "score" | "comment") {
     const data = new FormData();
     data.set("assignmentId", assignmentId);
     data.set("position", String(position));
+    data.set("mode", mode);
     data.set("comment", draftToSave.comment);
     for (const category of RUBRIC_CATEGORIES) {
       data.set(category.key, draftToSave[category.key]);
@@ -123,15 +130,15 @@ export function JudgeScoreForm({
     return data;
   }
 
-  function persist(draftToSave: Draft) {
-    if (locked) return;
+  function persist(draftToSave: Draft, mode: "score" | "comment") {
+    if (mode === "score" ? scoreLocked : commentLocked) return;
     if (commentTimer.current != null) {
       window.clearTimeout(commentTimer.current);
       commentTimer.current = null;
     }
     pendingComment.current = null;
     setInFlight((n) => n + 1);
-    void enqueueSave(queueKey(assignmentId, position), toFormData(draftToSave)).then(
+    void enqueueSave(queueKey(assignmentId, position), toFormData(draftToSave, mode)).then(
       (result) => {
         setState(result);
         setInFlight((n) => n - 1);
@@ -145,36 +152,37 @@ export function JudgeScoreForm({
         window.clearTimeout(commentTimer.current);
       }
       const unsaved = pendingComment.current;
-      if (unsaved && !locked) {
+      if (unsaved && !commentLocked) {
         // The sheet can unmount when it follows the live team; queue the last
         // typed comment behind earlier saves instead of dropping it.
-        void enqueueSave(queueKey(assignmentId, position), toFormData(unsaved));
+        void enqueueSave(queueKey(assignmentId, position), toFormData(unsaved, "comment"));
       }
     };
     // toFormData only reads props that are fixed for this keyed instance.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [locked]);
+  }, [commentLocked]);
 
   function updateScore(key: RubricKey, value: string) {
+    if (scoreLocked) return;
     const draftToSave = { ...draft, [key]: value };
     setDraft(draftToSave);
-    persist(draftToSave);
+    persist(draftToSave, "score");
   }
 
   function updateComment(value: string) {
     const draftToSave = { ...draft, comment: value };
     setDraft(draftToSave);
-    if (locked) return;
+    if (commentLocked) return;
     pendingComment.current = draftToSave;
     if (commentTimer.current != null) window.clearTimeout(commentTimer.current);
     commentTimer.current = window.setTimeout(() => {
       commentTimer.current = null;
-      if (pendingComment.current) persist(pendingComment.current);
+      if (pendingComment.current) persist(pendingComment.current, "comment");
     }, COMMENT_SAVE_DELAY_MS);
   }
 
   function flushComment() {
-    if (pendingComment.current) persist(pendingComment.current);
+    if (pendingComment.current) persist(pendingComment.current, "comment");
   }
 
   return (
@@ -193,7 +201,7 @@ export function JudgeScoreForm({
             </label>
             <select
               id={category.key}
-              disabled={locked}
+              disabled={scoreLocked}
               value={draft[category.key]}
               onChange={(event) => updateScore(category.key, event.target.value)}
             >
@@ -212,7 +220,7 @@ export function JudgeScoreForm({
         <textarea
           id="comment"
           maxLength={1000}
-          disabled={locked}
+          disabled={commentLocked}
           value={draft.comment}
           placeholder="Optional. Audio issues, wrong video on screen, etc."
           onChange={(event) => updateComment(event.target.value)}
@@ -223,6 +231,13 @@ export function JudgeScoreForm({
           it, and the team name stays hidden from you.
         </p>
       </div>
+      {scoreLocked && !locked ? (
+        <p className="px-4 text-sm text-muted">
+          {livePosition == null
+            ? "Scores unlock when the moderator shows a team."
+            : `Team ${position} is ahead of the live video. You can score Team ${livePosition} or an earlier team.`}
+        </p>
+      ) : null}
       <p className="px-4 text-sm text-muted">
         {complete
           ? `Saved total: ${rubricTotal({
@@ -261,7 +276,7 @@ export function JudgeScoreForm({
           <Link href={`/judge/${competitionId}`} prefetch className="btn btn-ghost">
             Packet List
           </Link>
-          {nextPosition ? (
+          {nextPosition && (locked || (livePosition != null && nextPosition <= livePosition)) ? (
             <Link
               href={`/judge/${competitionId}/team/${nextPosition}?stay=1`}
               prefetch

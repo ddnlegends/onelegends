@@ -6,7 +6,8 @@
  * Callers must own an APPROVED assignment for the competition. Saves and
  * submits lock the assignment row (`SELECT ... FOR UPDATE`) and re-check the
  * submitted and judging-open state inside the transaction, so a save can never
- * land after submit and a packet can never submit with missing scores. A
+ * land after submit. Rubric scores are limited to the live or earlier teams;
+ * comment-only saves may finish after the moderator moves on. A
  * submit may release results via `maybeReleaseResults`.
  */
 import { revalidatePath } from "next/cache";
@@ -61,6 +62,8 @@ export async function saveTeamScores(
 
   const assignmentId = String(formData.get("assignmentId") ?? "");
   const position = Number(formData.get("position") ?? "");
+  const mode = String(formData.get("mode") ?? "score");
+  if (mode !== "score" && mode !== "comment") return { error: "Invalid save request." };
   const comment = String(formData.get("comment") ?? "").trim();
   if (comment.length > COMMENT_MAX) {
     return { error: `Comment must be ${COMMENT_MAX} characters or less.` };
@@ -73,17 +76,19 @@ export async function saveTeamScores(
     syncCleanliness: null,
     overallImpression: null,
   };
-  for (const category of RUBRIC_CATEGORIES) {
-    if (!formData.has(category.key)) {
-      return { error: "Score form is incomplete. Refresh and try again." };
+  if (mode === "score") {
+    for (const category of RUBRIC_CATEGORIES) {
+      if (!formData.has(category.key)) {
+        return { error: "Score form is incomplete. Refresh and try again." };
+      }
+      const raw = String(formData.get(category.key) ?? "").trim();
+      if (!raw) continue;
+      const value = parseRubricScore(raw);
+      if (value == null) {
+        return { error: "Each category must be a whole number from 0 to 10." };
+      }
+      parsed[category.key] = value;
     }
-    const raw = String(formData.get(category.key) ?? "").trim();
-    if (!raw) continue;
-    const value = parseRubricScore(raw);
-    if (value == null) {
-      return { error: "Each category must be a whole number from 0 to 10." };
-    }
-    parsed[category.key] = value;
   }
 
   const assignment = await prisma.judgeAssignment.findFirst({
@@ -110,15 +115,6 @@ export async function saveTeamScores(
   });
   if (!slot) return { error: "That team slot was not found." };
 
-  const next = {
-    choreography: parsed.choreography,
-    formations: parsed.formations,
-    technique: parsed.technique,
-    syncCleanliness: parsed.syncCleanliness,
-    overallImpression: parsed.overallImpression,
-    comment,
-  };
-
   const saved = await prisma.$transaction(async (tx) => {
     await lockAssignment(tx, assignment.competitionId, assignmentId);
     const fresh = await tx.judgeAssignment.findFirst({
@@ -129,26 +125,41 @@ export async function saveTeamScores(
     if (fresh.submittedAt) return "This packet is already submitted.";
     const freshLock = judgingLockMessage(fresh.competition);
     if (freshLock) return freshLock;
-    await tx.judgeScore.upsert({
-      where: { slotId: slot.id },
-      update: next,
-      create: {
-        assignmentId,
-        slotId: slot.id,
-        ...next,
-      },
-    });
+    if (mode === "score") {
+      if (fresh.competition.livePosition == null || position > fresh.competition.livePosition) {
+        return "Wait for the moderator to show this team before scoring it.";
+      }
+      const next = { ...parsed, comment };
+      await tx.judgeScore.upsert({
+        where: { slotId: slot.id },
+        update: next,
+        create: { assignmentId, slotId: slot.id, ...next },
+      });
+    } else {
+      const existing = await tx.judgeScore.findUnique({
+        where: { slotId: slot.id },
+        select: { id: true },
+      });
+      if (existing) {
+        await tx.judgeScore.update({ where: { id: existing.id }, data: { comment } });
+      } else if (fresh.competition.livePosition === position) {
+        await tx.judgeScore.create({ data: { assignmentId, slotId: slot.id, comment } });
+      } else {
+        return "Wait for the moderator to show this team before commenting on it.";
+      }
+    }
     return null;
   });
   if (saved) return { error: saved };
 
   revalidatePath(`/judge/${assignment.competitionId}`);
   revalidatePath(`/judge/${assignment.competitionId}/team/${position}`);
+  revalidatePath(`/moderator/${assignment.competitionId}`);
   revalidatePath("/ops/comps", "layout");
   revalidatePath("/comp/results");
   return {
     ok: true,
-    message: `Scores saved for Team ${position}.`,
+    message: `${mode === "comment" ? "Comment" : "Scores"} saved for Team ${position}.`,
   };
 }
 
