@@ -10,6 +10,7 @@ type Dancer = {
   dietaryRestrictions: string;
   tshirtSize: string;
   inAV: boolean;
+  pointOfContact: boolean;
 };
 
 const emptyDancer = (): Dancer => ({
@@ -17,6 +18,7 @@ const emptyDancer = (): Dancer => ({
   dietaryRestrictions: "",
   tshirtSize: "",
   inAV: false,
+  pointOfContact: false,
 });
 
 export function DancerRoster({ initial }: { initial: Dancer[] }) {
@@ -39,13 +41,14 @@ export function DancerRoster({ initial }: { initial: Dancer[] }) {
         can apply. Dietary notes can be left blank if there are none.
       </p>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[40rem] text-left text-sm">
+        <table className="w-full min-w-[48rem] text-left text-sm">
           <thead className="text-xs uppercase tracking-wide text-muted">
             <tr>
               <th className="pb-2 font-medium">Name</th>
               <th className="pb-2 font-medium">Dietary restrictions</th>
               <th className="pb-2 font-medium">T-shirt</th>
               <th className="pb-2 font-medium">In AV</th>
+              <th className="pb-2 font-medium">Point of Contact</th>
               <th className="pb-2 font-medium" />
             </tr>
           </thead>
@@ -92,6 +95,20 @@ export function DancerRoster({ initial }: { initial: Dancer[] }) {
                       dancer.name ? `In AV: ${dancer.name}` : "In AV"
                     }
                     onChange={(e) => update(index, { inAV: e.target.checked })}
+                  />
+                </td>
+                <td className="py-2 pr-2">
+                  <input
+                    type="checkbox"
+                    checked={dancer.pointOfContact}
+                    aria-label={
+                      dancer.name
+                        ? `Point of Contact: ${dancer.name}`
+                        : "Point of Contact"
+                    }
+                    onChange={(e) =>
+                      update(index, { pointOfContact: e.target.checked })
+                    }
                   />
                 </td>
                 <td className="py-2">

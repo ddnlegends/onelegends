@@ -128,6 +128,7 @@ model Dancer {
   dietaryRestrictions String      @default("")
   tshirtSize          String      @default("")
   inAV                Boolean     @default(false)
+  pointOfContact      Boolean     @default(false)
 
   @@index([teamId])
 }

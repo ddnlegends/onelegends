@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
-type GuideId = "TEAM" | "JUDGE" | "COMP";
+type GuideId = "TEAM" | "JUDGE" | "MODERATOR" | "COMP" | "OPS";
 
 type Guide = {
   id: GuideId;
@@ -23,27 +23,27 @@ const GUIDES: Guide[] = [
     kicker: "One login · claim code",
     title: "How teams apply",
     intro:
-      "Everyone signs in with Google. Circuit ops creates the team listing and a claim code. The first person to enter that code becomes the primary admin. Payment stays off this site.",
+      "Circuit ops creates a team listing and gives its claim code to the team. The first person to claim it becomes the primary admin. Applications and payments are handled separately.",
     steps: [
       {
-        title: "Register once",
-        body: "Sign in with Google. That does not create a team. After you log in, you land on your dashboard. Open Code Claim with the team code.",
+        title: "Register with Google",
+        body: "Create your account, then open Code Claim from the dashboard. Registering does not create a team.",
       },
       {
         title: "Claim the team with the code",
-        body: "Only Legends Admin can create a team. Creating one generates a claim code. The app does not email anyone — ops gives you the code. First successful claim becomes primary admin and uses the code up. If it is already claimed, you will see that plus a blurred admin email (first two letters of the local part).",
+        body: "Enter the code from circuit ops. The first successful claim becomes the primary admin and uses the code up. If the team was already claimed, the app shows a masked admin email.",
       },
       {
         title: "Invite secondary admins by email",
-        body: "Only the primary admin can invite more admins. Type their email. If they already have an account, they get a popup the next time they log in. If they do not, they get the same popup after they register. Clicking outside does not dismiss it. It also stays under Requests on your dashboard until they Approve. There is no “that’s not me” button that kills the invite.",
+        body: "The primary admin can invite other admins by email. Invites appear under Requests when those people sign in or register; they must approve before they can manage the team. The app does not send invitation emails.",
       },
       {
         title: "Fill Team Profile and roster",
-        body: "Every field is required: blurb, captains, uploaded team logo, years established, roster size, and a Drive file AV. List each dancer with a t-shirt size. You cannot apply until this is saved.",
+        body: "Save the team blurb, captains, logo, years established, roster size, and a shareable Google Drive file for the audition video. Add each dancer with a shirt size; mark anyone serving as Point of Contact. The profile and roster must be complete before applying.",
       },
       {
         title: "Apply with checkboxes",
-        body: "Apply stays locked until the profile and roster are complete. Then check the competitions you want and submit once. Each listing has its own deadline.",
+        body: "Select every open competition you want and submit. Each has its own deadline. Follow the payment instructions separately; the app does not verify payment.",
       },
     ],
     cta: { href: "/register", label: "Create an account" },
@@ -55,31 +55,63 @@ const GUIDES: Guide[] = [
     kicker: "Email invite · blind packets",
     title: "How judges score",
     intro:
-      "Judges are invited by email from a competition. There is no judge claim code. You never see team names. Each judge gets a private shuffled packet and watches the Drive AV on their own laptop.",
+      "Competition admins invite judges by email. Judges score anonymous Team numbers while the moderator plays audition videos on a shared screen.",
     steps: [
       {
         title: "Register or log in",
-        body: "Same login as everyone else. You do not pick “Judge” on the form.",
+        body: "Use the same Google account that received the invitation. There is no judge claim code or role picker at registration.",
       },
       {
         title: "Approve the invite",
-        body: "A competition types your email in-app. This site does not send real email. The next time you log in (or right after you register), a popup asks you to Approve. It also stays under Requests on your dashboard until you do.",
+        body: "The invitation appears under Requests on your dashboard. Accept it to join the competition's approved judges, then review your judge profile. The app does not email the invitation.",
       },
       {
-        title: "Wait until applications close",
-        body: "Judging starts after applications close and circuit ops opens judging. Packets shuffle once after that. If a team later fixes a Drive link, refresh your packet to see the update.",
+        title: "Wait for judging to open",
+        body: "Circuit ops closes applications and opens judging. Your packet stays locked until then; each team is identified only by number.",
       },
       {
         title: "Score Team 1, Team 2, …",
-        body: "Score 0–10 for choreography, formations, technique, sync & cleanliness, and overall impression (50 total). The moderator unlocks each live team; you can return to earlier teams to edit scores until you submit. Future teams stay locked. Leave optional comments on each team’s video; the competition sees them after results unlock, and other judges never see them.",
+        body: "The moderator selects the live team, and your sheet follows. Score choreography, formations, technique, sync & cleanliness, and overall impression from 0–10 each. You may edit earlier teams until submission; future teams stay locked. Comments are optional.",
       },
       {
         title: "Submit Judging when every slot is filled",
-        body: "Save as you go. Submit locks your packet. You will not see rankings, other judges’ scores, or team names. If judging is closed, you cannot change scores until circuit ops opens it again. After results release, competition admins see detailed results and moderators see read-only final rankings.",
+        body: "Save as you go. Once every team has all five scores, submit your packet to lock it. Judges do not see team names, other judges’ scores, or rankings.",
       },
     ],
     cta: { href: "/register", label: "Create an account" },
     signedInCta: { href: "/dashboard", label: "Your dashboard" },
+  },
+  {
+    id: "MODERATOR",
+    tab: "Moderators",
+    kicker: "Assigned access · live viewing",
+    title: "How moderators run viewing",
+    intro:
+      "Moderators control the shared audition video and the live Team number. Judges follow that number on their own score sheets while teams stay anonymous.",
+    steps: [
+      {
+        title: "Sign in with your assigned email",
+        body: "Circuit ops grants moderator access for a Partner competition. For a Non-partner competition, approved competition admins also get moderator controls. There is no moderator claim code or judge packet for this role.",
+      },
+      {
+        title: "Open Live Viewing",
+        body: "Find your assigned competition from the dashboard. Circuit ops must close applications and open judging before you can show a team.",
+      },
+      {
+        title: "Show each anonymous team",
+        body: "Select Team 1 to load its audition video, then play it for the judges on a shared screen. Their score sheets move to the same Team number automatically.",
+      },
+      {
+        title: "Watch judging progress",
+        body: "You can return to an earlier team. Moving ahead waits until every approved judge has completed all five scores for each earlier team.",
+      },
+      {
+        title: "View final rankings",
+        body: "After the required judge packets are submitted and results release, you can see read-only final rankings. Moderator access does not include full rosters or competition decisions.",
+      },
+    ],
+    cta: { href: "/login", label: "Log in" },
+    signedInCta: { href: "/moderator", label: "Open live viewing" },
   },
   {
     id: "COMP",
@@ -87,31 +119,59 @@ const GUIDES: Guide[] = [
     kicker: "Claim code · then invite",
     title: "How competitions run apps",
     intro:
-      "Everyone signs in with Google. Circuit ops creates the competition listing and a claim code. The first person to enter that code becomes the primary admin. Applied Teams shows names, application dates, and dancer counts for payment checks.",
+      "Circuit ops creates the competition listing and gives its claim code to an admin. Competition admins manage details, judge invitations, and applications; circuit ops controls when judging opens.",
     steps: [
       {
         title: "Register, then claim with the claim code",
-        body: "Only Legends Admin can create a competition. Creating one generates a claim code. The app does not email anyone — ops gives you the code. First successful claim becomes primary admin and uses the code up. If it is already claimed, you will see that plus a blurred admin email.",
+        body: "Register with Google, then enter the code from circuit ops in Code Claim. The first successful claim becomes the primary admin and uses the code up. The app does not email claim codes.",
       },
       {
         title: "Invite secondary admins",
-        body: "Only the primary admin can invite more competition admins by email. Same popup-on-login pattern as teams. Requests on your dashboard hold anything not yet approved.",
+        body: "The primary admin can invite other competition admins by email. They approve the invitation under Requests on their dashboard before gaining access.",
       },
       {
         title: "Set Comp Details",
-        body: "Dates, city, venue, stage, lighting, production notes, early and late application deadlines, and required judge count (N). The late deadline closes applications. The competition name stays locked to the official listing.",
+        body: "Set event details, production notes, early and late application deadlines, and the required number of judge packets. The late deadline closes applications; the competition name stays tied to the official listing.",
       },
       {
-        title: "Invite judges by email",
-        body: "Type a judge’s email. This app does not send mail — they approve in the popup / Account until they click Approve.",
+        title: "Invite judges and check applicants",
+        body: "Invite judges by email. Their acceptance approves the assignment; review any separate pending judge requests on the Judges page. The app stores invitations but does not send email. Applied Teams shows applicant names, dates, and dancer counts for manual payment checks before results release.",
       },
       {
-        title: "Release Viewing Results",
-        body: "When N invited judges have submitted, ranked results unlock: scores, z-scores, judge comments, AVs, full team details, and accept / waitlist / decline. Judges still cannot see that table. Before release, competition admins can see only applicant names, application dates, and dancer counts. Circuit ops can open judging, then use Live View for every subscore as judges autosave.",
+        title: "Review released results",
+        body: "Circuit ops opens judging after applications close. When the required judge packets are submitted, rankings, comments, videos, full applicant rosters, and accept / waitlist / decline decisions unlock. Non-partner admins can also run live viewing; Partner competitions use moderators assigned by circuit ops.",
       },
     ],
     cta: { href: "/register", label: "Create an account" },
     signedInCta: { href: "/claim", label: "Code Claim" },
+  },
+  {
+    id: "OPS",
+    tab: "Circuit ops",
+    kicker: "Listings · access · judging",
+    title: "How circuit ops runs the season",
+    intro:
+      "Legends Admin manages official listings and access across the circuit, then opens judging when applications are closed.",
+    steps: [
+      {
+        title: "Create official listings",
+        body: "Create team and competition listings, choose Partner or Non-partner for each competition, and hand claim codes to the intended primary admins outside the app.",
+      },
+      {
+        title: "Manage access",
+        body: "Review team and competition admins, grant Partner competition moderator access, and rotate claim codes or reset access when needed.",
+      },
+      {
+        title: "Open judging",
+        body: "Once applications close and teams have applied, open judging for the competition. The app fixes the shared anonymous viewing order; moderators show videos and judges score them.",
+      },
+      {
+        title: "Monitor and export",
+        body: "Follow live scoring progress and download CSV or XLSX reports for permitted operations. Keep exports private because they may contain emails and rosters.",
+      },
+    ],
+    cta: { href: "/login", label: "Log in" },
+    signedInCta: { href: "/dashboard", label: "Open dashboard" },
   },
 ];
 
@@ -136,9 +196,10 @@ export function RoleGuide({ signedIn }: { signedIn?: boolean }) {
             How it works
           </h2>
           <p className="mt-2 max-w-2xl text-muted">
-            One login for everyone. Teams and competitions are claimed with a
-            code. Judges are invited by email. You can be on a team and a
-            competition at the same time.
+            Regular accounts use Google sign-in; temporary test accounts have
+            a separate password option. Teams and competitions use claim codes,
+            while judges and moderators receive access by email. Choose a role
+            below for its steps.
           </p>
         </div>
       </div>
@@ -147,7 +208,7 @@ export function RoleGuide({ signedIn }: { signedIn?: boolean }) {
         <div
           role="tablist"
           aria-label="Choose a walkthrough"
-          className="grid grid-cols-3 border-b border-line bg-blush"
+          className="flex overflow-x-auto border-b border-line bg-blush"
         >
           {GUIDES.map((item) => {
             const selected = item.id === activeId;
@@ -160,7 +221,7 @@ export function RoleGuide({ signedIn }: { signedIn?: boolean }) {
                 id={`guide-tab-${item.id}`}
                 aria-controls={`guide-panel-${item.id}`}
                 onClick={() => setActiveId(item.id)}
-                className={`relative px-3 py-3.5 text-center text-xs font-bold uppercase tracking-[0.14em] transition sm:text-sm ${
+                className={`relative min-w-[8.5rem] flex-1 px-3 py-3.5 text-center text-xs font-bold uppercase tracking-[0.14em] transition sm:text-sm ${
                   selected
                     ? "bg-card text-accent"
                     : "text-muted hover:bg-card/60 hover:text-ink"
