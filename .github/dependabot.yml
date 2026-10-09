@@ -4,7 +4,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    # Keep security updates enabled without opening routine version-update PRs.
+    open-pull-requests-limit: 0
     groups:
       prisma:
         patterns:
