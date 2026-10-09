@@ -48,12 +48,12 @@ describe("temporary production test login", () => {
 
   it.each([
     "legendstestadmin@gmail.com", "legendstestcomp@gmail.com",
-    "legendstestmoderator@gmail.com", "legendstestjudge@gmail.com",
+    "legendstestmoderator@gmail.com", "legendstestuser@gmail.com",
   ])("accepts the named demonstration account %s", (email) => {
     expect(testPasswordLoginAllowed(email, production)).toBe(true);
   });
 
-  it.each(["legendstech@desidancenetwork.org", "legendstestuser@gmail.com", "new@example.org"])(
+  it.each(["legendstech@desidancenetwork.org", "legendstestreg@gmail.com", "new@example.org"])(
     "refuses other production emails: %s",
     (email) => expect(testPasswordLoginAllowed(email, production)).toBe(false),
   );

@@ -14,9 +14,9 @@ export const E2E = {
   emails: {
     tech: "legendstestadmin@gmail.com",
     comp: "legendstestcomp@gmail.com",
-    team: "legendstestuser@gmail.com",
+    team: "legendstestreg@gmail.com",
     moderator: "legendstestmoderator@gmail.com",
-    judge: "legendstestjudge@gmail.com",
+    judge: "legendstestuser@gmail.com",
   },
   comps: {
     open: { slug: "e2e-open-call", name: "E2E Open Call", claimCode: "COMP-E2EOPN" },

@@ -56,7 +56,7 @@ The existing Vitest/Playwright suite is the canonical suite. The release-hardeni
 
 ### Test-account passwords
 
-Production temporarily permits password login for only `legendstestadmin@gmail.com`, `legendstestcomp@gmail.com`, `legendstestmoderator@gmail.com`, and `legendstestjudge@gmail.com`. Verify each has a unique password hash and its intended access, rotate any previously exposed passwords, and set a removal date after role testing. Regular staff accounts remain Google-only. Published competition claim codes also need review and rotation if active; removing them from source does not revoke database values. See [release-readiness.md](release-readiness.md) for the earlier audit and [release-runbook.md](release-runbook.md) for the current rollout.
+Production temporarily permits password login for only `legendstestadmin@gmail.com`, `legendstestcomp@gmail.com`, `legendstestmoderator@gmail.com`, and `legendstestuser@gmail.com`. Verify each has a unique password hash and its intended access, rotate any previously exposed passwords, and set a removal date after role testing. Regular staff accounts remain Google-only. Published competition claim codes also need review and rotation if active; removing them from source does not revoke database values. See [release-readiness.md](release-readiness.md) for the earlier audit and [release-runbook.md](release-runbook.md) for the current rollout.
 
 ### Transfer primary admin
 

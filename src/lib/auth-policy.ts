@@ -1,7 +1,7 @@
 /** Temporary production demonstration accounts. Keep these distinct from staff accounts. */
 export const PUBLIC_TEST_ACCOUNTS = [
   { label: "Moderator", email: "legendstestmoderator@gmail.com" },
-  { label: "Judge", email: "legendstestjudge@gmail.com" },
+  { label: "Judge", email: "legendstestuser@gmail.com" },
   { label: "Competition admin", email: "legendstestcomp@gmail.com" },
   { label: "Legends admin", email: "legendstestadmin@gmail.com" },
 ] as const;
