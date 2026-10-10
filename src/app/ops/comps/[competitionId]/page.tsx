@@ -23,6 +23,7 @@ import {
 import { rankTeams } from "@/lib/results";
 import { formatDateTime } from "@/lib/utils";
 import { isPlatformAdmin } from "@/lib/team-access";
+import { judgePanelCompletion } from "@/lib/judge-panel-completion";
 
 export default async function CompDashboardDetailPage({
   params,
@@ -103,6 +104,7 @@ export default async function CompDashboardDetailPage({
   );
   const removedJudges = competition.judgeAssignments.filter((row) => row.status === "REMOVED");
   const submitted = approved.filter((row) => row.submittedAt);
+  const closeProgress = judgePanelCompletion(competition.applications, approved);
 
   const scoreFor = (
     judge: (typeof approved)[number],
@@ -219,6 +221,7 @@ export default async function CompDashboardDetailPage({
         appsOpen={appsOpen}
         claimed={claimed}
         released={released}
+        closeProgress={closeProgress}
       />
 
       <FinalizeResultsForm

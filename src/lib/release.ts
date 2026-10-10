@@ -1,6 +1,6 @@
 /** Finalization is explicit and serialized with scoring and roster changes. */
 import { prisma } from "@/lib/prisma";
-import { isScoreComplete } from "@/lib/judging";
+import { judgePanelCompletion } from "@/lib/judge-panel-completion";
 
 export async function finalizeResults(competitionId: string, actorEmail: string) {
   return prisma.$transaction(async (tx) => {
@@ -16,7 +16,7 @@ export async function finalizeResults(competitionId: string, actorEmail: string)
           select: {
             status: true,
             submittedAt: true,
-            slots: { select: { score: true } },
+            slots: { select: { applicationId: true, score: true } },
           },
         },
       },
@@ -29,7 +29,7 @@ export async function finalizeResults(competitionId: string, actorEmail: string)
     }
     const active = competition.judgeAssignments.filter((row) => row.status === "APPROVED");
     if (!active.length) return { error: "At least one approved judge is required." };
-    if (active.some((row) => !row.submittedAt || row.slots.length !== competition.applications.length || row.slots.some((slot) => !isScoreComplete(slot.score)))) {
+    if (!judgePanelCompletion(competition.applications, active).ready) {
       return { error: "Every active judge must submit a complete packet before finalizing." };
     }
     await tx.competitionProfile.update({

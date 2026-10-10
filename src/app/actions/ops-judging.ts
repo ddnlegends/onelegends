@@ -6,7 +6,8 @@
  * Requires `platformAdmin`. Opening needs a claimed listing, closed
  * applications, at least one application, and no released results; it builds
  * the shared viewing order and forces `acceptingApps` off (a database CHECK
- * also forbids both flags being true). Closing clears the live team.
+ * also forbids both flags being true). Closing requires every active judge's
+ * complete, submitted packet and clears the live team.
  */
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
@@ -17,6 +18,7 @@ import {
   isCompetitionOpen,
 } from "@/lib/judging";
 import { isPlatformAdmin } from "@/lib/team-access";
+import { describePanelBlockers, judgePanelCompletion } from "@/lib/judge-panel-completion";
 
 function revalidateJudging(competitionId: string) {
   revalidatePath("/dashboard");
@@ -89,10 +91,44 @@ export async function setJudgingOpen(
     };
   }
 
-  await prisma.competitionProfile.update({
-    where: { id: competition.id },
-    data: { judgingOpen: false, livePosition: null, liveUpdatedAt: null },
+  const result = await prisma.$transaction(async (tx) => {
+    // Score saves, submissions, judge removal, and finalization lock this row first.
+    await tx.$queryRaw`SELECT id FROM "CompetitionProfile" WHERE id = ${competition.id} FOR UPDATE`;
+    const current = await tx.competitionProfile.findUnique({
+      where: { id: competition.id },
+      select: {
+        judgingOpen: true,
+        resultsReleasedAt: true,
+        applications: { select: { id: true } },
+        judgeAssignments: {
+          where: { status: "APPROVED" },
+          select: {
+            submittedAt: true,
+            slots: { select: { applicationId: true, score: true } },
+          },
+        },
+      },
+    });
+    if (!current) return { error: "Competition not found." };
+    if (current.resultsReleasedAt) return { error: "Results are already final." };
+    if (!current.judgingOpen) return { ok: true, message: "Judging is already closed." };
+
+    const progress = judgePanelCompletion(current.applications, current.judgeAssignments);
+    if (!progress.ready) {
+      if (!current.applications.length || !current.judgeAssignments.length) {
+        return { error: "At least one team and one active judge are required to close judging." };
+      }
+      return {
+        error: `Judging cannot close yet: ${describePanelBlockers(progress)}. Remove an unavailable judge from the panel if needed.`,
+      };
+    }
+    await tx.competitionProfile.update({
+      where: { id: competition.id },
+      data: { judgingOpen: false, livePosition: null, liveUpdatedAt: null },
+    });
+    return { ok: true, message: "Judging is closed. Judges cannot change scores." };
   });
+  if (result.error) return result;
   revalidateJudging(competition.id);
-  return { ok: true, message: "Judging is closed. Judges cannot change scores." };
+  return result;
 }

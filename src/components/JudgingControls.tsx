@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { setJudgingOpen } from "@/app/actions/ops-judging";
 import { SaveNotice } from "@/components/SaveNotice";
+import { describePanelBlockers } from "@/lib/judge-panel-completion";
 
 export function JudgingControls({
   competitionId,
@@ -10,12 +11,14 @@ export function JudgingControls({
   appsOpen,
   claimed,
   released,
+  closeProgress,
 }: {
   competitionId: string;
   judgingOpen: boolean;
   appsOpen: boolean;
   claimed: boolean;
   released: boolean;
+  closeProgress: { ready: boolean; missingScores: number; unsubmittedJudges: number; invalidPackets: number };
 }) {
   const [state, formAction, pending] = useActionState(setJudgingOpen, undefined);
 
@@ -39,7 +42,7 @@ export function JudgingControls({
         <p className="mt-1 text-sm text-muted">
           {!claimed
             ? "A competition admin has to claim it before you can open judging or watch live scores."
-            : "Only tech admins can open or close judging. Opening it sets the shared team order; the moderator and judges are locked while it is closed."}
+            : "Only tech admins can open or close judging. Opening it sets the shared team order. Closing requires every active judge to save all team scores and submit their packet; judges are locked while judging is closed."}
         </p>
       </div>
       <SaveNotice state={state} />
@@ -50,7 +53,7 @@ export function JudgingControls({
             {judgingOpen ? (
               <>
                 <input type="hidden" name="open" value="0" />
-                <button className="btn btn-ghost" disabled={pending} type="submit">
+                <button className="btn btn-ghost" disabled={pending || !closeProgress.ready} type="submit">
                   {pending ? "Closing…" : "Close judging"}
                 </button>
               </>
@@ -73,6 +76,11 @@ export function JudgingControls({
         <p className="text-sm text-muted">
           Close applications first. Judging cannot open while teams can still
           apply.
+        </p>
+      ) : null}
+      {judgingOpen && !closeProgress.ready ? (
+        <p className="text-sm text-muted">
+          Before closing: {describePanelBlockers(closeProgress) || "at least one team and one active judge are required"}. A tech admin can remove an unavailable judge from the active panel during viewing.
         </p>
       ) : null}
     </div>

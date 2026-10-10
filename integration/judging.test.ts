@@ -10,6 +10,7 @@ import { ensureCompetitionJudgeSlots } from "@/lib/judging";
 import { saveTeamScores, submitJudgingPacket } from "@/app/actions/judge";
 import { setLiveTeam } from "@/app/actions/moderator";
 import { finalizeCompetitionResults, removeJudgeAssignment } from "@/app/actions/comp-judging";
+import { setJudgingOpen } from "@/app/actions/ops-judging";
 
 let competitionId: string;
 let assignmentId: string;
@@ -44,6 +45,13 @@ function liveForm(position: number | null) {
   const data = new FormData();
   data.set("competitionId", competitionId);
   data.set("position", position == null ? "" : String(position));
+  return data;
+}
+
+function closeForm() {
+  const data = new FormData();
+  data.set("competitionId", competitionId);
+  data.set("open", "0");
   return data;
 }
 
@@ -111,6 +119,43 @@ describe("judging with real PostgreSQL transactions", () => {
     await saveTeamScores(undefined, form());
     expect(await submitJudgingPacket(undefined, form())).toHaveProperty("error");
     expect((await prisma.competitionProfile.findUniqueOrThrow({ where: { id: competitionId } })).resultsReleasedAt).toBeNull();
+  });
+  it("keeps judging open until every team is saved and the packet is submitted", async () => {
+    session.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.tech } })).id;
+    expect(await setJudgingOpen(undefined, closeForm())).toHaveProperty("error");
+    expect((await prisma.competitionProfile.findUniqueOrThrow({ where: { id: competitionId } })).judgingOpen).toBe(true);
+
+    session.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.judge } })).id;
+    await completePacket();
+    session.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.tech } })).id;
+    expect(await setJudgingOpen(undefined, closeForm())).toHaveProperty("error");
+
+    session.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.judge } })).id;
+    expect(await submitJudgingPacket(undefined, form())).toMatchObject({ ok: true });
+    session.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.tech } })).id;
+    expect(await setJudgingOpen(undefined, closeForm())).toMatchObject({ ok: true });
+    const closed = await prisma.competitionProfile.findUniqueOrThrow({ where: { id: competitionId } });
+    expect(closed.judgingOpen).toBe(false);
+    expect(closed.livePosition).toBeNull();
+  });
+  it("can close after a tech admin removes an unavailable judge during viewing", async () => {
+    const otherUser = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.team } });
+    const second = await prisma.judgeProfile.create({
+      data: { userId: otherUser.id, name: "Second judge", assignments: { create: { competitionId, status: "APPROVED" } } },
+      include: { assignments: true },
+    });
+    await ensureCompetitionJudgeSlots(competitionId);
+    await completePacket();
+    expect(await submitJudgingPacket(undefined, form())).toMatchObject({ ok: true });
+
+    session.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.tech } })).id;
+    expect(await setJudgingOpen(undefined, closeForm())).toHaveProperty("error");
+    const removal = new FormData();
+    removal.set("assignmentId", second.assignments[0].id);
+    removal.set("confirmation", "REMOVE");
+    removal.set("reason", "Unavailable during viewing");
+    expect(await removeJudgeAssignment(undefined, removal)).toMatchObject({ ok: true });
+    expect(await setJudgingOpen(undefined, closeForm())).toMatchObject({ ok: true });
   });
   it("refuses saving and submitting after ops closes judging", async () => {
     await completePacket();
