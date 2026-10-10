@@ -15,7 +15,6 @@ type Profile = {
   acceptingApps: boolean;
   earlyApplicationDeadline: string;
   applicationDeadline: string;
-  requiredJudgeCount: number;
 };
 
 const noopSubscribe = () => () => {};
@@ -115,18 +114,6 @@ export function CompProfileForm({ profile }: { profile: Profile }) {
           label="Late application deadline"
           help="Shown as the final deadline. After this time, applications close even if Accepting Applications is checked. Clear it for no automatic close."
         />
-        <div className="field">
-          <label htmlFor="requiredJudgeCount">Required judges (N)</label>
-          <input
-            id="requiredJudgeCount"
-            name="requiredJudgeCount"
-            type="number"
-            min={1}
-            max={50}
-            required
-            defaultValue={profile.requiredJudgeCount}
-          />
-        </div>
         <div className="field">
           <label htmlFor="venue">Venue</label>
           <input id="venue" name="venue" defaultValue={profile.venue} />

@@ -508,13 +508,19 @@ export function CancelTeamInviteForm({ inviteId }: { inviteId: string }) {
 }
 
 export function CancelJudgeInviteForm({ inviteId }: { inviteId: string }) {
+  const [confirming, setConfirming] = useState(false);
   const [state, formAction, pending] = useActionState(cancelJudgeInvite, undefined);
+  if (!confirming) return (
+    <button className="btn btn-ghost py-1.5" type="button" onClick={() => setConfirming(true)}>Cancel invite</button>
+  );
   return (
-    <form action={formAction}>
+    <form action={formAction} className="space-y-2 rounded-md border border-line bg-blush p-3">
       <input type="hidden" name="inviteId" value={inviteId} />
-      <button className="btn btn-ghost py-1.5" disabled={pending} type="submit">
-        {pending ? "…" : "Cancel"}
-      </button>
+      <p className="text-sm">Are you sure you want to cancel this judge invitation?</p>
+      <div className="flex gap-2">
+        <button className="btn btn-ghost py-1.5" disabled={pending} type="submit">{pending ? "Canceling…" : "Yes, cancel invite"}</button>
+        <button className="btn btn-ghost py-1.5" type="button" onClick={() => setConfirming(false)}>Keep invite</button>
+      </div>
       {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
     </form>
   );

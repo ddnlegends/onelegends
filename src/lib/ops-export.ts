@@ -135,9 +135,8 @@ async function competitionsTable(competitionId?: string): Promise<ExportCell[][]
       "Late application deadline",
       "Applications",
       "Judging open",
-      "Approved judges",
       "Packets submitted",
-      "Packets required",
+      "Active judges",
       "Results released",
       "Created",
     ],
@@ -159,9 +158,8 @@ async function competitionsTable(competitionId?: string): Promise<ExportCell[][]
       stamp(comp.applicationDeadline),
       comp._count.applications,
       yesNo(comp.judgingOpen),
-      comp.judgeAssignments.length,
       comp.judgeAssignments.filter((assignment) => assignment.submittedAt).length,
-      comp.requiredJudgeCount,
+      comp.judgeAssignments.length,
       stamp(comp.resultsReleasedAt),
       stamp(comp.createdAt),
     ]),
@@ -310,6 +308,9 @@ async function judgesTable(competitionId?: string): Promise<ExportCell[][]> {
       "Teams fully scored",
       "Teams in packet",
       "Packet submitted",
+      "Removed at",
+      "Removed by",
+      "Removal reason",
     ],
     ...assignments.map((assignment) => [
       assignment.competition.name,
@@ -320,12 +321,17 @@ async function judgesTable(competitionId?: string): Promise<ExportCell[][]> {
         ? "Approved"
         : assignment.status === "DENIED"
           ? "Denied"
-          : "Pending",
+          : assignment.status === "REMOVED"
+            ? "Removed"
+            : "Pending",
       stamp(assignment.requestedAt),
       stamp(assignment.decidedAt),
       assignment.slots.filter((slot) => isScoreComplete(toPartialRubric(slot.score))).length,
       assignment.slots.length,
       stamp(assignment.submittedAt),
+      stamp(assignment.removedAt),
+      assignment.removedByEmail ?? "",
+      assignment.removalReason,
     ]),
     ...invites.map((invite) => [
       invite.competition.name,
@@ -334,6 +340,9 @@ async function judgesTable(competitionId?: string): Promise<ExportCell[][]> {
       "",
       "Invited (no account yet)",
       stamp(invite.createdAt),
+      "",
+      "",
+      "",
       "",
       "",
       "",
@@ -405,7 +414,6 @@ async function resultsTable(competitionId?: string): Promise<ExportCell[][]> {
     select: {
       name: true,
       resultsReleasedAt: true,
-      requiredJudgeCount: true,
       applications: {
         select: {
           id: true,
@@ -427,19 +435,19 @@ async function resultsTable(competitionId?: string): Promise<ExportCell[][]> {
 
   const rows: ExportCell[][] = [];
   for (const comp of competitions) {
-    if (comp.judgeAssignments.length === 0) continue;
+    if (!comp.resultsReleasedAt || comp.judgeAssignments.length === 0) continue;
     const released = Boolean(comp.resultsReleasedAt);
     const ranked = rankTeams(comp.applications, comp.judgeAssignments);
     ranked.forEach((team, index) => {
       rows.push([
         comp.name,
-        released ? "Released" : "Provisional (not released)",
+        "Released",
         index + 1,
         num(team.viewingPosition),
         teamLabel(team.viewingPosition, team.name, released),
         released ? statusLabel(team.status) : "",
         team.judges.length,
-        `${comp.judgeAssignments.length} / ${comp.requiredJudgeCount}`,
+        `${comp.judgeAssignments.length} / ${comp.judgeAssignments.length}`,
         round(team.avgZ),
         round(team.avgTotal, 2),
         team.judges.map((judge) => `${judge.judgeName}: ${judge.total}`).join("; "),

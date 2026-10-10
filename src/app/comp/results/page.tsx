@@ -29,6 +29,7 @@ export default async function CompResultsPage() {
 
   const submitted = competition.judgeAssignments.filter((a) => a.submittedAt);
   const released = Boolean(competition.resultsReleasedAt);
+  const pending = await prisma.judgeInvite.count({ where: { competitionId } });
 
   const ranked = rankTeams(competition.applications, submitted);
 
@@ -37,26 +38,23 @@ export default async function CompResultsPage() {
       <div>
         <h1 className="font-heading text-4xl">Viewing Results</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          Rankings and scores stay sealed until{" "}
-          {competition.requiredJudgeCount === 1
-            ? "1 judge submits"
-            : `${competition.requiredJudgeCount} judges submit`}
-          . Rank is average z-score, then average total.
+          Rankings and scores stay sealed until all active judges submit and an
+          admin finalizes results. Rank is average z-score, then average total.
         </p>
       </div>
 
       <div className="rounded-xl border border-line bg-blush p-5 text-sm">
-        {submitted.length} of {competition.requiredJudgeCount} required packets
+        {submitted.length} of {competition.judgeAssignments.length} active packets
         submitted
         {released && competition.resultsReleasedAt
           ? ` · Unlocked ${formatDateTime(competition.resultsReleasedAt)}`
           : " · Rankings and scores are still hidden"}
-        . Lower N on Judges if you need to release early.
+        . {pending ? `${pending} pending invitations also need to be resolved.` : "Manage the panel on Judges."}
       </div>
 
       {!released ? (
         <p className="text-muted">
-          Rankings and scores unlock when the required packets are complete.
+          Rankings and scores unlock after every active packet is submitted and results are finalized.
           Applicant names, dates, and dancer counts are available in Applied Teams.
         </p>
       ) : ranked.length === 0 ? (

@@ -12,7 +12,6 @@ import { z } from "zod";
 import { ApplicationStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
-import { maybeReleaseResults } from "@/lib/release";
 import { isPlatformAdmin, requireActiveCompetition } from "@/lib/team-access";
 
 const profileSchema = z.object({
@@ -26,7 +25,6 @@ const profileSchema = z.object({
   acceptingApps: z.string().optional(),
   earlyApplicationDeadline: z.string(),
   applicationDeadline: z.string(),
-  requiredJudgeCount: z.string(),
 });
 
 export async function saveCompProfile(
@@ -52,20 +50,12 @@ export async function saveCompProfile(
     acceptingApps: formData.get("acceptingApps") ? "on" : "",
     earlyApplicationDeadline: String(formData.get("earlyApplicationDeadline") ?? "").trim(),
     applicationDeadline: String(formData.get("applicationDeadline") ?? "").trim(),
-    requiredJudgeCount: String(formData.get("requiredJudgeCount") ?? "").trim(),
   });
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid profile." };
   }
 
-  const n = Number(parsed.data.requiredJudgeCount);
-  if (!Number.isInteger(n) || n < 1 || n > 50) {
-    return { error: "Required judges must be a whole number from 1 to 50." };
-  }
-  if (competition.resultsReleasedAt && n !== competition.requiredJudgeCount) {
-    return { error: "Required judges cannot change after results are released." };
-  }
   const earlyRaw = parsed.data.earlyApplicationDeadline;
   const earlyApplicationDeadline = earlyRaw ? new Date(earlyRaw) : null;
   if (earlyRaw && Number.isNaN(earlyApplicationDeadline?.getTime())) {
@@ -101,7 +91,7 @@ export async function saveCompProfile(
       };
     }
   }
-  const updated = await prisma.competitionProfile.update({
+  await prisma.competitionProfile.update({
     where: { id: competition.id },
     data: {
       dates: parsed.data.dates,
@@ -114,13 +104,11 @@ export async function saveCompProfile(
       acceptingApps,
       earlyApplicationDeadline,
       applicationDeadline,
-      requiredJudgeCount: n,
       ...(acceptingApps
         ? { judgingOpen: false, livePosition: null, liveUpdatedAt: null }
         : {}),
     },
   });
-  await maybeReleaseResults(updated.id);
 
   revalidatePath("/comp");
   revalidatePath("/comp/profile");

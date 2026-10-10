@@ -133,7 +133,7 @@ export default async function CompDashboardPage() {
         <p className="text-sm text-ink/80">
           Applied Teams shows applicant names, application dates, and dancer
           counts so you can check payments manually. Viewing order, full team
-          details, and ranked results unlock after the required judges submit.
+          details, and ranked results unlock after every active judge submits and an admin finalizes.
           Manage judges and read ranked results from the Judges and Viewing
           Results pages.
         </p>

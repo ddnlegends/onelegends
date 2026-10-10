@@ -9,11 +9,13 @@ export function JudgingControls({
   judgingOpen,
   appsOpen,
   claimed,
+  released,
 }: {
   competitionId: string;
   judgingOpen: boolean;
   appsOpen: boolean;
   claimed: boolean;
+  released: boolean;
 }) {
   const [state, formAction, pending] = useActionState(setJudgingOpen, undefined);
 
@@ -24,7 +26,9 @@ export function JudgingControls({
           Circuit ops · judging
         </p>
         <p className="mt-1 font-medium">
-          {!claimed
+          {released
+            ? "Results are final."
+            : !claimed
             ? "This listing is unclaimed."
             : appsOpen
               ? "Applications are still open."
@@ -55,7 +59,7 @@ export function JudgingControls({
                 <input type="hidden" name="open" value="1" />
                 <button
                   className="btn btn-primary"
-                  disabled={pending || appsOpen}
+                  disabled={pending || appsOpen || released}
                   type="submit"
                 >
                   {pending ? "Opening…" : "Open judging"}

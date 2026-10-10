@@ -8,7 +8,7 @@
  * submitted and judging-open state inside the transaction, so a save can never
  * land after submit. Rubric scores are limited to the live or earlier teams;
  * comment-only saves may finish after the moderator moves on. A
- * submit may release results via `maybeReleaseResults`.
+ * submission marks one packet complete; an admin finalizes results separately.
  */
 import { revalidatePath } from "next/cache";
 import type { Prisma } from "@prisma/client";
@@ -21,7 +21,6 @@ import {
   isScoreComplete,
   type RubricKey,
 } from "@/lib/judging";
-import { maybeReleaseResults } from "@/lib/release";
 
 export async function saveJudgeProfile(
   _prev: { error?: string; ok?: boolean } | undefined,
@@ -207,8 +206,6 @@ export async function submitJudgingPacket(
     return null;
   });
   if (failed) return { error: failed };
-  await maybeReleaseResults(assignment.competitionId);
-
   revalidatePath("/judge");
   revalidatePath(`/judge/${assignment.competitionId}`);
   revalidatePath("/comp");

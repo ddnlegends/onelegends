@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { ensureCompetitionJudgeSlots } from "@/lib/judging";
 import { saveTeamScores, submitJudgingPacket } from "@/app/actions/judge";
 import { setLiveTeam } from "@/app/actions/moderator";
-import { maybeReleaseResults } from "@/lib/release";
+import { finalizeCompetitionResults, removeJudgeAssignment } from "@/app/actions/comp-judging";
 
 let competitionId: string;
 let assignmentId: string;
@@ -148,22 +148,41 @@ describe("judging with real PostgreSQL transactions", () => {
       await close;
     }
   });
-  it("concurrent duplicate submissions release once and seal scores", async () => {
+  it("duplicate submissions wait for explicit finalization, which then seals scores", async () => {
     await completePacket();
     const results = await Promise.all([submitJudgingPacket(undefined, form()), submitJudgingPacket(undefined, form())]);
     expect(results).toEqual([{ ok: true }, { ok: true }]);
+    expect((await prisma.competitionProfile.findUniqueOrThrow({ where: { id: competitionId } })).resultsReleasedAt).toBeNull();
+    const comp = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.comp } });
+    session.userId = comp.id;
+    const confirm = new FormData();
+    confirm.set("competitionId", competitionId);
+    confirm.set("confirmation", "FINALIZE");
+    expect(await finalizeCompetitionResults(undefined, confirm)).toMatchObject({ ok: true });
     const released = await prisma.competitionProfile.findUniqueOrThrow({ where: { id: competitionId } });
     expect(released.resultsReleasedAt).not.toBeNull();
     expect(released.judgingOpen).toBe(false);
     const before = await prisma.judgeScore.findMany({ orderBy: { id: "asc" } });
+    session.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.judge } })).id;
     expect(await saveTeamScores(undefined, form())).toHaveProperty("error");
     expect(await prisma.judgeScore.findMany({ orderBy: { id: "asc" } })).toEqual(before);
   });
-  it("waits for the configured number of approved submitted judges", async () => {
-    await prisma.competitionProfile.update({ where: { id: competitionId }, data: { requiredJudgeCount: 2 } });
+  it("waits for every active judge even when the legacy threshold is one", async () => {
+    const otherUser = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.team } });
+    await prisma.judgeProfile.create({ data: { userId: otherUser.id, name: "Second judge", assignments: { create: { competitionId, status: "APPROVED" } } } });
     await completePacket();
     expect(await submitJudgingPacket(undefined, form())).toMatchObject({ ok: true });
-    expect(await maybeReleaseResults(competitionId)).toBe(false);
+    expect((await prisma.competitionProfile.findUniqueOrThrow({ where: { id: competitionId } })).resultsReleasedAt).toBeNull();
+    session.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.comp } })).id;
+    const confirm = new FormData(); confirm.set("competitionId", competitionId); confirm.set("confirmation", "FINALIZE");
+    expect(await finalizeCompetitionResults(undefined, confirm)).toHaveProperty("error");
+    session.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.tech } })).id;
+    const second = await prisma.judgeAssignment.findFirstOrThrow({ where: { competitionId, judge: { userId: otherUser.id } } });
+    const removal = new FormData(); removal.set("assignmentId", second.id); removal.set("confirmation", "REMOVE"); removal.set("reason", "Unavailable during viewing");
+    expect(await removeJudgeAssignment(undefined, removal)).toMatchObject({ ok: true });
+    expect((await prisma.judgeAssignment.findUniqueOrThrow({ where: { id: second.id } })).status).toBe("REMOVED");
+    session.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.comp } })).id;
+    expect(await finalizeCompetitionResults(undefined, confirm)).toMatchObject({ ok: true });
   });
   it("the database rejects accepting applications while judging is open", async () => {
     await expect(prisma.competitionProfile.update({ where: { id: competitionId }, data: { acceptingApps: true } })).rejects.toThrow();

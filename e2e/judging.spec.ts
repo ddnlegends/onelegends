@@ -106,9 +106,8 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
     include: { slots: { orderBy: { position: "asc" }, include: { score: true } }, competition: true },
   });
   expect(stored.submittedAt).not.toBeNull();
-  expect(stored.competition.resultsReleasedAt).not.toBeNull();
-  expect(stored.competition.judgingOpen).toBe(false);
-  expect(stored.competition.livePosition).toBeNull();
+  expect(stored.competition.resultsReleasedAt).toBeNull();
+  expect(stored.competition.judgingOpen).toBe(true);
   for (const slot of stored.slots) {
     const expected = SCORES[slot.position as keyof typeof SCORES];
     for (const [field, value] of Object.entries(expected)) {
@@ -117,6 +116,10 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
       );
     }
   }
+  await ops.reload();
+  await ops.getByRole("button", { name: "Finalize results", exact: true }).click();
+  await ops.getByRole("button", { name: "Yes, finalize results" }).click();
+  await expect(ops.getByText(/Results finalized/)).toBeVisible();
   await judge.goto(`/judge/${id}/team/1`);
   await expect(judge.locator("#choreography")).toBeDisabled();
 

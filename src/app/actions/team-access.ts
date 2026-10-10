@@ -400,26 +400,23 @@ export async function acceptJudgeInvite(
     update: {},
   });
 
-  await prisma.judgeAssignment.upsert({
-    where: {
-      judgeId_competitionId: {
-        judgeId: judge.id,
-        competitionId: invite.competitionId,
-      },
-    },
-    create: {
-      judgeId: judge.id,
-      competitionId: invite.competitionId,
-      status: "APPROVED",
-      decidedAt: new Date(),
-    },
-    update: {
-      status: "APPROVED",
-      decidedAt: new Date(),
-      submittedAt: null,
-    },
+  const accepted = await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "CompetitionProfile" WHERE id = ${invite.competitionId} FOR UPDATE`;
+    const competition = await tx.competitionProfile.findUnique({ where: { id: invite.competitionId }, select: { resultsReleasedAt: true } });
+    if (!competition || competition.resultsReleasedAt) return false;
+    const pendingInvite = await tx.judgeInvite.findUnique({ where: { id: invite.id }, select: { id: true } });
+    if (!pendingInvite) return false;
+    const existing = await tx.judgeAssignment.findUnique({ where: { judgeId_competitionId: { judgeId: judge.id, competitionId: invite.competitionId } }, select: { status: true } });
+    if (existing?.status === "REMOVED") return false;
+    await tx.judgeAssignment.upsert({
+      where: { judgeId_competitionId: { judgeId: judge.id, competitionId: invite.competitionId } },
+      create: { judgeId: judge.id, competitionId: invite.competitionId, status: "APPROVED", decidedAt: new Date() },
+      update: { status: "APPROVED", decidedAt: new Date() },
+    });
+    await tx.judgeInvite.delete({ where: { id: invite.id } });
+    return true;
   });
-  await prisma.judgeInvite.delete({ where: { id: invite.id } });
+  if (!accepted) return { error: "This invite is no longer available or the judge was removed." };
   revalidateAccessPaths();
   return { ok: true };
 }
@@ -643,6 +640,9 @@ export async function inviteJudge(
   if (account?.judge?.assignments.some((a) => a.competitionId === competitionId && a.status === "APPROVED")) {
     return { error: "That email is already an approved judge for this competition." };
   }
+  if (account?.judge?.assignments.some((a) => a.competitionId === competitionId && a.status === "REMOVED")) {
+    return { error: "That judge was removed from this competition and cannot be re-invited." };
+  }
   const [moderatorAccess, moderatorInvite] = await Promise.all([
     account
       ? hasModeratorAccess(account.id, competitionId)
@@ -658,11 +658,18 @@ export async function inviteJudge(
     };
   }
 
-  await prisma.judgeInvite.upsert({
-    where: { competitionId_email: { competitionId, email } },
-    create: { competitionId, email },
-    update: {},
+  const invited = await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "CompetitionProfile" WHERE id = ${competitionId} FOR UPDATE`;
+    const competition = await tx.competitionProfile.findUnique({ where: { id: competitionId }, select: { resultsReleasedAt: true } });
+    if (!competition || competition.resultsReleasedAt) return false;
+    await tx.judgeInvite.upsert({
+      where: { competitionId_email: { competitionId, email } },
+      create: { competitionId, email },
+      update: {},
+    });
+    return true;
   });
+  if (!invited) return { error: "Judges cannot be invited after results release." };
   revalidateAccessPaths();
   return {
     ok: true,

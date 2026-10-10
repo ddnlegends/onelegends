@@ -39,7 +39,6 @@ export default async function CompProfilePage() {
           acceptingApps: competition.acceptingApps,
           earlyApplicationDeadline: competition.earlyApplicationDeadline?.toISOString() ?? "",
           applicationDeadline: competition.applicationDeadline?.toISOString() ?? "",
-          requiredJudgeCount: competition.requiredJudgeCount,
         }}
       />
     </div>

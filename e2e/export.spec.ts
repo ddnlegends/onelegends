@@ -54,7 +54,6 @@ test("a tech admin downloads CSV and xlsx", async ({ page }) => {
 
 test("CSV and XLSX keep judging names sealed until results release", async ({ page }) => {
   const id = await competitionId(E2E.comps.showcase.slug);
-  await db.competitionProfile.update({ where: { id }, data: { requiredJudgeCount: 2 } });
   await login(page, "tech");
   await page.goto(`/ops/comps/${id}`);
   await page.getByRole("button", { name: "Open judging" }).click();
@@ -72,12 +71,13 @@ test("CSV and XLSX keep judging names sealed until results release", async ({ pa
       expect(csv.status()).toBe(200);
       expect(csv.headers()["cache-control"]).toBe("no-store");
       const body = await csv.text();
-      expect(body).toContain(E2E.comps.showcase.name);
+      if (dataset === "scores" || released) expect(body).toContain(E2E.comps.showcase.name);
       for (const name of SEALED_NAMES) {
         if (released) expect(body).toContain(name);
         else expect(body).not.toContain(name);
       }
-      if (!released) expect(body).toContain("Team 1");
+      if (!released && dataset === "scores") expect(body).toContain("Team 1");
+      if (!released && dataset === "results") expect(body).not.toContain("Provisional");
     }
     const response = await page.request.get(`/api/ops/export?dataset=scores&dataset=results&format=xlsx&competitionId=${id}`);
     expect(response.status()).toBe(200);

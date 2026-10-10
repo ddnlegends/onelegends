@@ -70,6 +70,12 @@ export async function setJudgingOpen(
     if (apps === 0) {
       return { error: "No applications to judge yet." };
     }
+    const approvedJudges = await prisma.judgeAssignment.count({
+      where: { competitionId: competition.id, status: "APPROVED" },
+    });
+    if (approvedJudges === 0) {
+      return { error: "Approve at least one judge before opening viewing." };
+    }
     await ensureCompetitionJudgeSlots(competition.id);
     const updated = await prisma.competitionProfile.updateMany({
       where: { id: competition.id, resultsReleasedAt: null },

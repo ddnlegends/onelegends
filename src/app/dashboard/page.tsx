@@ -442,10 +442,10 @@ export default async function DashboardPage() {
             </div>
             <div className="rounded-xl border border-line bg-card p-5">
               <dt className="text-xs uppercase tracking-wide text-muted">
-                Required judges
+                Active judges
               </dt>
               <dd className="mt-2 font-heading text-3xl text-accent">
-                {competition.requiredJudgeCount}
+                {competition.judgeAssignments.length}
               </dd>
             </div>
           </dl>

@@ -25,6 +25,7 @@ enum JudgeRequestStatus {
   PENDING
   APPROVED
   DENIED
+  REMOVED
 }
 
 enum TeamMembershipStatus {
@@ -146,8 +147,10 @@ model CompetitionProfile {
   acceptingApps       Boolean   @default(true)
   earlyApplicationDeadline DateTime?
   applicationDeadline DateTime?
+  // Legacy threshold kept for historical data; finalization uses the active approved panel.
   requiredJudgeCount  Int       @default(3)
   resultsReleasedAt   DateTime?
+  resultsFinalizedByEmail String?
   dates               String    @default("")
   location            String    @default("")
   venue               String    @default("")
@@ -277,6 +280,9 @@ model JudgeAssignment {
   requestedAt   DateTime           @default(now())
   decidedAt     DateTime?
   submittedAt   DateTime?
+  removedAt     DateTime?
+  removedByEmail String?
+  removalReason String @default("")
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
 

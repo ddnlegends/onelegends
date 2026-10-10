@@ -51,7 +51,7 @@ The destructive seed guard validates both URLs, the database name, loopback host
 | Cross-competition access | Moderator/judge live API limited to assigned competition; team and comp admin refused | Other role/resource pairs, invitations, changed/revoked memberships |
 | Incomplete or duplicate application | Blocked team cannot apply; complete team applies only to open comp; duplicate shown | Server-side concurrent duplicate/deadline/roster-change cases |
 | Lost/invalid scores | DB checks invalid fields/ownership, incomplete packets, close/submit ordering, duplicate submission; browser verifies persisted rubric | Network interruption/reconnect, concurrent distinct judges, mobile background/foreground |
-| Results released early | DB configured threshold, idempotent release, sealed writes; browser page and CSV/XLSX names hidden until release | Approval/threshold changes during release; operational rehearsal |
+| Results released early | DB requires every active approved judge to submit, resolves pending invites, and requires explicit admin finalization; browser page and CSV/XLSX names stay hidden until release | Judge acceptance/removal racing finalization; operational rehearsal |
 | Judging/application state conflicts | PostgreSQL CHECK rejects simultaneous application and judging flags; clean migrations and claim-limit upgrade with synthetic existing rows | Production-sized sanitized upgrade/restore rehearsal |
 | Moderator drives wrong team | Browser selects anonymous slot; live API returns only allowed keys; release clears live position | Real Drive video playback on event network and device |
 | Exports broken | Every non-tech role denied; CSV and parsed two-sheet XLSX content before/after release; formula-looking text round trip | Open exports in Excel/Sheets; large realistic datasets |
@@ -73,7 +73,7 @@ Record deployment SHA/URL, tester, device, time, pass/fail, evidence, and cleanu
 | Tech admin | Grant/revoke Moderator, open/close judging, inspect live dashboard, export | Only admin can operate these; mutually exclusive app/judging state; revoked access stops working |
 | Moderator | Open assigned comp, play Drive audition, switch live team, try judging same comp | All judges follow anonymous slot; video works; Moderator cannot also judge it |
 | Judge | Save partial rubric, reload, change score, disconnect/reconnect, complete and submit twice | Persisted values match; visible save failure/recovery; no incomplete submission; sealed packet immutable |
-| Final judge/comp | Submit final required packet while another judge submits; refresh results and exports | One release; consistent rankings and names; judging/live state closes; no lost score |
+| Final judge/comp | Submit the last active packet, resolve invites, confirm finalization; refresh results and exports | Submission alone keeps results sealed; one explicit release yields consistent rankings and closes live state |
 | Operator | Lose network during live viewing; restore it; switch browser/device | Staff can recover from persisted state and know whether an operation saved |
 
 ## Failures and maintenance

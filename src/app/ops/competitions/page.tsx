@@ -112,7 +112,7 @@ export default async function OpsCompetitionsPage() {
                         competition.dates || null,
                         competition.location || null,
                         `${competition.applications.length} application${competition.applications.length === 1 ? "" : "s"}`,
-                        `${packets} / ${competition.requiredJudgeCount} packets`,
+                        `${packets} / ${competition.judgeAssignments.filter((row) => row.status === "APPROVED").length} packets`,
                       ]
                         .filter(Boolean)
                         .join(" · ")}
@@ -197,7 +197,7 @@ export default async function OpsCompetitionsPage() {
                         label: "Applications",
                         value: `${competition.applications.length} total · ${accepted} accepted`,
                       },
-                      { label: "Required judges (N)", value: competition.requiredJudgeCount },
+                      { label: "Active judges", value: competition.judgeAssignments.filter((row) => row.status === "APPROVED").length },
                       { label: "Judging open", value: competition.judgingOpen ? "Yes" : "No" },
                       {
                         label: "Packets submitted",

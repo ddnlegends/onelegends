@@ -75,7 +75,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Submit Judging when every slot is filled",
-        body: "Once every team has all five scores, submit your packet to lock it. Closing judging also pauses edits, and results release locks all scoring. Judges do not see team names, other judges’ scores, or rankings.",
+        body: "Once every team has all five scores, submit your packet to lock it. Your submission does not release results; a competition or tech admin finalizes after every active judge submits and pending invitations are resolved. Judges do not see team names, other judges’ scores, or rankings.",
       },
     ],
     cta: { href: "/register", label: "Create an account" },
@@ -107,7 +107,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "View final rankings",
-        body: "After the required judge packets are submitted and results release, you can see read-only final rankings. Moderator access does not include full rosters or competition decisions.",
+        body: "After every active judge submits and an admin finalizes results, you can see read-only final rankings. Moderator access does not include full rosters or competition decisions.",
       },
     ],
     cta: { href: "/login", label: "Log in" },
@@ -131,15 +131,15 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Set Comp Details",
-        body: "Save event details, production notes, early and late application deadlines, and the required number of judge packets. The early deadline is informational; the late deadline closes applications. Check the labeled timezone. The competition name stays tied to the official listing. Finish edits before switching competitions or tabs.",
+        body: "Save event details, production notes, and early and late application deadlines. The early deadline is informational; the late deadline closes applications. Check the labeled timezone. The competition name stays tied to the official listing. Finish edits before switching competitions or tabs.",
       },
       {
         title: "Invite judges and check applicants",
-        body: "Invite judges by email. Their acceptance approves the assignment; review any separate pending judge requests on the Judges page. The app stores invitations but does not send email. Applied Teams shows applicant names, dates, and dancer counts for manual payment checks before results release.",
+        body: "Invite judges by email. Their acceptance adds them to the active panel; review any separate pending judge requests on the Judges page. The app stores invitations but does not send email. Applied Teams shows applicant names, dates, and dancer counts for manual payment checks before results release.",
       },
       {
         title: "Review released results",
-        body: "Circuit ops opens judging after applications close. Results release automatically when the required number of approved judges submit: rankings, comments, videos, full applicant rosters, and accept / waitlist / decline decisions unlock. Non-partner admins can also run live viewing; Partner competitions use moderators assigned by circuit ops.",
+        body: "Circuit ops opens judging after applications close. Once every active judge submits and pending invitations are resolved, a competition or tech admin confirms finalization. Rankings, comments, videos, full applicant rosters, and accept / waitlist / decline decisions then unlock. Non-partner admins can also run live viewing; Partner competitions use moderators assigned by circuit ops.",
       },
     ],
     cta: { href: "/register", label: "Create an account" },
@@ -163,11 +163,11 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Open judging",
-        body: "Once applications close and teams have applied, open judging for the competition. The app fixes the shared anonymous viewing order; moderators show videos and judges score them.",
+        body: "Once applications close, teams have applied, and at least one judge is approved, open judging for the competition. The app fixes the shared anonymous viewing order; moderators show videos and judges score them.",
       },
       {
         title: "Monitor and export",
-        body: "Follow live scoring progress and download CSV or XLSX reports for permitted operations. Keep exports private because they may contain emails and rosters.",
+        body: "Follow live scoring progress, help manage the judge panel, finalize results when every active judge submits, and download CSV or XLSX reports for permitted operations. Keep exports private because they may contain emails and rosters.",
       },
     ],
     cta: { href: "/login", label: "Log in" },

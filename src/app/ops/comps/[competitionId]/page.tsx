@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { CompStatusPill } from "@/components/CompStatusPill";
 import { JudgingControls } from "@/components/JudgingControls";
+import { FinalizeResultsForm, RemoveJudgeForm } from "@/components/JudgePanelControls";
 import { LiveProgress } from "@/components/LiveProgress";
 import {
   RUBRIC_CATEGORIES,
@@ -52,7 +53,7 @@ export default async function CompDashboardDetailPage({
         },
       },
       judgeAssignments: {
-        where: { status: { not: "DENIED" } },
+        where: { status: { in: ["APPROVED", "PENDING", "REMOVED"] } },
         include: {
           judge: { select: { name: true, user: { select: { email: true } } } },
           slots: {
@@ -100,6 +101,7 @@ export default async function CompDashboardDetailPage({
   const pendingJudges = competition.judgeAssignments.filter(
     (row) => row.status === "PENDING",
   );
+  const removedJudges = competition.judgeAssignments.filter((row) => row.status === "REMOVED");
   const submitted = approved.filter((row) => row.submittedAt);
 
   const scoreFor = (
@@ -195,8 +197,8 @@ export default async function CompDashboardDetailPage({
         />
         <Stat
           label="Packets in"
-          value={`${submitted.length} / ${competition.requiredJudgeCount}`}
-          hint={released ? "Results released" : "Required to release results"}
+          value={`${submitted.length} / ${approved.length}`}
+          hint={released ? "Results released" : "Active judges submitted"}
         />
         <Stat
           label="Moderator"
@@ -216,7 +218,38 @@ export default async function CompDashboardDetailPage({
         judgingOpen={competition.judgingOpen}
         appsOpen={appsOpen}
         claimed={claimed}
+        released={released}
       />
+
+      <FinalizeResultsForm
+        competitionId={competition.id}
+        approved={approved.length}
+        submitted={submitted.length}
+        pending={pendingJudges.length + competition.judgeInvites.length}
+        released={released}
+      />
+
+      <section className="space-y-3">
+        <h2 className="font-heading text-2xl">Active judge panel</h2>
+        {approved.length === 0 ? <p className="text-sm text-muted">No approved judges.</p> : (
+          <ul className="divide-y divide-line rounded-xl border border-line bg-card">
+            {approved.map((judge) => (
+              <li key={judge.id} className="flex flex-wrap items-start justify-between gap-3 px-4 py-3">
+                <div>
+                  <p className="font-medium">{judge.judge.name} · {judge.judge.user.email}</p>
+                  <p className="text-sm text-muted">{judge.slots.filter((slot) => isScoreComplete(slot.score)).length} / {ordered.length} scored · {judge.submittedAt ? "Submitted" : "Scoring"}</p>
+                </div>
+                {!released ? <RemoveJudgeForm assignmentId={judge.id} name={judge.judge.name} email={judge.judge.user.email} scored={judge.slots.filter((slot) => isScoreComplete(slot.score)).length} total={ordered.length} submitted={Boolean(judge.submittedAt)} live={hasOrder} /> : null}
+              </li>
+            ))}
+          </ul>
+        )}
+        {removedJudges.length ? (
+          <ul className="text-sm text-muted">
+            {removedJudges.map((judge) => <li key={judge.id}>{judge.judge.name} · {judge.judge.user.email} · removed by {judge.removedByEmail || "admin"}: {judge.removalReason}</li>)}
+          </ul>
+        ) : null}
+      </section>
 
       {released ? (
         <section className="space-y-3">
@@ -298,7 +331,7 @@ export default async function CompDashboardDetailPage({
                       </span>
                     </th>
                   ))}
-                  <th className="px-3 py-3 font-medium">Avg</th>
+                  {released ? <th className="px-3 py-3 font-medium">Avg</th> : null}
                 </tr>
               </thead>
               <tbody>
@@ -350,9 +383,7 @@ export default async function CompDashboardDetailPage({
                           </td>
                         );
                       })}
-                      <td className="px-3 py-3 font-semibold tabular-nums text-accent">
-                        {avg != null ? avg.toFixed(1) : "—"}
-                      </td>
+                      {released ? <td className="px-3 py-3 font-semibold tabular-nums text-accent">{avg != null ? avg.toFixed(1) : "—"}</td> : null}
                     </tr>
                   );
                 })}

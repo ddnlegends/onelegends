@@ -45,7 +45,6 @@ export default async function CompDashboardPage() {
       livePosition: true,
       liveUpdatedAt: true,
       resultsReleasedAt: true,
-      requiredJudgeCount: true,
       _count: {
         select: { applications: true, moderatorAccess: true },
       },
@@ -166,7 +165,7 @@ export default async function CompDashboardPage() {
                         Packets
                       </dt>
                       <dd className="font-heading text-lg tabular-nums">
-                        {packetsIn}/{comp.requiredJudgeCount}
+                        {packetsIn}/{judges}
                       </dd>
                     </div>
                   </dl>
