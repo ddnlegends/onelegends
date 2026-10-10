@@ -8,6 +8,6 @@ The first person to claim a team or competition becomes its primary admin and ca
 
 AV viewing and judging stay anonymous while scores are open. A moderator plays each AV for the judges, who follow the same viewing order on private score sheets labeled Team 1, Team 2, and so on. Everyone uses the same rubric: choreography, formations, technique, sync and cleanliness, and overall impression.
 
-The circuit coordinates viewing and follows judging progress. Once the required judges submit, competition hosts can review rankings, scores, comments, and applicant details, then accept, waitlist, or decline teams.
+The circuit coordinates viewing and follows judging progress. Once every active judge submits, competition hosts finalize results and can review rankings, scores, comments, and applicant details, then accept, waitlist, or decline teams.
 
 OneLegends is for the people who run the season: teams, competition hosts, judges, moderators, and Legends staff.
