@@ -46,6 +46,7 @@ export default async function TeamProfilePage() {
             tshirtSize: d.tshirtSize,
             inAV: d.inAV,
             pointOfContact: d.pointOfContact,
+            soberMonitor: d.soberMonitor,
           }))}
         />
       </div>

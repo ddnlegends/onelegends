@@ -95,7 +95,7 @@
   --color-ready-soft: var(--ready-soft);
   --color-ready-line: var(--ready-line);
   --color-live-surface: var(--live-surface);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-graphik), Arial, sans-serif;
 }
 
 html,
@@ -116,8 +116,8 @@ select {
 }
 
 .font-heading {
-  font-family: var(--font-sans);
-  font-weight: 800;
+  font-family: var(--font-pontiac), var(--font-graphik), Arial, sans-serif;
+  font-weight: 400;
   letter-spacing: 0.04em;
 }
 

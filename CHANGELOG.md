@@ -4,6 +4,9 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Use the supplied Graphik family as the primary site font and Pontiac Inline for display headings, served locally with the app.
+- Add an optional Sober Monitor flag alongside Point of Contact on each roster dancer, with full roster and CSV/XLSX export visibility. Existing dancers default to unchecked.
+- Replace the public landing page role walkthrough with a season-wide feature overview for teams, hosts, judges, moderators, and Legends staff.
 - Align Prisma CLI and client at 6.19.3, update pinned GitHub Actions to Node 24 releases, and group future action updates into one Dependabot PR.
 - Refine all five role walkthroughs for shared judge/moderator viewing, separate team saves, invitations, and automatic results release. Add keyboard navigation and a How it works page reachable after login. Record the five-role QA findings and remaining acceptance work in `docs/qa-role-audit-2026-10-09.md`.
 - Add an optional Point of Contact flag to each roster dancer, including full roster views and CSV/XLSX exports; existing dancers default to unchecked.

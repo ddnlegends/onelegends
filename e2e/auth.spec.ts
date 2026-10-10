@@ -51,13 +51,14 @@ test("Register displays the unknown-account notice (no OAuth round trip)", async
   await expect(page.getByText(/no OneLegends account for that Google email/)).toBeVisible();
 });
 
-test("landing guide explains moderator viewing and current judge flow", async ({ page }) => {
+test("landing overview presents the season and every role without operational details", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("tab", { name: "Moderators" }).click();
-  await expect(page.getByRole("heading", { name: "How moderators run viewing" })).toBeVisible();
-  await expect(page.getByText(/Moving ahead waits until every approved judge/)).toBeVisible();
-  await page.getByRole("tab", { name: "Judges" }).click();
-  await expect(page.getByText(/plays audition videos on a shared screen/)).toBeVisible();
-  await page.getByRole("tab", { name: "Circuit ops" }).click();
-  await expect(page.getByRole("heading", { name: "How circuit ops runs the season" })).toBeVisible();
+  const overview = page.getByRole("region", { name: "How it works" });
+  await expect(overview.getByRole("heading", { name: "Build one team profile" })).toBeVisible();
+  await expect(overview.getByRole("heading", { name: "Watch and judge together" })).toBeVisible();
+  for (const role of ["teams", "competition hosts", "judges", "moderators", "Legends staff"]) {
+    await expect(overview.getByRole("heading", { name: `For ${role}` })).toBeVisible();
+  }
+  await expect(overview).not.toContainText("claim code");
+  await expect(overview).not.toContainText("admin email");
 });

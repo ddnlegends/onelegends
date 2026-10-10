@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { BrandMark } from "@/components/BrandMark";
 import { CompetitionTypeBadge } from "@/components/CompetitionTypeBadge";
 import { Lattice } from "@/components/Lattice";
-import { RoleGuide } from "@/components/RoleGuide";
+import { PublicHowItWorks } from "@/components/PublicHowItWorks";
 import { isCompetitionOpen } from "@/lib/judging";
 import { formatDateTime } from "@/lib/utils";
 
@@ -43,8 +43,7 @@ export default async function HomePage() {
             #journeytothecrown
           </p>
           <p className="mx-auto mt-6 max-w-xl text-base text-ink/80 sm:text-lg">
-            Applications for the Legends circuit. One team profile. Check the
-            comps. Send once.
+            One place for Legends applications, AV viewing, and judging.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link href="/register" className="btn btn-primary">
@@ -57,7 +56,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <RoleGuide signedIn={false} />
+      <PublicHowItWorks />
 
       <section className="border-y border-line bg-blush px-4 py-10">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-5">

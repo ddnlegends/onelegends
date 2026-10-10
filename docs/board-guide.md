@@ -24,7 +24,7 @@ Access checks run in server pages and actions. Giving someone a claim code or in
 2. Circuit ops creates team listings and competition listings in the admin dashboard. Set each competition type to **Partner** or **Non-partner**; existing listings default to Partner, and the type can be changed from **Competitions**. Both types use the same application and judging flow. For Non-partner competitions, approved competition admins automatically have moderator controls; Partner competitions need an assigned moderator. Give each primary contact the correct one-time claim code through your normal secure channel. A Google sign-in alone does not create or claim a team.
 3. First-time users must use **Register** (Continue with Google there). **Log In** with a Google account that has no OneLegends account sends them to Register with a notice instead of creating one.
 4. Primary team and competition admins claim their listings and invite secondary admins by email. The app shows invitations at login and on the dashboard; it does not send email. Tell invitees to register with the same Google email as the invitation.
-5. Teams complete the profile, logo, Drive AV, and roster. A complete profile is required to apply. Ask teams to give the Drive file a neutral name (not the team name), because the title can show when the moderator shares the video.
+5. Teams complete the profile, logo, Drive AV, and roster. Mark each dancer who is a Point of Contact or Sober Monitor; both optional flags can be set on the same dancer. A complete profile is required to apply. Ask teams to give the Drive file a neutral name (not the team name), because the title can show when the moderator shares the video.
 6. Competition admins fill dates, venue, production details, early and late application deadlines, and required judge count. They invite judges. Partner competitions also assign moderators; Non-partner admins can use the moderator controls themselves and may still assign another moderator. Deadlines are entered and shown in each viewer's own timezone, with the zone labeled. The early deadline is informational; the late deadline automatically closes applications.
 
 ## Payments and eligibility
@@ -60,7 +60,7 @@ Circuit tech admins can download data from **Dashboard → Export data**, or fro
 2. **Download .xlsx** gives one tab per dataset and opens in spreadsheet apps.
 3. Each dataset card also has a **CSV** link for a single table.
 
-Exports respect the anonymity gate: before a competition releases results, scores list teams as Team 1, Team 2, and so on, and lineups hide the viewing order. Files can contain emails, rosters, dietary restrictions, and claim codes. Keep them in the board's private Drive and do not post them publicly.
+Exports respect the anonymity gate: before a competition releases results, scores list teams as Team 1, Team 2, and so on, and lineups hide the viewing order. Roster exports include each dancer's Point of Contact and Sober Monitor flags. Files can contain emails, rosters, dietary restrictions, and claim codes. Keep them in the board's private Drive and do not post them publicly.
 
 ## Annual board handoff
 

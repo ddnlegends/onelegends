@@ -3,7 +3,7 @@ import { login, test } from "./helpers";
 
 test("all role walkthroughs work by keyboard on a narrow screen", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
-  await page.goto("/");
+  await page.goto("/guide");
   const teams = page.getByRole("tab", { name: "Teams", exact: true });
   await teams.focus();
   await teams.press("ArrowRight");

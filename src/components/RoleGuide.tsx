@@ -39,7 +39,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Fill Team Profile and roster",
-        body: "Save Team Profile with the blurb, captains, logo, years established, roster size, and a shareable Google Drive file for the audition video. Separately add each dancer with a shirt size, mark anyone serving as Point of Contact, and Save roster. Both saves must be complete before applying.",
+        body: "Save Team Profile with the blurb, captains, logo, years established, roster size, and a shareable Google Drive file for the audition video. Separately add each dancer with a shirt size, mark anyone serving as Point of Contact or Sober Monitor, and Save roster. Both saves must be complete before applying.",
       },
       {
         title: "Apply with checkboxes",

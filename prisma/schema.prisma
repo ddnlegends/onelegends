@@ -129,6 +129,7 @@ model Dancer {
   tshirtSize          String      @default("")
   inAV                Boolean     @default(false)
   pointOfContact      Boolean     @default(false)
+  soberMonitor        Boolean     @default(false)
 
   @@index([teamId])
 }

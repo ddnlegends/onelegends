@@ -18,6 +18,7 @@ export type DetailedTeam = {
     tshirtSize: string;
     inAV: boolean;
     pointOfContact: boolean;
+    soberMonitor: boolean;
   }>;
 };
 
@@ -69,12 +70,13 @@ export function TeamDetails({
           <p className="text-muted">No dancers have been added yet.</p>
         ) : (
           <div className="overflow-x-auto rounded-xl border border-line bg-card">
-            <table className="w-full min-w-[46rem] text-left text-sm">
+            <table className="w-full min-w-[54rem] text-left text-sm">
               <thead className="border-b border-line bg-blush text-xs uppercase tracking-wide text-muted">
                 <tr>
                   <th className="px-4 py-3 font-medium">Dancer</th>
                   <th className="px-4 py-3 font-medium">In AV</th>
                   <th className="px-4 py-3 font-medium">Point of Contact</th>
+                  <th className="px-4 py-3 font-medium">Sober Monitor</th>
                   <th className="px-4 py-3 font-medium">Shirt size</th>
                   <th className="px-4 py-3 font-medium">Dietary restrictions</th>
                 </tr>
@@ -85,6 +87,7 @@ export function TeamDetails({
                     <th className="px-4 py-3 font-medium">{dancer.name}</th>
                     <td className="px-4 py-3">{dancer.inAV ? "Yes" : "No"}</td>
                     <td className="px-4 py-3">{dancer.pointOfContact ? "Yes" : "No"}</td>
+                    <td className="px-4 py-3">{dancer.soberMonitor ? "Yes" : "No"}</td>
                     <td className="px-4 py-3">{dancer.tshirtSize || "—"}</td>
                     <td className="px-4 py-3">{dancer.dietaryRestrictions || "—"}</td>
                   </tr>

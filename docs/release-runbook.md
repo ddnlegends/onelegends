@@ -60,6 +60,8 @@ Apply only reviewed, backward-compatible migrations with `npm run db:migrate` us
 
 The Point of Contact change adds `20261009120000_dancer_point_of_contact`. Apply it before deploying code that reads the new column. Existing roster rows receive `false`; the previous app ignores the column if a code rollback is needed. Confirm the four production demonstration accounts exist with password hashes and the intended access before inviting testers.
 
+The Sober Monitor change adds `20261010120000_dancer_sober_monitor`. Apply it before deploying code that reads the new column. Existing roster rows receive `false`; the previous app ignores the column if a code rollback is needed.
+
 Test both a clean migration and an upgrade of a restored, sanitized prior schema with representative rows. For destructive schema work, use expand/migrate/contract: add compatible schema, deploy code that handles both, backfill and verify, then remove old schema in a later release. Do not make the app deploy depend on a migration that has not completed.
 
 This branch adds `20261006170000_claim_attempt_limits`: two columns on `User` and a nonnegative-count constraint. Apply it **before** deploying the new app. Existing users start with an empty attempt window and zero attempts. Old app code ignores these columns, so leave them in place during any code rollback. The limiter fails closed if its table query is unavailable; an app deployed before the migration will refuse all claims. The local upgrade check preserved synthetic rows; a production-sized upgrade/backup rehearsal is still required. PostgreSQL takes a table lock for the schema change, so schedule it outside an active judging window and observe lock waits.

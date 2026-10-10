@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Montserrat } from "next/font/google";
+import localFont from "next/font/local";
 import { Nav } from "@/components/Nav";
 import { ThemeSelect } from "@/components/ThemeSelect";
 import { NavigationPulse } from "@/components/NavigationPulse";
@@ -8,10 +8,27 @@ import { PendingInviteGate } from "@/components/PendingInviteGate";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
-const sans = Montserrat({
-  variable: "--font-sans",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
+const graphik = localFont({
+  src: [
+    { path: "./fonts/Graphik-Thin.otf", weight: "100", style: "normal" },
+    { path: "./fonts/Graphik-Extralight.otf", weight: "200", style: "normal" },
+    { path: "./fonts/Graphik-Light.otf", weight: "300", style: "normal" },
+    { path: "./fonts/Graphik-Regular.otf", weight: "400", style: "normal" },
+    { path: "./fonts/Graphik-Medium.otf", weight: "500", style: "normal" },
+    { path: "./fonts/Graphik-Medium.otf", weight: "600", style: "normal" },
+    { path: "./fonts/Graphik-Medium.otf", weight: "700", style: "normal" },
+    { path: "./fonts/Graphik-Black.otf", weight: "800", style: "normal" },
+    { path: "./fonts/Graphik-Black.otf", weight: "900", style: "normal" },
+  ],
+  variable: "--font-graphik",
+  display: "swap",
+});
+
+const pontiac = localFont({
+  src: "./fonts/Pontiac-Inline-Regular.otf",
+  variable: "--font-pontiac",
+  display: "swap",
+  weight: "400",
 });
 
 export const metadata: Metadata = {
@@ -22,7 +39,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${sans.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="en" className={`${graphik.variable} ${pontiac.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
