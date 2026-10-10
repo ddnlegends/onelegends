@@ -58,6 +58,8 @@ Record date/time in Eastern Time, release SHA, Vercel deployment ID/URL, previou
 
 Apply only reviewed, backward-compatible migrations with `npm run db:migrate` using the intended protected environment. Confirm `npx prisma migrate status` before and after. Never run seed/reset against production. The local guard is a second line of defense, not a reason to put production URLs in a developer shell.
 
+The production build runs a read-only Prisma migration-status check and fails if migrations are pending or the database cannot be checked. Apply and verify migrations before pushing code to `main`; the build check prevents another schema mismatch from reaching the live domain, but does not apply migrations or replace a backup and restore rehearsal. Production secrets must be scoped to Production; configure a separate database and credentials before enabling functional Preview deployments.
+
 The Point of Contact change adds `20261009120000_dancer_point_of_contact`. Apply it before deploying code that reads the new column. Existing roster rows receive `false`; the previous app ignores the column if a code rollback is needed. Confirm the four production demonstration accounts exist with password hashes and the intended access before inviting testers.
 
 The Sober Monitor change adds `20261010120000_dancer_sober_monitor`. Apply it before deploying code that reads the new column. Existing roster rows receive `false`; the previous app ignores the column if a code rollback is needed.
