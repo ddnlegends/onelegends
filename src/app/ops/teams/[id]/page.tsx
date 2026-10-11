@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requirePlatformAdminPage } from "@/lib/page-guards";
 import { TeamDetails } from "@/components/TeamDetails";
+import { RemoveApplicationForm } from "@/components/PaymentForms";
 
 export default async function OpsTeamDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   await requirePlatformAdminPage();
@@ -25,8 +26,13 @@ export default async function OpsTeamDetailsPage({ params }: { params: Promise<{
         {team.applications.length ? (
           <ul className="divide-y divide-line rounded-xl border border-line bg-card">
             {team.applications.map((application) => (
-              <li key={application.id} className="flex justify-between gap-4 px-4 py-3 text-sm">
-                <span>{application.competition.name}</span><span>{application.status}</span>
+              <li key={application.id} className="flex flex-wrap justify-between gap-4 px-4 py-3 text-sm">
+                <span>{application.competition.name} · {application.status}{application.removedAt ? " · Removed" : ""}</span>
+                {application.removedAt ? (
+                  <span className="text-muted">{application.removalReason}</span>
+                ) : application.viewingPosition == null ? (
+                  <RemoveApplicationForm applicationId={application.id} />
+                ) : <span className="text-muted">Viewing roster locked</span>}
               </li>
             ))}
           </ul>

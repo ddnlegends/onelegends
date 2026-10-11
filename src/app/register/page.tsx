@@ -16,7 +16,7 @@ export default async function RegisterPage({
           <h1 className="mt-2 font-heading text-3xl tracking-[0.08em]">Create account</h1>
           <p className="mt-2 text-sm text-muted">
             Create your account with Google, then claim a team or competition
-            with its code. Payment instructions are separate from sign-in.
+            with its code. OneLegends registration is $25 per team, $25 per partner competition, or $40 per non-partner competition. Payment is external and must be verified before AV viewing.
           </p>
         </div>
         {error === "no-account" ? (

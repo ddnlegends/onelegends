@@ -13,6 +13,7 @@ import { ApplicationStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
 import { isPlatformAdmin, requireActiveCompetition } from "@/lib/team-access";
+import { visibleApplicationWhere } from "@/lib/payment-eligibility";
 
 const profileSchema = z.object({
   dates: z.string(),
@@ -114,6 +115,8 @@ export async function saveCompProfile(
   revalidatePath("/comp/profile");
   revalidatePath("/comp/judges");
   revalidatePath("/comp/results");
+  revalidatePath("/comp/applicants");
+  revalidatePath("/ops/payments");
   revalidatePath("/ops/comps", "layout");
   revalidatePath("/ops/competitions", "layout");
   revalidatePath("/moderator", "layout");
@@ -139,7 +142,7 @@ export async function setApplicationStatus(
   }
 
   const app = await prisma.application.findFirst({
-    where: { id: applicationId, competitionId: competition.id },
+    where: { id: applicationId, competitionId: competition.id, ...visibleApplicationWhere },
   });
   if (!app) return { error: "Application not found." };
 
@@ -150,6 +153,8 @@ export async function setApplicationStatus(
 
   revalidatePath("/comp");
   revalidatePath("/comp/results");
+  revalidatePath("/comp/applicants");
+  revalidatePath("/ops/payments");
   revalidatePath(`/comp/applicants/${app.teamId}`);
   return {};
 }

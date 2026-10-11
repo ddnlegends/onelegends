@@ -50,7 +50,7 @@ model User {
   judge                  JudgeProfile?
   memberships            TeamMembership[]
   competitionMemberships CompetitionMembership[]
-  moderatorAccess     ModeratorAccess[]
+  moderatorAccess        ModeratorAccess[]
 }
 
 model PlatformAdminInvite {
@@ -60,22 +60,25 @@ model PlatformAdminInvite {
 }
 
 model TeamProfile {
-  id               String    @id @default(cuid())
-  slug             String    @unique
-  claimCode        String    @unique
-  claimedAt        DateTime?
-  name             String
-  photoUrl         String    @default("")
-  blurb            String    @default("")
-  wikiUrl          String    @default("")
-  avDriveUrl       String    @default("")
-  captains         String    @default("")
-  yearsEstablished Int?
-  rosterSize       Int?
-  applyBlocked     Boolean   @default(false)
-  applyBlockReason String    @default("")
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  id                      String    @id @default(cuid())
+  slug                    String    @unique
+  claimCode               String    @unique
+  claimedAt               DateTime?
+  name                    String
+  photoUrl                String    @default("")
+  blurb                   String    @default("")
+  wikiUrl                 String    @default("")
+  avDriveUrl              String    @default("")
+  captains                String    @default("")
+  yearsEstablished        Int?
+  rosterSize              Int?
+  applyBlocked            Boolean   @default(false)
+  applyBlockReason        String    @default("")
+  registrationFeeCents    Int       @default(2500)
+  registrationPaidAt      DateTime?
+  registrationPaidByEmail String?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 
   dancers      Dancer[]
   applications Application[]
@@ -136,40 +139,43 @@ model Dancer {
 }
 
 model CompetitionProfile {
-  id                  String    @id @default(cuid())
-  userId              String?   @unique
-  user                User?     @relation("CompPrimary", fields: [userId], references: [id], onDelete: SetNull)
-  slug                String    @unique
-  claimCode           String    @unique
-  claimedAt           DateTime?
-  name                String
-  isPartner           Boolean   @default(true)
-  acceptingApps       Boolean   @default(true)
+  id                       String    @id @default(cuid())
+  userId                   String?   @unique
+  user                     User?     @relation("CompPrimary", fields: [userId], references: [id], onDelete: SetNull)
+  slug                     String    @unique
+  claimCode                String    @unique
+  claimedAt                DateTime?
+  name                     String
+  isPartner                Boolean   @default(true)
+  registrationFeeCents     Int       @default(2500)
+  registrationPaidAt       DateTime?
+  registrationPaidByEmail  String?
+  acceptingApps            Boolean   @default(true)
   earlyApplicationDeadline DateTime?
-  applicationDeadline DateTime?
+  applicationDeadline      DateTime?
   // Legacy threshold kept for historical data; finalization uses the active approved panel.
-  requiredJudgeCount  Int       @default(3)
-  resultsReleasedAt   DateTime?
-  resultsFinalizedByEmail String?
-  dates               String    @default("")
-  location            String    @default("")
-  venue               String    @default("")
-  stageSize           String    @default("")
-  productionNotes     String    @default("")
-  lighting            String    @default("")
-  description         String    @default("")
-  eventDate           DateTime?
-  judgingOpen         Boolean   @default(false)
-  livePosition        Int?
-  liveUpdatedAt       DateTime?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  requiredJudgeCount       Int       @default(3)
+  resultsReleasedAt        DateTime?
+  resultsFinalizedByEmail  String?
+  dates                    String    @default("")
+  location                 String    @default("")
+  venue                    String    @default("")
+  stageSize                String    @default("")
+  productionNotes          String    @default("")
+  lighting                 String    @default("")
+  description              String    @default("")
+  eventDate                DateTime?
+  judgingOpen              Boolean   @default(false)
+  livePosition             Int?
+  liveUpdatedAt            DateTime?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
 
-  applications        Application[]
-  judgeAssignments    JudgeAssignment[]
-  memberships         CompetitionMembership[]
-  invites             CompInvite[]
-  judgeInvites        JudgeInvite[]
+  applications     Application[]
+  judgeAssignments JudgeAssignment[]
+  memberships      CompetitionMembership[]
+  invites          CompInvite[]
+  judgeInvites     JudgeInvite[]
   moderatorAccess  ModeratorAccess[]
   moderatorInvites ModeratorInvite[]
 }
@@ -240,13 +246,18 @@ model JudgeInvite {
 }
 
 model Application {
-  id              String            @id @default(cuid())
-  teamId          String
-  competitionId   String
-  status          ApplicationStatus @default(PENDING)
-  viewingPosition Int?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  id                         String            @id @default(cuid())
+  teamId                     String
+  competitionId              String
+  status                     ApplicationStatus @default(PENDING)
+  viewingPosition            Int?
+  removedAt                  DateTime?
+  removedByEmail             String?
+  removalReason              String            @default("")
+  compPaymentReceivedAt      DateTime?
+  compPaymentRecordedByEmail String?
+  createdAt                  DateTime          @default(now())
+  updatedAt                  DateTime          @updatedAt
 
   team         TeamProfile        @relation(fields: [teamId], references: [id], onDelete: Cascade)
   competition  CompetitionProfile @relation(fields: [competitionId], references: [id], onDelete: Cascade)
@@ -271,20 +282,20 @@ model JudgeProfile {
 }
 
 model JudgeAssignment {
-  id            String             @id @default(cuid())
-  judgeId       String
-  judge         JudgeProfile       @relation(fields: [judgeId], references: [id], onDelete: Cascade)
-  competitionId String
-  competition   CompetitionProfile @relation(fields: [competitionId], references: [id], onDelete: Cascade)
-  status        JudgeRequestStatus @default(PENDING)
-  requestedAt   DateTime           @default(now())
-  decidedAt     DateTime?
-  submittedAt   DateTime?
-  removedAt     DateTime?
+  id             String             @id @default(cuid())
+  judgeId        String
+  judge          JudgeProfile       @relation(fields: [judgeId], references: [id], onDelete: Cascade)
+  competitionId  String
+  competition    CompetitionProfile @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  status         JudgeRequestStatus @default(PENDING)
+  requestedAt    DateTime           @default(now())
+  decidedAt      DateTime?
+  submittedAt    DateTime?
+  removedAt      DateTime?
   removedByEmail String?
-  removalReason String @default("")
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
+  removalReason  String             @default("")
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 
   slots  JudgeViewingSlot[]
   scores JudgeScore[]

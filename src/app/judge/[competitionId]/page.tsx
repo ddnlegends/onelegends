@@ -14,6 +14,7 @@ import {
   scoreComment,
 } from "@/lib/judging";
 import { formatDateTime } from "@/lib/utils";
+import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 
 export default async function JudgePacketPage({
   params,
@@ -42,7 +43,7 @@ export default async function JudgePacketPage({
     where: { id: assignment.id },
     include: {
       competition: true,
-      slots: { orderBy: { position: "asc" }, include: { score: true } },
+      slots: { where: { application: viewingEligibleApplicationWhere }, orderBy: { position: "asc" }, include: { score: true } },
     },
   });
   if (!fresh) notFound();

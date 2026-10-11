@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { hasModeratorAccess } from "@/lib/moderator";
 import { rankTeams } from "@/lib/results";
 import { formatDateTime } from "@/lib/utils";
+import { visibleApplicationWhere } from "@/lib/payment-eligibility";
 
 export default async function ModeratorResultsPage({
   params,
@@ -22,6 +23,7 @@ export default async function ModeratorResultsPage({
       name: true,
       resultsReleasedAt: true,
       applications: {
+        where: visibleApplicationWhere,
         select: {
           id: true,
           teamId: true,
@@ -35,6 +37,7 @@ export default async function ModeratorResultsPage({
         select: {
           judge: { select: { name: true } },
           slots: {
+            where: { application: visibleApplicationWhere },
             select: {
               applicationId: true,
               score: {

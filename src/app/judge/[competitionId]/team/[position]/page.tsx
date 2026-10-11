@@ -9,6 +9,7 @@ import {
   judgingLockMessage,
   viewingNeighbors,
 } from "@/lib/judging";
+import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 
 export default async function JudgeTeamPage({
   params,
@@ -43,7 +44,7 @@ export default async function JudgeTeamPage({
   }
 
   const slots = await prisma.judgeViewingSlot.findMany({
-    where: { assignmentId: assignment.id },
+    where: { assignmentId: assignment.id, application: viewingEligibleApplicationWhere },
     select: { position: true, score: true },
     orderBy: { position: "asc" },
   });

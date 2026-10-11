@@ -35,6 +35,7 @@ import {
 import { ApplyForm } from "@/components/ApplyForm";
 import { InstantSelect } from "@/components/InstantSelect";
 import { TeamPhoto } from "@/components/TeamPhoto";
+import { visibleApplicationWhere } from "@/lib/payment-eligibility";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -82,7 +83,7 @@ export default async function DashboardPage() {
       ? prisma.competitionProfile.findUnique({
           where: { id: activeCompId },
           include: {
-            applications: true,
+            applications: { where: visibleApplicationWhere },
             judgeAssignments: {
               where: { status: "APPROVED" },
               select: { submittedAt: true },
@@ -563,6 +564,7 @@ async function OpsDashboard({
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Link href="/ops/teams" className="group rounded-2xl border border-line bg-card p-6 transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md"><p className="text-xs uppercase tracking-widest text-muted">Circuit management</p><h2 className="mt-1 font-heading text-2xl group-hover:text-accent">Teams</h2><p className="mt-2 text-sm text-muted">Claim codes, owners, profiles, rosters, applications, and application blocks.</p><span className="mt-5 inline-flex text-sm font-semibold text-accent">Manage teams →</span></Link>
+        <Link href="/ops/payments" className="group rounded-2xl border border-line bg-card p-6 transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md"><p className="text-xs uppercase tracking-widest text-muted">Circuit management</p><h2 className="mt-1 font-heading text-2xl group-hover:text-accent">Payments</h2><p className="mt-2 text-sm text-muted">Verify OneLegends fees and view competition payment tracking.</p><span className="mt-5 inline-flex text-sm font-semibold text-accent">View payments →</span></Link>
         <Link href="/ops/competitions" className="group rounded-2xl border border-line bg-card p-6 transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md"><p className="text-xs uppercase tracking-widest text-muted">Circuit management</p><h2 className="mt-1 font-heading text-2xl group-hover:text-accent">Competitions</h2><p className="mt-2 text-sm text-muted">Claim codes, owners, event details, Moderator access, applications, and live-dashboard links.</p><span className="mt-5 inline-flex text-sm font-semibold text-accent">Manage competitions →</span></Link>
         <Link href="/ops/export" className="group rounded-2xl border border-line bg-card p-6 transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md"><p className="text-xs uppercase tracking-widest text-muted">Reports</p><h2 className="mt-1 font-heading text-2xl group-hover:text-accent">Export data</h2><p className="mt-2 text-sm text-muted">Download judging scores, results, lineups, rosters, details, and access lists as .xlsx or CSV.</p><span className="mt-5 inline-flex text-sm font-semibold text-accent">Open exports →</span></Link>
       </div>

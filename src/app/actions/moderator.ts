@@ -11,6 +11,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
 import { isJudgingOpen, isScoreComplete, judgingLockMessage } from "@/lib/judging";
 import { hasModeratorAccess } from "@/lib/moderator";
+import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 
 export async function setLiveTeam(
   _prev: { error?: string; ok?: boolean; message?: string } | undefined,
@@ -40,7 +41,7 @@ export async function setLiveTeam(
 
     if (position != null) {
       const applications = await tx.application.findMany({
-        where: { competitionId, viewingPosition: { lte: position } },
+        where: { competitionId, viewingPosition: { lte: position }, ...viewingEligibleApplicationWhere },
         select: { viewingPosition: true },
         orderBy: { viewingPosition: "asc" },
       });

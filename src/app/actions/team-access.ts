@@ -18,6 +18,7 @@ import { requireUser } from "@/app/actions/auth";
 import { claimAttemptError } from "@/lib/claim-rate-limit";
 import { blurEmail, normalizeClaimCode } from "@/lib/claim-code";
 import { hasModeratorAccess } from "@/lib/moderator";
+import { competitionRegistrationFeeCents } from "@/lib/payment-eligibility";
 import {
   isCompAdmin,
   isCompPrimary,
@@ -45,6 +46,8 @@ function revalidateAccessPaths() {
   revalidatePath("/comp/profile");
   revalidatePath("/comp/judges");
   revalidatePath("/comp/results");
+  revalidatePath("/comp/applicants");
+  revalidatePath("/payments");
   revalidatePath("/ops/comps", "layout");
   revalidatePath("/ops/competitions", "layout");
   revalidatePath("/ops/teams", "layout");
@@ -938,6 +941,7 @@ export async function createCompetition(
     data: {
       name: parsed.data.name,
       isPartner: parsed.data.type === "partner",
+      registrationFeeCents: competitionRegistrationFeeCents(parsed.data.type === "partner"),
       slug,
       claimCode,
       description: `${parsed.data.name}. Claim this listing with the official claim code after you log in.`,
@@ -993,9 +997,17 @@ export async function setCompetitionPartnerStatus(
     }
   }
 
+  const currentFee = await prisma.competitionProfile.findUnique({
+    where: { id: parsed.data.competitionId }, select: { registrationPaidAt: true },
+  });
   const updated = await prisma.competitionProfile.updateMany({
     where: { id: parsed.data.competitionId },
-    data: { isPartner: parsed.data.type === "partner" },
+    data: {
+      isPartner: parsed.data.type === "partner",
+      ...(!currentFee?.registrationPaidAt
+        ? { registrationFeeCents: competitionRegistrationFeeCents(parsed.data.type === "partner") }
+        : {}),
+    },
   });
   if (!updated.count) return { error: "Competition not found." };
 
@@ -1017,7 +1029,6 @@ export async function resetTeamClaim(
   const teamId = String(formData.get("teamId") ?? "");
   const team = await prisma.teamProfile.findUnique({ where: { id: teamId } });
   if (!team) return { error: "Team not found." };
-
   const claimCode = await uniqueTeamClaimCode();
   await prisma.$transaction([
     prisma.teamMembership.deleteMany({ where: { teamId } }),
@@ -1054,11 +1065,23 @@ export async function setTeamApplyBlock(
   }
   const team = await prisma.teamProfile.findUnique({ where: { id: teamId } });
   if (!team) return { error: "Team not found." };
-
-  await prisma.teamProfile.update({
-    where: { id: teamId },
-    data: { applyBlocked: blocked, applyBlockReason: blocked ? reason : "" },
+  const result = await prisma.$transaction(async (tx) => {
+    const competitions = await tx.application.findMany({
+      where: { teamId }, select: { competitionId: true }, orderBy: { competitionId: "asc" },
+    });
+    for (const application of competitions) {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${application.competitionId}))`;
+    }
+    if (blocked && await tx.application.findFirst({
+      where: { teamId, viewingPosition: { not: null } }, select: { id: true },
+    })) return { error: "This team is already in a viewing order. Contact tech ops before blocking it." };
+    await tx.teamProfile.update({
+      where: { id: teamId },
+      data: { applyBlocked: blocked, applyBlockReason: blocked ? reason : "" },
+    });
+    return { ok: true };
   });
+  if (result.error) return result;
   revalidateAccessPaths();
   revalidatePath("/ops/teams", "layout");
   revalidatePath("/comps", "layout");

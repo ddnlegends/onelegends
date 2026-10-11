@@ -19,6 +19,7 @@ import {
 } from "@/lib/judging";
 import { isPlatformAdmin } from "@/lib/team-access";
 import { describePanelBlockers, judgePanelCompletion } from "@/lib/judge-panel-completion";
+import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 
 function revalidateJudging(competitionId: string) {
   revalidatePath("/dashboard");
@@ -63,14 +64,17 @@ export async function setJudgingOpen(
     if (!isCompetitionClaimed(competition)) {
       return { error: "A competition admin has to claim this listing first." };
     }
+    if (!competition.registrationPaidAt) {
+      return { error: "The competition's OneLegends registration payment must be verified before viewing." };
+    }
     if (isCompetitionOpen(competition)) {
       return { error: "Close applications before opening judging." };
     }
     const apps = await prisma.application.count({
-      where: { competitionId: competition.id },
+      where: { competitionId: competition.id, ...viewingEligibleApplicationWhere },
     });
     if (apps === 0) {
-      return { error: "No applications to judge yet." };
+      return { error: "No paid, unblocked teams are eligible for viewing yet." };
     }
     const approvedJudges = await prisma.judgeAssignment.count({
       where: { competitionId: competition.id, status: "APPROVED" },
@@ -79,6 +83,10 @@ export async function setJudgingOpen(
       return { error: "Approve at least one judge before opening viewing." };
     }
     await ensureCompetitionJudgeSlots(competition.id);
+    const ordered = await prisma.application.count({
+      where: { competitionId: competition.id, viewingPosition: { not: null }, ...viewingEligibleApplicationWhere },
+    });
+    if (ordered === 0) return { error: "No paid, unblocked teams are in the viewing order." };
     const updated = await prisma.competitionProfile.updateMany({
       where: { id: competition.id, resultsReleasedAt: null },
       data: { judgingOpen: true, acceptingApps: false },
@@ -99,12 +107,12 @@ export async function setJudgingOpen(
       select: {
         judgingOpen: true,
         resultsReleasedAt: true,
-        applications: { select: { id: true } },
+        applications: { where: viewingEligibleApplicationWhere, select: { id: true } },
         judgeAssignments: {
           where: { status: "APPROVED" },
           select: {
             submittedAt: true,
-            slots: { select: { applicationId: true, score: true } },
+            slots: { where: { application: viewingEligibleApplicationWhere }, select: { applicationId: true, score: true } },
           },
         },
       },

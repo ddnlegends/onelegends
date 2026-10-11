@@ -6,6 +6,7 @@ import { StatusSelect } from "@/components/StatusSelect";
 import { rankTeams } from "@/lib/results";
 import { formatDateTime } from "@/lib/utils";
 import { getActiveCompetitionId } from "@/lib/team-access";
+import { visibleApplicationWhere } from "@/lib/payment-eligibility";
 
 export default async function CompResultsPage() {
   const session = await auth();
@@ -15,7 +16,7 @@ export default async function CompResultsPage() {
   const competition = await prisma.competitionProfile.findUnique({
     where: { id: competitionId },
     include: {
-      applications: { include: { team: true } },
+      applications: { where: visibleApplicationWhere, include: { team: true } },
       judgeAssignments: {
         where: { status: "APPROVED" },
         include: {

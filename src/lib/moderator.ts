@@ -1,6 +1,7 @@
 import { cache } from "react";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { visibleApplicationWhere } from "@/lib/payment-eligibility";
 
 /** Non-partner competition admins run the same live console as assigned moderators. */
 function moderatorCompetitionWhere(userId: string): Prisma.CompetitionProfileWhereInput {
@@ -87,7 +88,7 @@ export const getModeratorCompetitions = cache(async (userId: string) => {
       judgingOpen: true,
       livePosition: true,
       resultsReleasedAt: true,
-      _count: { select: { applications: true } },
+      _count: { select: { applications: { where: visibleApplicationWhere } } },
     },
     orderBy: { name: "asc" },
   });

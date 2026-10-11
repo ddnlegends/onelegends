@@ -9,6 +9,7 @@ export default function ClaimPage() {
           Enter a claim code to attach this login to a team or a competition.
           First valid claim becomes the primary admin. You will be asked to
           confirm before it goes through.
+          OneLegends registration costs $25 for a team or partner competition and $40 for a non-partner competition. Tech admins verify external payment before AV viewing.
         </p>
       </div>
       <section className="grid gap-4 lg:grid-cols-2">

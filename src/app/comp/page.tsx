@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { isCompetitionOpen } from "@/lib/judging";
+import { visibleApplicationWhere } from "@/lib/payment-eligibility";
 import {
   getActiveCompetitionId,
   getApprovedCompMemberships,
@@ -45,6 +46,7 @@ export default async function CompDashboardPage() {
     where: { id: competitionId },
     include: {
       applications: {
+        where: visibleApplicationWhere,
         include: {
           team: { include: { dancers: true } },
         },

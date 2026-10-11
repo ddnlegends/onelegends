@@ -1,6 +1,7 @@
 /** Finalization is explicit and serialized with scoring and roster changes. */
 import { prisma } from "@/lib/prisma";
 import { judgePanelCompletion } from "@/lib/judge-panel-completion";
+import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 
 export async function finalizeResults(competitionId: string, actorEmail: string) {
   return prisma.$transaction(async (tx) => {
@@ -9,14 +10,14 @@ export async function finalizeResults(competitionId: string, actorEmail: string)
       where: { id: competitionId },
       select: {
         resultsReleasedAt: true,
-        applications: { select: { id: true } },
+        applications: { where: viewingEligibleApplicationWhere, select: { id: true } },
         judgeInvites: { select: { id: true }, take: 1 },
         judgeAssignments: {
           where: { status: { in: ["APPROVED", "PENDING"] } },
           select: {
             status: true,
             submittedAt: true,
-            slots: { select: { applicationId: true, score: true } },
+            slots: { where: { application: viewingEligibleApplicationWhere }, select: { applicationId: true, score: true } },
           },
         },
       },

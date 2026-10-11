@@ -36,6 +36,7 @@ function completeTeam(team: { slug: string; name: string; claimCode: string }) {
   return {
     ...team,
     claimedAt: new Date(),
+    registrationPaidAt: new Date(),
     photoUrl: "https://example.org/e2e-team.jpg",
     blurb: `${team.name} is a fixture team for automated tests.`,
     avDriveUrl: DRIVE_FILE,
@@ -97,6 +98,7 @@ export async function seedE2E() {
       data: {
         ...E2E.comps.open,
         claimedAt: new Date(),
+        registrationPaidAt: new Date(),
         acceptingApps: true,
         applicationDeadline: nextMonth,
         dates: "Fixture dates",
@@ -108,6 +110,7 @@ export async function seedE2E() {
       data: {
         ...E2E.comps.closed,
         claimedAt: new Date(),
+        registrationPaidAt: new Date(),
         acceptingApps: false,
         applicationDeadline: lastMonth,
       },
@@ -116,6 +119,7 @@ export async function seedE2E() {
       data: {
         ...E2E.comps.showcase,
         claimedAt: new Date(),
+        registrationPaidAt: new Date(),
         userId: compAdmin.id,
         acceptingApps: false,
         applicationDeadline: lastMonth,

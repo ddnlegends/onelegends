@@ -7,6 +7,7 @@
  */
 import { prisma } from "@/lib/prisma";
 import { shuffleCopy } from "@/lib/judging-rules";
+import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 
 export * from "@/lib/judging-rules";
 
@@ -28,9 +29,9 @@ export async function ensureSharedViewingOrder(
   competitionId: string,
   onlyAssignmentId?: string,
 ) {
-  const [order, assignments] = await Promise.all([
+  const [allEligible, assignments, existingOrder] = await Promise.all([
     prisma.application.findMany({
-      where: { competitionId },
+      where: { competitionId, ...viewingEligibleApplicationWhere },
       select: { id: true, viewingPosition: true },
     }),
     prisma.judgeAssignment.findMany({
@@ -44,7 +45,12 @@ export async function ensureSharedViewingOrder(
         slots: { select: { id: true, applicationId: true, position: true } },
       },
     }),
+    prisma.application.findFirst({ where: { competitionId, viewingPosition: { not: null } }, select: { id: true } }),
   ]);
+  // Once positions exist, the roster is frozen. Later payment changes cannot add AVs.
+  const order = existingOrder
+    ? allEligible.filter((app) => app.viewingPosition != null)
+    : allEligible;
   if (order.length === 0) return;
   const orderReady = order.every((app) => app.viewingPosition != null);
   if (
@@ -59,10 +65,16 @@ export async function ensureSharedViewingOrder(
       // Serializes concurrent page loads that would otherwise race on positions.
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${competitionId}))`;
 
-      const apps = await tx.application.findMany({
-        where: { competitionId },
+      const [allApps, existing] = await Promise.all([
+        tx.application.findMany({
+        where: { competitionId, ...viewingEligibleApplicationWhere },
         select: { id: true, viewingPosition: true },
-      });
+        }),
+        tx.application.findFirst({ where: { competitionId, viewingPosition: { not: null } }, select: { id: true } }),
+      ]);
+      const apps = existing
+        ? allApps.filter((app) => app.viewingPosition != null)
+        : allApps;
       const missing = apps.filter((app) => app.viewingPosition == null);
       if (missing.length) {
         let next = apps.reduce(

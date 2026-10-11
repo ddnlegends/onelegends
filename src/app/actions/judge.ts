@@ -21,6 +21,7 @@ import {
   isScoreComplete,
   type RubricKey,
 } from "@/lib/judging";
+import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 
 export async function saveJudgeProfile(
   _prev: { error?: string; ok?: boolean } | undefined,
@@ -110,9 +111,9 @@ export async function saveTeamScores(
   }
   const slot = await prisma.judgeViewingSlot.findUnique({
     where: { assignmentId_position: { assignmentId, position } },
-    select: { id: true },
+    select: { id: true, application: { select: { removedAt: true, team: { select: { applyBlocked: true, registrationPaidAt: true } } } } },
   });
-  if (!slot) return { error: "That team slot was not found." };
+  if (!slot || slot.application.removedAt || slot.application.team.applyBlocked || !slot.application.team.registrationPaidAt) return { error: "That team slot was not found." };
 
   const saved = await prisma.$transaction(async (tx) => {
     await lockAssignment(tx, assignment.competitionId, assignmentId);
@@ -178,7 +179,7 @@ export async function submitJudgingPacket(
     },
     include: {
       competition: true,
-      slots: { include: { score: true } },
+      slots: { where: { application: viewingEligibleApplicationWhere }, include: { score: true } },
     },
   });
   if (!assignment) return { error: "Assignment not found." };
@@ -189,7 +190,7 @@ export async function submitJudgingPacket(
     await lockAssignment(tx, assignment.competitionId, assignment.id);
     const fresh = await tx.judgeAssignment.findFirst({
       where: { id: assignment.id, status: "APPROVED", judge: { userId: user.id } },
-      select: { submittedAt: true, competition: true, slots: { include: { score: true } } },
+      select: { submittedAt: true, competition: true, slots: { where: { application: viewingEligibleApplicationWhere }, include: { score: true } } },
     });
     if (!fresh) return "Assignment not found.";
     if (fresh.submittedAt) return null;

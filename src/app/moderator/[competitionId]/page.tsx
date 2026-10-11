@@ -15,6 +15,7 @@ import {
   judgingLockMessage,
 } from "@/lib/judging";
 import { hasModeratorAccess } from "@/lib/moderator";
+import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 
 export default async function ModeratorCompetitionPage({
   params,
@@ -37,7 +38,7 @@ export default async function ModeratorCompetitionPage({
     where: { id: competitionId },
     include: {
       applications: {
-        where: { viewingPosition: { not: null } },
+        where: { viewingPosition: { not: null }, ...viewingEligibleApplicationWhere },
         orderBy: { viewingPosition: "asc" },
         select: {
           id: true,
@@ -50,7 +51,7 @@ export default async function ModeratorCompetitionPage({
         select: {
           id: true,
           judge: { select: { name: true } },
-          slots: { select: { applicationId: true, score: true } },
+          slots: { where: { application: viewingEligibleApplicationWhere }, select: { applicationId: true, score: true } },
         },
       },
     },
