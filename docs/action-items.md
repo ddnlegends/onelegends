@@ -18,7 +18,7 @@ What the board asked for, what is done, and what is still open. The [README](../
 
 | Item | Owner | Status |
 | --- | --- | --- |
-| [Payments](#payments) | Board, then tech | Manual Zelle/PayPal address shown; no in-app confirmation |
+| [Payments](#payments) | Board, then tech | Manual external payments with in-app status tracking; no automatic transaction confirmation |
 | [DDN app integration](#ddn-app-integration) | Board and app team | Needs a decision |
 | [Branding review](#branding-review) | Sreya and MD | Not started |
 | [Regression workflow merge](#regression-workflow-merge) | Rushi and tech | Expanded suite prepared; merge/CI activation pending |
@@ -30,11 +30,14 @@ What the board asked for, what is done, and what is still open. The [README](../
 
 ### Payments
 
-The site does not take money yet. The home, team, apply, and Payments pages explain the manual process. Teams can pay via Zelle or PayPal to `legends@desidancenetwork.org` after confirming the amount and recipient. The memo is `{Team}'s OneLegends Payment`.
+The site does not take money. It tracks two separate external payment flows:
 
-For future payment integration, the board would need either an official payment link for each recipient (circuit dues, and each competition's entry fee), or a PayPal Business account with API keys if the app should confirm payments itself.
+1. Circuit ops manually records the OneLegends registration fee: $25 per team, $25 per Partner competition, or $40 per Non-partner competition. Both the competition and each team must be marked paid before the team's AV can enter the frozen viewing roster. Teams may apply while payment is pending.
+2. After results are final, an Accepted team's host payment is tracked by that competition's admins with **Payment received**. This status does not affect judging or results. Circuit ops can view it but does not verify it for the host.
 
-With the current Zelle or PayPal address, circuit ops still marks dues paid by unblocking the team. A later bank debit or card link could confirm payment in the app. Each competition could keep its own link. Circuit dues stay separate from a host’s application fee.
+Circuit ops may block a team across OneLegends or remove one application before the viewing roster is created. Those records remain available to circuit ops for audit. Once the roster exists, payment, block, and removal changes that would alter it are rejected.
+
+For future automatic payment integration, the board would need an official payment link for each recipient or payment-provider API credentials. The current checkboxes record staff reconciliation only; they do not claim that OneLegends verified a bank, Venmo, Zelle, or PayPal transaction.
 
 ### DDN app integration
 

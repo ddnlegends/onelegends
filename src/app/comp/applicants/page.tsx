@@ -68,6 +68,8 @@ export default async function CompApplicantsPage() {
                   <span className="text-sm text-muted">{statusLabel(application.status)}</span>
                   {application.status === "ACCEPTED" ? (
                     <CompPaymentCheckbox applicationId={application.id} received={Boolean(application.compPaymentReceivedAt)} />
+                  ) : application.compPaymentReceivedAt ? (
+                    <p className="text-sm text-muted">Host payment recorded {formatDate(application.compPaymentReceivedAt)}</p>
                   ) : null}
                 </div>
               ) : null}

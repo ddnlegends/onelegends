@@ -4,9 +4,10 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { StatusSelect } from "@/components/StatusSelect";
 import { rankTeams } from "@/lib/results";
-import { formatDateTime } from "@/lib/utils";
+import { formatDate, formatDateTime } from "@/lib/utils";
 import { getActiveCompetitionId } from "@/lib/team-access";
 import { visibleApplicationWhere } from "@/lib/payment-eligibility";
+import { CompPaymentCheckbox } from "@/components/PaymentForms";
 
 export default async function CompResultsPage() {
   const session = await auth();
@@ -16,7 +17,10 @@ export default async function CompResultsPage() {
   const competition = await prisma.competitionProfile.findUnique({
     where: { id: competitionId },
     include: {
-      applications: { where: visibleApplicationWhere, include: { team: true } },
+      applications: {
+        where: visibleApplicationWhere,
+        include: { team: true },
+      },
       judgeAssignments: {
         where: { status: "APPROVED" },
         include: {
@@ -33,6 +37,9 @@ export default async function CompResultsPage() {
   const pending = await prisma.judgeInvite.count({ where: { competitionId } });
 
   const ranked = rankTeams(competition.applications, submitted);
+  const paymentByApplication = new Map(
+    competition.applications.map((application) => [application.id, application.compPaymentReceivedAt]),
+  );
 
   return (
     <div className="space-y-8">
@@ -91,7 +98,19 @@ export default async function CompResultsPage() {
                       {row.judges.filter((judge) => judge.comment).length || "—"}
                     </td>
                     <td className="px-4 py-3">
-                      <StatusSelect applicationId={row.applicationId} value={row.status} />
+                      <div className="space-y-2">
+                        <StatusSelect applicationId={row.applicationId} value={row.status} />
+                        {row.status === "ACCEPTED" ? (
+                          <CompPaymentCheckbox
+                            applicationId={row.applicationId}
+                            received={Boolean(paymentByApplication.get(row.applicationId))}
+                          />
+                        ) : paymentByApplication.get(row.applicationId) ? (
+                          <p className="text-xs text-muted">
+                            Host payment recorded {formatDate(paymentByApplication.get(row.applicationId)!)}
+                          </p>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 ))}

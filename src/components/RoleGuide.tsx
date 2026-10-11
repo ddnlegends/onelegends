@@ -43,7 +43,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Apply with checkboxes",
-        body: "Select every open competition you want and submit once. Check its early and late deadlines; the late deadline closes applications. Confirm the Pending status, then follow payment instructions separately. The app does not verify payment.",
+        body: "Select every open competition you want and submit once. Check its early and late deadlines; the late deadline closes applications. Pay the $25 OneLegends registration fee outside the app; you can apply while it is pending, but tech admins must verify it before your AV enters viewing. A later payment to a competition is due only if that host Accepts you after judging.",
       },
     ],
     cta: { href: "/register", label: "Create an account" },
@@ -135,7 +135,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Invite judges and check applicants",
-        body: "Invite judges by email. Their acceptance adds them to the active panel; review any separate pending judge requests on the Judges page. The app stores invitations but does not send email. Applied Teams shows applicant names, dates, and dancer counts for manual payment checks before results release.",
+        body: "Invite judges by email. Their acceptance adds them to the active panel; review any separate pending judge requests on the Judges page. The app stores invitations but does not send email. Applied Teams shows applicant names, dates, and dancer counts before results. After you mark a team Accepted, use Payment received to track the host fee you collect outside OneLegends.",
       },
       {
         title: "Review released results",
@@ -159,11 +159,11 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Manage access",
-        body: "Review team and competition admins, grant Partner competition moderator access, and rotate claim codes or reset access when needed.",
+        body: "Review team and competition admins, grant Partner competition moderator access, and rotate claim codes or reset access when needed. Mark OneLegends registration payments on Fees, block a team circuit-wide, or remove one application before viewing starts.",
       },
       {
         title: "Open judging",
-        body: "Once applications close, teams have applied, and at least one judge is approved, open judging for the competition. The app fixes the shared anonymous viewing order; moderators show videos and judges score them.",
+        body: "Verify the competition's OneLegends fee and each team's $25 registration before opening viewing. Unpaid, blocked, or removed applications stay off the roster. Once applications are closed and at least one judge is approved, open judging; the app freezes the anonymous viewing order.",
       },
       {
         title: "Monitor and export",

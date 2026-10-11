@@ -44,7 +44,14 @@ export function CompPaymentCheckbox({ applicationId, received }: { applicationId
     <form action={action} className="flex flex-wrap items-center gap-2 text-sm">
       <input type="hidden" name="applicationId" value={applicationId} />
       <label className="flex items-center gap-2">
-        <input type="checkbox" name="received" value="1" defaultChecked={received} disabled={pending} />
+        <input
+          type="checkbox"
+          name="received"
+          value="1"
+          defaultChecked={received}
+          disabled={pending}
+          onChange={(event) => event.currentTarget.form?.requestSubmit()}
+        />
         Payment received
       </label>
       <button className="btn btn-ghost py-1.5 text-xs" disabled={pending} type="submit">{pending ? "Saving…" : "Save"}</button>

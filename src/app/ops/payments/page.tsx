@@ -4,7 +4,7 @@ import { RegistrationPaymentForm } from "@/components/PaymentForms";
 import { requirePlatformAdminPage } from "@/lib/page-guards";
 import { dollars } from "@/lib/payment-eligibility";
 import { prisma } from "@/lib/prisma";
-import { formatDate } from "@/lib/utils";
+import { formatDate, statusLabel } from "@/lib/utils";
 
 export default async function OpsPaymentsPage() {
   await requirePlatformAdminPage();
@@ -12,8 +12,19 @@ export default async function OpsPaymentsPage() {
     prisma.teamProfile.findMany({ orderBy: { name: "asc" } }),
     prisma.competitionProfile.findMany({ orderBy: { name: "asc" } }),
     prisma.application.findMany({
-      where: { status: "ACCEPTED", competition: { resultsReleasedAt: { not: null } } },
-      select: { id: true, compPaymentReceivedAt: true, team: { select: { name: true } }, competition: { select: { name: true } } },
+      where: {
+        OR: [
+          { status: "ACCEPTED", competition: { resultsReleasedAt: { not: null } } },
+          { compPaymentReceivedAt: { not: null } },
+        ],
+      },
+      select: {
+        id: true,
+        status: true,
+        compPaymentReceivedAt: true,
+        team: { select: { name: true } },
+        competition: { select: { name: true } },
+      },
       orderBy: { createdAt: "desc" },
     }),
   ]);
@@ -58,7 +69,7 @@ export default async function OpsPaymentsPage() {
           <ul className="divide-y divide-line rounded-xl border border-line bg-card">
             {accepted.map((application) => (
               <li key={application.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
-                <span>{application.team.name} · {application.competition.name}</span>
+                <span>{application.team.name} · {application.competition.name} · {statusLabel(application.status)}</span>
                 <span className="text-muted">{application.compPaymentReceivedAt ? `Received ${formatDate(application.compPaymentReceivedAt)}` : "Outstanding"}</span>
               </li>
             ))}

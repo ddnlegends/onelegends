@@ -24,6 +24,7 @@ import { rankTeams } from "@/lib/results";
 import { formatDateTime } from "@/lib/utils";
 import { isPlatformAdmin } from "@/lib/team-access";
 import { judgePanelCompletion } from "@/lib/judge-panel-completion";
+import { isViewingEligibleApplication } from "@/lib/payment-eligibility";
 
 export default async function CompDashboardDetailPage({
   params,
@@ -50,7 +51,8 @@ export default async function CompDashboardDetailPage({
           teamId: true,
           status: true,
           viewingPosition: true,
-          team: { select: { name: true } },
+          removedAt: true,
+          team: { select: { name: true, applyBlocked: true, registrationPaidAt: true } },
         },
       },
       judgeAssignments: {
@@ -92,7 +94,8 @@ export default async function CompDashboardDetailPage({
     for (const membership of competition.memberships) moderatorEmails.add(membership.user.email);
   }
 
-  const ordered = competition.applications
+  const eligibleApplications = competition.applications.filter(isViewingEligibleApplication);
+  const ordered = eligibleApplications
     .filter((app) => app.viewingPosition != null)
     .sort((a, b) => (a.viewingPosition as number) - (b.viewingPosition as number));
   const hasOrder = ordered.length > 0;
@@ -104,14 +107,14 @@ export default async function CompDashboardDetailPage({
   );
   const removedJudges = competition.judgeAssignments.filter((row) => row.status === "REMOVED");
   const submitted = approved.filter((row) => row.submittedAt);
-  const closeProgress = judgePanelCompletion(competition.applications, approved);
+  const closeProgress = judgePanelCompletion(eligibleApplications, approved);
 
   const scoreFor = (
     judge: (typeof approved)[number],
     applicationId: string,
   ) => judge.slots.find((slot) => slot.applicationId === applicationId)?.score ?? null;
 
-  const ranked = released ? rankTeams(competition.applications, submitted) : [];
+  const ranked = released ? rankTeams(eligibleApplications, submitted) : [];
 
   return (
     <div className="space-y-8">
@@ -187,7 +190,15 @@ export default async function CompDashboardDetailPage({
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Teams" value={String(competition.applications.length)} />
+        <Stat
+          label="Teams"
+          value={String(eligibleApplications.length)}
+          hint={
+            competition.applications.length !== eligibleApplications.length
+              ? `${competition.applications.length} applied; unpaid, blocked, or removed stay off viewing`
+              : undefined
+          }
+        />
         <Stat
           label="Judges"
           value={String(approved.length)}

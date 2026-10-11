@@ -4,6 +4,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Track the two external payment flows separately. Circuit ops records $25 team, $25 Partner competition, and $40 Non-partner competition OneLegends registration fees; only paid, unblocked teams at a paid competition enter the frozen AV roster. Circuit ops can remove one application before that roster locks. After final acceptance, competition admins track their own received payments without changing judging, while circuit ops has read-only visibility. Apply migration `20261011180000_registration_and_comp_payment_tracking` before deploying.
 - Replace the preset release threshold with the active approved judge panel and explicit admin finalization. Pending judge invitations block finalization; one submitted packet cannot release rankings while others remain active. Legends tech admins can remove judges during viewing, competition admins before viewing, with confirmation and an audit reason. Removed scores are excluded and the final judge's removal pauses viewing. Live averages and provisional result exports stay hidden until finalization. Apply migration `20261008230000_judge_panel_finalization` before deploying.
 - Use the supplied Graphik family as the primary site font and Pontiac Inline for display headings, served locally with the app.
 - Add an optional Sober Monitor flag alongside Point of Contact on each roster dancer, with full roster and CSV/XLSX export visibility. Existing dancers default to unchecked.

@@ -32,3 +32,14 @@ export const viewingEligibleApplicationWhere = {
     registrationPaidAt: { not: null },
   },
 } satisfies Prisma.ApplicationWhereInput;
+
+export function isViewingEligibleApplication(application: {
+  removedAt: Date | null;
+  team: { applyBlocked: boolean; registrationPaidAt: Date | null };
+}) {
+  return (
+    application.removedAt == null &&
+    !application.team.applyBlocked &&
+    application.team.registrationPaidAt != null
+  );
+}

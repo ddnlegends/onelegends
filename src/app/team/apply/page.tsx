@@ -33,7 +33,7 @@ export default async function TeamApplyPage() {
         <h1 className="font-heading text-4xl">Apply</h1>
         <p className="mt-2 text-muted">
           Sending as <span className="text-ink">{team.name || "your team"}</span>.
-          The full team profile and roster must be saved first.
+          The full team profile and roster must be saved first. You can apply before the $25 OneLegends registration fee is verified; that AV cannot enter viewing until tech admins mark the fee paid.
         </p>
       </div>
 

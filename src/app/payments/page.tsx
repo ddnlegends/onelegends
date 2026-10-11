@@ -11,7 +11,7 @@ export default async function PaymentsPage() {
   const team = teamId
     ? await prisma.teamProfile.findUnique({
         where: { id: teamId },
-        select: { name: true },
+        select: { name: true, registrationPaidAt: true },
       })
     : null;
   const memo = `${team?.name || "{Team}"}'s OneLegends Payment`;
@@ -33,7 +33,10 @@ export default async function PaymentsPage() {
         <section className="rounded-xl border border-line bg-card p-6">
           <h2 className="font-heading text-xl">OneLegends registration fees</h2>
           <p className="mt-2 text-sm text-muted">Team: {dollars(TEAM_REGISTRATION_FEE_CENTS)} · Partner competition: {dollars(PARTNER_COMP_REGISTRATION_FEE_CENTS)} · Non-partner competition: {dollars(NON_PARTNER_COMP_REGISTRATION_FEE_CENTS)}. Tech admins verify these external payments before AV viewing.</p>
-          <p className="mt-2 text-sm text-muted">A team's payment to a competition is due only after the competition's final Accepted decision. The host tracks that payment separately.</p>
+          {team ? (
+            <p className="mt-2 text-sm">{team.registrationPaidAt ? "Your team's OneLegends registration is marked paid." : "Your team's OneLegends registration is still unpaid."}</p>
+          ) : null}
+          <p className="mt-2 text-sm text-muted">A team’s payment to a competition is due only after the competition’s final Accepted decision. The host tracks that payment separately.</p>
         </section>
 
         <ol className="list-decimal space-y-4 rounded-xl border border-line bg-card px-8 py-6 text-sm">
@@ -57,7 +60,7 @@ export default async function PaymentsPage() {
         </ol>
 
         <p className="rounded-xl border border-line bg-blush p-4 text-sm text-muted">
-          Circuit ops can block a team while its OneLegends fee or a circuit issue is unresolved. Blocked teams are excluded from every competition's applications and AV viewing.
+          Circuit ops can block a team while its OneLegends fee or a circuit issue is unresolved. Blocked teams are excluded from every competition’s applications and AV viewing.
         </p>
 
         <Link href={team ? "/team" : "/"} className="btn btn-ghost">
