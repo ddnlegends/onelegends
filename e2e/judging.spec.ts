@@ -65,6 +65,7 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
   await scoreTeam(judge, SCORES[1]);
   await judge.locator("#comment").fill("Strong opener");
   await judge.locator("#comment").blur();
+  await expect.poll(async () => (await savedScore(1))?.comment).toBe("Strong opener");
 
   await expect(async () => {
     await moderator.reload();
@@ -116,6 +117,17 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
       );
     }
   }
+  const completedRankings = moderator.getByRole("link", {
+    name: "View completed rankings",
+  });
+  await expect(completedRankings).toBeVisible({ timeout: 15_000 });
+  await completedRankings.click();
+  await expect(moderator.getByRole("heading", { name: "Completed rankings" })).toBeVisible();
+  for (const name of SEALED_NAMES) {
+    await expect(moderator.getByRole("cell", { name, exact: true })).toBeVisible();
+  }
+  await moderator.goto(`/moderator/${id}`);
+
   await ops.reload();
   await ops.getByRole("button", { name: "Finalize results", exact: true }).click();
   await ops.getByRole("button", { name: "Yes, finalize results" }).click();

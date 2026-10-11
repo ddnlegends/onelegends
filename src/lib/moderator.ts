@@ -1,7 +1,11 @@
 import { cache } from "react";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { visibleApplicationWhere } from "@/lib/payment-eligibility";
+import {
+  viewingEligibleApplicationWhere,
+  visibleApplicationWhere,
+} from "@/lib/payment-eligibility";
+import { moderatorResultsReady } from "@/lib/judge-panel-completion";
 
 /** Non-partner competition admins run the same live console as assigned moderators. */
 function moderatorCompetitionWhere(userId: string): Prisma.CompetitionProfileWhereInput {
@@ -76,7 +80,7 @@ export const hasAnyModeratorAccess = cache(async (userId: string) => {
 });
 
 export const getModeratorCompetitions = cache(async (userId: string) => {
-  return prisma.competitionProfile.findMany({
+  const competitions = await prisma.competitionProfile.findMany({
     where: moderatorCompetitionWhere(userId),
     select: {
       id: true,
@@ -89,7 +93,41 @@ export const getModeratorCompetitions = cache(async (userId: string) => {
       livePosition: true,
       resultsReleasedAt: true,
       _count: { select: { applications: { where: visibleApplicationWhere } } },
+      applications: {
+        where: viewingEligibleApplicationWhere,
+        select: { id: true },
+      },
+      judgeInvites: { select: { id: true } },
+      judgeAssignments: {
+        where: { status: { in: ["APPROVED", "PENDING"] } },
+        select: {
+          status: true,
+          submittedAt: true,
+          slots: {
+            where: { application: viewingEligibleApplicationWhere },
+            select: { applicationId: true, score: true },
+          },
+        },
+      },
     },
     orderBy: { name: "asc" },
+  });
+  return competitions.map(({
+    applications,
+    judgeAssignments,
+    judgeInvites,
+    ...competition
+  }) => {
+    const active = judgeAssignments.filter((row) => row.status === "APPROVED");
+    const unresolved = judgeInvites.length +
+      judgeAssignments.filter((row) => row.status === "PENDING").length;
+    return {
+      ...competition,
+      moderatorResultsReady: moderatorResultsReady(
+        applications,
+        active,
+        unresolved,
+      ),
+    };
   });
 });

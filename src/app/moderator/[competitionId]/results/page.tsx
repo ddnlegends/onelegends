@@ -5,7 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { hasModeratorAccess } from "@/lib/moderator";
 import { rankTeams } from "@/lib/results";
 import { formatDateTime } from "@/lib/utils";
-import { visibleApplicationWhere } from "@/lib/payment-eligibility";
+import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
+import { moderatorResultsReady } from "@/lib/judge-panel-completion";
 
 export default async function ModeratorResultsPage({
   params,
@@ -17,13 +18,13 @@ export default async function ModeratorResultsPage({
   if (!session?.user) redirect("/login");
   if (!(await hasModeratorAccess(session.user.id, competitionId))) notFound();
 
-  const competition = await prisma.competitionProfile.findFirst({
-    where: { id: competitionId, resultsReleasedAt: { not: null } },
+  const competition = await prisma.competitionProfile.findUnique({
+    where: { id: competitionId },
     select: {
       name: true,
       resultsReleasedAt: true,
       applications: {
-        where: visibleApplicationWhere,
+        where: viewingEligibleApplicationWhere,
         select: {
           id: true,
           teamId: true,
@@ -32,12 +33,15 @@ export default async function ModeratorResultsPage({
           team: { select: { name: true } },
         },
       },
+      judgeInvites: { select: { id: true } },
       judgeAssignments: {
-        where: { status: "APPROVED", submittedAt: { not: null } },
+        where: { status: { in: ["APPROVED", "PENDING"] } },
         select: {
+          status: true,
+          submittedAt: true,
           judge: { select: { name: true } },
           slots: {
-            where: { application: visibleApplicationWhere },
+            where: { application: viewingEligibleApplicationWhere },
             select: {
               applicationId: true,
               score: {
@@ -55,9 +59,20 @@ export default async function ModeratorResultsPage({
       },
     },
   });
-  if (!competition?.resultsReleasedAt) notFound();
+  if (!competition) notFound();
+  const activeJudges = competition.judgeAssignments.filter(
+    (assignment) => assignment.status === "APPROVED",
+  );
+  const unresolvedJudges = competition.judgeInvites.length +
+    competition.judgeAssignments.filter((assignment) => assignment.status === "PENDING").length;
+  if (!moderatorResultsReady(
+    competition.applications,
+    activeJudges,
+    unresolvedJudges,
+  )) notFound();
 
-  const ranked = rankTeams(competition.applications, competition.judgeAssignments);
+  const ranked = rankTeams(competition.applications, activeJudges);
+  const finalized = Boolean(competition.resultsReleasedAt);
 
   return (
     <div className="space-y-6">
@@ -66,10 +81,15 @@ export default async function ModeratorResultsPage({
       </Link>
       <div>
         <p className="text-xs uppercase tracking-wide text-muted">{competition.name}</p>
-        <h1 className="font-heading text-4xl">Final rankings</h1>
+        <h1 className="font-heading text-4xl">
+          {finalized ? "Final rankings" : "Completed rankings"}
+        </h1>
         <p className="mt-2 text-muted">
-          Read-only results · Released {formatDateTime(competition.resultsReleasedAt)}.
-          Ranked by average z-score, then average total.
+          Read-only results
+          {competition.resultsReleasedAt
+            ? ` · Released ${formatDateTime(competition.resultsReleasedAt)}`
+            : " · Every active judge submitted a complete packet"}.
+          {" "}Ranked by average z-score, then average total.
         </p>
       </div>
       {ranked.length === 0 ? (

@@ -65,6 +65,21 @@ describe("rankTeams", () => {
     expect(ranked[0].applicationId).toBe("a");
   });
 
+  it("ignores a partially filled judge packet until the whole packet is complete", () => {
+    const ranked = rankTeams(apps, [
+      {
+        judge: { name: "Partial" },
+        slots: [
+          { applicationId: "a", score: rubric(8) },
+          { applicationId: "b", score: null },
+          { applicationId: "c", score: rubric(6) },
+        ],
+      },
+    ]);
+
+    expect(ranked).toEqual([]);
+  });
+
   it("keeps the judge comment, trimmed", () => {
     const ranked = rankTeams(apps.slice(0, 1), [
       {

@@ -31,7 +31,7 @@ for (const role of ["moderator", "judge"] as const) {
   });
 }
 
-test("moderator rankings stay sealed until release and are scoped to the assignment", async ({ page }) => {
+test("moderator rankings require every active judge even with a stale release flag", async ({ page }) => {
   await login(page, "moderator");
   const assigned = await competitionId(E2E.comps.showcase.slug);
   const other = await competitionId(E2E.comps.open.slug);
@@ -41,6 +41,19 @@ test("moderator rankings stay sealed until release and are scoped to the assignm
     await page.goto(`/moderator/${id}/results`);
     await expect(page.getByText("404", { exact: true })).toBeVisible();
   }
+  await db.competitionProfile.update({
+    where: { id: assigned },
+    data: { resultsReleasedAt: new Date() },
+  });
+  const staleRelease = await page.request.get(`/moderator/${assigned}/results`, {
+    maxRedirects: 0,
+  });
+  const staleReleaseBody = await staleRelease.text();
+  for (const name of SEALED_NAMES) {
+    expect(staleReleaseBody).not.toContain(name);
+  }
+  await page.goto(`/moderator/${assigned}/results`);
+  await expect(page.getByText("404", { exact: true })).toBeVisible();
 });
 
 test("non-partner admins get moderator controls while pending admins and judges do not", async ({ browser }) => {

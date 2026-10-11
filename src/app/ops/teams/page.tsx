@@ -6,6 +6,7 @@ import {
   ResetTeamClaimForm,
   RevokeTeamAccessForm,
   SetTeamApplyBlockForm,
+  SoftResetTeamClaimForm,
 } from "@/components/AccountForms";
 import { ExpandableRow } from "@/components/ExpandableRow";
 import { Chip, InfoGrid, PanelSection } from "@/components/OpsListParts";
@@ -120,7 +121,10 @@ export default async function OpsTeamsPage() {
                       reason={team.applyBlockReason}
                     />
                     {team.claimedAt ? (
-                      <ResetTeamClaimForm teamId={team.id} teamName={team.name} />
+                      <>
+                        <SoftResetTeamClaimForm teamId={team.id} teamName={team.name} />
+                        <ResetTeamClaimForm teamId={team.id} teamName={team.name} />
+                      </>
                     ) : null}
                   </div>
                 </div>

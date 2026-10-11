@@ -30,6 +30,8 @@ import {
   inviteTeamAdmin,
   resetCompClaim,
   resetTeamClaim,
+  softResetCompClaim,
+  softResetTeamClaim,
   setTeamApplyBlock,
   revokeCompAccess,
   revokeTeamAccess,
@@ -793,6 +795,48 @@ export function ResetTeamClaimForm({
   );
 }
 
+export function SoftResetTeamClaimForm({
+  teamId,
+  teamName,
+}: {
+  teamId: string;
+  teamName: string;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [state, formAction, pending] = useActionState(softResetTeamClaim, undefined);
+
+  if (!confirming) {
+    return (
+      <div>
+        <button className="btn btn-ghost py-1.5" type="button" onClick={() => setConfirming(true)}>
+          Soft reset
+        </button>
+        {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
+        {state?.ok ? <p className="text-xs text-success">{state.message}</p> : null}
+      </div>
+    );
+  }
+
+  return (
+    <form action={formAction} className="space-y-2 rounded-md border border-line bg-blush p-3">
+      <input type="hidden" name="teamId" value={teamId} />
+      <p className="text-sm">
+        Soft reset <strong>{teamName}</strong>. This clears team application history,
+        but keeps the claim code, team profile, and admin access intact.
+      </p>
+      <div className="flex gap-2">
+        <button className="btn btn-primary py-1.5" disabled={pending} type="submit">
+          {pending ? "Resetting…" : "Yes, soft reset"}
+        </button>
+        <button className="btn btn-ghost py-1.5" type="button" onClick={() => setConfirming(false)}>
+          Cancel
+        </button>
+      </div>
+      {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
+    </form>
+  );
+}
+
 export function ResetCompClaimForm({
   competitionId,
   competitionName,
@@ -826,6 +870,48 @@ export function ResetCompClaimForm({
       <div className="flex gap-2">
         <button className="btn btn-primary py-1.5" disabled={pending} type="submit">
           {pending ? "Resetting…" : "Yes, reset claim"}
+        </button>
+        <button className="btn btn-ghost py-1.5" type="button" onClick={() => setConfirming(false)}>
+          Cancel
+        </button>
+      </div>
+      {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
+    </form>
+  );
+}
+
+export function SoftResetCompClaimForm({
+  competitionId,
+  competitionName,
+}: {
+  competitionId: string;
+  competitionName: string;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [state, formAction, pending] = useActionState(softResetCompClaim, undefined);
+
+  if (!confirming) {
+    return (
+      <div>
+        <button className="btn btn-ghost py-1.5" type="button" onClick={() => setConfirming(true)}>
+          Soft reset
+        </button>
+        {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
+        {state?.ok ? <p className="text-xs text-success">{state.message}</p> : null}
+      </div>
+    );
+  }
+
+  return (
+    <form action={formAction} className="space-y-2 rounded-md border border-line bg-blush p-3">
+      <input type="hidden" name="competitionId" value={competitionId} />
+      <p className="text-sm">
+        Soft reset <strong>{competitionName}</strong>. This clears applications and judge
+        results, but preserves the claim code, event profile, and admin access.
+      </p>
+      <div className="flex gap-2">
+        <button className="btn btn-primary py-1.5" disabled={pending} type="submit">
+          {pending ? "Resetting…" : "Yes, soft reset"}
         </button>
         <button className="btn btn-ghost py-1.5" type="button" onClick={() => setConfirming(false)}>
           Cancel

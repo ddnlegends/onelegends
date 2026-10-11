@@ -108,13 +108,18 @@ export default async function CompDashboardDetailPage({
   const removedJudges = competition.judgeAssignments.filter((row) => row.status === "REMOVED");
   const submitted = approved.filter((row) => row.submittedAt);
   const closeProgress = judgePanelCompletion(eligibleApplications, approved);
+  const panelReady = closeProgress.ready &&
+    pendingJudges.length === 0 &&
+    competition.judgeInvites.length === 0;
 
   const scoreFor = (
     judge: (typeof approved)[number],
     applicationId: string,
   ) => judge.slots.find((slot) => slot.applicationId === applicationId)?.score ?? null;
 
-  const ranked = released ? rankTeams(eligibleApplications, submitted) : [];
+  const ranked = released && panelReady
+    ? rankTeams(eligibleApplications, submitted)
+    : [];
 
   return (
     <div className="space-y-8">

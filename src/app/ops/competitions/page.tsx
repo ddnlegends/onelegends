@@ -6,6 +6,7 @@ import {
   InviteCompAdminForm,
   ResetCompClaimForm,
   RevokeCompAccessForm,
+  SoftResetCompClaimForm,
 } from "@/components/AccountForms";
 import { CompStatusPill } from "@/components/CompStatusPill";
 import { CompetitionTypeBadge } from "@/components/CompetitionTypeBadge";
@@ -143,10 +144,16 @@ export default async function OpsCompetitionsPage() {
                       Export
                     </Link>
                     {competition.claimedAt ? (
-                      <ResetCompClaimForm
-                        competitionId={competition.id}
-                        competitionName={competition.name}
-                      />
+                      <>
+                        <SoftResetCompClaimForm
+                          competitionId={competition.id}
+                          competitionName={competition.name}
+                        />
+                        <ResetCompClaimForm
+                          competitionId={competition.id}
+                          competitionName={competition.name}
+                        />
+                      </>
                     ) : null}
                   </div>
                 </div>

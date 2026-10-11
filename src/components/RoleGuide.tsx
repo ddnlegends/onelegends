@@ -106,8 +106,8 @@ const GUIDES: Guide[] = [
         body: "You can return to an earlier team or use Clear screen to pause the live selection. Moving ahead waits until every approved judge has completed all five scores for each earlier team.",
       },
       {
-        title: "View final rankings",
-        body: "After every active judge submits and an admin finalizes results, you can see read-only final rankings. Moderator access does not include full rosters or competition decisions.",
+        title: "View completed rankings",
+        body: "After every active judge submits a complete packet and all pending judge invitations are resolved, you can see read-only rankings. They become final when a competition or tech admin finalizes results. Moderator access does not include full rosters, judge comments, or competition decisions.",
       },
     ],
     cta: { href: "/login", label: "Log in" },

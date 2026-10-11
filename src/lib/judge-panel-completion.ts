@@ -38,6 +38,16 @@ export function judgePanelCompletion(
   };
 }
 
+/** Moderators may see rankings only after the entire active panel is complete. */
+export function moderatorResultsReady(
+  applications: { id: string }[],
+  activeJudges: PanelAssignment[],
+  unresolvedJudgeCount: number,
+) {
+  return unresolvedJudgeCount === 0 &&
+    judgePanelCompletion(applications, activeJudges).ready;
+}
+
 export function describePanelBlockers(progress: ReturnType<typeof judgePanelCompletion>) {
   return [
     progress.missingScores ? `${progress.missingScores} team score sets missing` : null,

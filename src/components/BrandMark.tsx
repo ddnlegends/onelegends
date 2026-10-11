@@ -21,12 +21,12 @@ export function BrandMark({
   return (
     <Link
       href={href}
-      className="inline-flex items-center gap-2"
+      className="inline-flex items-center gap-2 leading-none"
       aria-label="OneLegends home"
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/brand/legends-crown-sm.png" alt="" className="h-9 w-auto" />
-      <span className="font-heading text-sm tracking-[0.08em] text-ink sm:text-base">
+      <span className="translate-y-px font-heading text-sm tracking-[0.08em] text-ink sm:text-base">
         OneLegends
       </span>
     </Link>

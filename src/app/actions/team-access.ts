@@ -19,6 +19,7 @@ import { claimAttemptError } from "@/lib/claim-rate-limit";
 import { blurEmail, normalizeClaimCode } from "@/lib/claim-code";
 import { hasModeratorAccess } from "@/lib/moderator";
 import { competitionRegistrationFeeCents } from "@/lib/payment-eligibility";
+import { getCompetitionResetPlan, getTeamResetPlan } from "@/lib/reset-plans";
 import {
   isCompAdmin,
   isCompPrimary,
@@ -1017,6 +1018,41 @@ export async function setCompetitionPartnerStatus(
   return { ok: true, message: "Competition type saved." };
 }
 
+export async function softResetTeamClaim(
+  _prev: { error?: string; ok?: boolean; message?: string } | undefined,
+  formData: FormData,
+): Promise<{ error?: string; ok?: boolean; message?: string }> {
+  const user = await requireUser();
+  if (!user) return { error: "You must be signed in." };
+  if (!(await isPlatformAdmin(user.id))) {
+    return { error: "Only tech admins can soft reset a team." };
+  }
+
+  const teamId = String(formData.get("teamId") ?? "");
+  const team = await prisma.teamProfile.findUnique({ where: { id: teamId } });
+  if (!team) return { error: "Team not found." };
+
+  const plan = getTeamResetPlan("soft");
+  await prisma.$transaction(async (tx) => {
+    if (plan.clearApplications) {
+      await tx.application.deleteMany({ where: { teamId } });
+    }
+    await tx.teamProfile.update({
+      where: { id: teamId },
+      data: {
+        applyBlocked: false,
+        applyBlockReason: "",
+      },
+    });
+  });
+
+  revalidateAccessPaths();
+  return {
+    ok: true,
+    message: `${team.name} was soft-reset. Application history was cleared, but the claim code, profile, and admin access were kept.`,
+  };
+}
+
 export async function resetTeamClaim(
   _prev: { error?: string; ok?: boolean; message?: string } | undefined,
   formData: FormData,
@@ -1029,19 +1065,39 @@ export async function resetTeamClaim(
   const teamId = String(formData.get("teamId") ?? "");
   const team = await prisma.teamProfile.findUnique({ where: { id: teamId } });
   if (!team) return { error: "Team not found." };
+
+  const plan = getTeamResetPlan("full");
   const claimCode = await uniqueTeamClaimCode();
-  await prisma.$transaction([
-    prisma.teamMembership.deleteMany({ where: { teamId } }),
-    prisma.teamInvite.deleteMany({ where: { teamId } }),
-    prisma.teamProfile.update({
+  await prisma.$transaction(async (tx) => {
+    if (plan.clearApplications) await tx.application.deleteMany({ where: { teamId } });
+    if (plan.clearDancers) await tx.dancer.deleteMany({ where: { teamId } });
+    if (plan.clearMemberships) await tx.teamMembership.deleteMany({ where: { teamId } });
+    if (plan.clearInvites) await tx.teamInvite.deleteMany({ where: { teamId } });
+    await tx.teamPhotoBlob.deleteMany({ where: { teamId } });
+    await tx.teamProfile.update({
       where: { id: teamId },
-      data: { claimedAt: null, claimCode },
-    }),
-  ]);
+      data: {
+        claimedAt: null,
+        claimCode,
+        photoUrl: "",
+        blurb: "",
+        wikiUrl: "",
+        avDriveUrl: "",
+        captains: "",
+        yearsEstablished: null,
+        rosterSize: null,
+        applyBlocked: false,
+        applyBlockReason: "",
+        registrationFeeCents: 2500,
+        registrationPaidAt: null,
+        registrationPaidByEmail: null,
+      },
+    });
+  });
   revalidateAccessPaths();
   return {
     ok: true,
-    message: `${team.name} is unclaimed again. New claim code: ${claimCode}.`,
+    message: `${team.name} is unclaimed again. New claim code: ${claimCode}. All team data was reset.`,
   };
 }
 
@@ -1093,6 +1149,45 @@ export async function setTeamApplyBlock(
   };
 }
 
+export async function softResetCompClaim(
+  _prev: { error?: string; ok?: boolean; message?: string } | undefined,
+  formData: FormData,
+): Promise<{ error?: string; ok?: boolean; message?: string }> {
+  const user = await requireUser();
+  if (!user) return { error: "You must be signed in." };
+  if (!(await isPlatformAdmin(user.id))) {
+    return { error: "Only tech admins can soft reset a competition." };
+  }
+
+  const competitionId = String(formData.get("competitionId") ?? "");
+  const competition = await prisma.competitionProfile.findUnique({ where: { id: competitionId } });
+  if (!competition) return { error: "Competition not found." };
+
+  const plan = getCompetitionResetPlan("soft");
+  await prisma.$transaction(async (tx) => {
+    if (plan.clearApplications) await tx.application.deleteMany({ where: { competitionId } });
+    if (plan.clearJudgeResults) await tx.judgeAssignment.deleteMany({ where: { competitionId } });
+    if (plan.clearJudgeInvites) await tx.judgeInvite.deleteMany({ where: { competitionId } });
+    await tx.competitionProfile.update({
+      where: { id: competitionId },
+      data: {
+        acceptingApps: true,
+        resultsReleasedAt: null,
+        resultsFinalizedByEmail: null,
+        judgingOpen: false,
+        livePosition: null,
+        liveUpdatedAt: null,
+      },
+    });
+  });
+
+  revalidateAccessPaths();
+  return {
+    ok: true,
+    message: `${competition.name} was soft-reset. Applications and judges were cleared, but its claim code, profile, and admin info were preserved.`,
+  };
+}
+
 export async function resetCompClaim(
   _prev: { error?: string; ok?: boolean; message?: string } | undefined,
   formData: FormData,
@@ -1108,31 +1203,48 @@ export async function resetCompClaim(
   });
   if (!competition) return { error: "Competition not found." };
 
+  const plan = getCompetitionResetPlan("full");
   const claimCode = await uniqueCompClaimCode();
-  await prisma.$transaction([
-    prisma.competitionMembership.deleteMany({ where: { competitionId } }),
-    prisma.compInvite.deleteMany({ where: { competitionId } }),
-    prisma.judgeInvite.deleteMany({ where: { competitionId } }),
-    prisma.moderatorAccess.deleteMany({ where: { competitionId } }),
-    prisma.moderatorInvite.deleteMany({ where: { competitionId } }),
-    ...(competition.resultsReleasedAt
-      ? []
-      : [prisma.judgeAssignment.deleteMany({ where: { competitionId } })]),
-    prisma.competitionProfile.update({
+  await prisma.$transaction(async (tx) => {
+    if (plan.clearApplications) await tx.application.deleteMany({ where: { competitionId } });
+    if (plan.clearJudgeResults) await tx.judgeAssignment.deleteMany({ where: { competitionId } });
+    if (plan.clearJudgeInvites) await tx.judgeInvite.deleteMany({ where: { competitionId } });
+    if (plan.clearModeratorAccess) {
+      await tx.moderatorAccess.deleteMany({ where: { competitionId } });
+      await tx.moderatorInvite.deleteMany({ where: { competitionId } });
+    }
+    if (plan.clearMemberships) await tx.competitionMembership.deleteMany({ where: { competitionId } });
+    if (plan.clearCompInvites) await tx.compInvite.deleteMany({ where: { competitionId } });
+    await tx.competitionProfile.update({
       where: { id: competitionId },
       data: {
         claimedAt: null,
         claimCode,
         userId: null,
+        acceptingApps: true,
+        earlyApplicationDeadline: null,
+        applicationDeadline: null,
+        resultsReleasedAt: null,
+        resultsFinalizedByEmail: null,
+        dates: "",
+        location: "",
+        venue: "",
+        stageSize: "",
+        productionNotes: "",
+        lighting: "",
+        description: "",
+        eventDate: null,
         judgingOpen: false,
         livePosition: null,
         liveUpdatedAt: null,
+        registrationPaidAt: null,
+        registrationPaidByEmail: null,
       },
-    }),
-  ]);
+    });
+  });
   revalidateAccessPaths();
   return {
     ok: true,
-    message: `${competition.name} is unclaimed again. New claim code: ${claimCode}.`,
+    message: `${competition.name} is unclaimed again. New claim code: ${claimCode}. All competition data was reset.`,
   };
 }

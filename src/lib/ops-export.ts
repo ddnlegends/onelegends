@@ -19,6 +19,8 @@ import {
 } from "@/lib/judging";
 import { rankTeams } from "@/lib/results";
 import { avDancerNames, statusLabel } from "@/lib/utils";
+import { moderatorResultsReady } from "@/lib/judge-panel-completion";
+import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 
 export const EXPORT_DATASETS = [
   {
@@ -415,6 +417,7 @@ async function resultsTable(competitionId?: string): Promise<ExportCell[][]> {
       name: true,
       resultsReleasedAt: true,
       applications: {
+        where: viewingEligibleApplicationWhere,
         select: {
           id: true,
           teamId: true,
@@ -423,9 +426,12 @@ async function resultsTable(competitionId?: string): Promise<ExportCell[][]> {
           team: { select: { name: true } },
         },
       },
+      judgeInvites: { select: { id: true } },
       judgeAssignments: {
-        where: { status: "APPROVED", submittedAt: { not: null } },
+        where: { status: { in: ["APPROVED", "PENDING"] } },
         select: {
+          status: true,
+          submittedAt: true,
           judge: { select: { name: true } },
           slots: { select: { applicationId: true, score: true } },
         },
@@ -435,19 +441,24 @@ async function resultsTable(competitionId?: string): Promise<ExportCell[][]> {
 
   const rows: ExportCell[][] = [];
   for (const comp of competitions) {
-    if (!comp.resultsReleasedAt || comp.judgeAssignments.length === 0) continue;
-    const released = Boolean(comp.resultsReleasedAt);
-    const ranked = rankTeams(comp.applications, comp.judgeAssignments);
+    const active = comp.judgeAssignments.filter((row) => row.status === "APPROVED");
+    const unresolved = comp.judgeInvites.length +
+      comp.judgeAssignments.filter((row) => row.status === "PENDING").length;
+    if (
+      !comp.resultsReleasedAt ||
+      !moderatorResultsReady(comp.applications, active, unresolved)
+    ) continue;
+    const ranked = rankTeams(comp.applications, active);
     ranked.forEach((team, index) => {
       rows.push([
         comp.name,
         "Released",
         index + 1,
         num(team.viewingPosition),
-        teamLabel(team.viewingPosition, team.name, released),
-        released ? statusLabel(team.status) : "",
+        teamLabel(team.viewingPosition, team.name, true),
+        statusLabel(team.status),
         team.judges.length,
-        `${comp.judgeAssignments.length} / ${comp.judgeAssignments.length}`,
+        `${active.length} / ${active.length}`,
         round(team.avgZ),
         round(team.avgTotal, 2),
         team.judges.map((judge) => `${judge.judgeName}: ${judge.total}`).join("; "),

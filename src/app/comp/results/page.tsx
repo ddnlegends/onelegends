@@ -6,8 +6,9 @@ import { StatusSelect } from "@/components/StatusSelect";
 import { rankTeams } from "@/lib/results";
 import { formatDate, formatDateTime } from "@/lib/utils";
 import { getActiveCompetitionId } from "@/lib/team-access";
-import { visibleApplicationWhere } from "@/lib/payment-eligibility";
+import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 import { CompPaymentCheckbox } from "@/components/PaymentForms";
+import { moderatorResultsReady } from "@/lib/judge-panel-completion";
 
 export default async function CompResultsPage() {
   const session = await auth();
@@ -18,7 +19,7 @@ export default async function CompResultsPage() {
     where: { id: competitionId },
     include: {
       applications: {
-        where: visibleApplicationWhere,
+        where: viewingEligibleApplicationWhere,
         include: { team: true },
       },
       judgeAssignments: {
@@ -34,9 +35,22 @@ export default async function CompResultsPage() {
 
   const submitted = competition.judgeAssignments.filter((a) => a.submittedAt);
   const released = Boolean(competition.resultsReleasedAt);
-  const pending = await prisma.judgeInvite.count({ where: { competitionId } });
+  const [pendingInvites, pendingRequests] = await Promise.all([
+    prisma.judgeInvite.count({ where: { competitionId } }),
+    prisma.judgeAssignment.count({
+      where: { competitionId, status: "PENDING" },
+    }),
+  ]);
+  const panelReady = moderatorResultsReady(
+    competition.applications,
+    competition.judgeAssignments,
+    pendingInvites + pendingRequests,
+  );
 
-  const ranked = rankTeams(competition.applications, submitted);
+  // Do not calculate or expose rankings until explicit finalization succeeds.
+  const ranked = released && panelReady
+    ? rankTeams(competition.applications, submitted)
+    : [];
   const paymentByApplication = new Map(
     competition.applications.map((application) => [application.id, application.compPaymentReceivedAt]),
   );
@@ -57,7 +71,9 @@ export default async function CompResultsPage() {
         {released && competition.resultsReleasedAt
           ? ` · Unlocked ${formatDateTime(competition.resultsReleasedAt)}`
           : " · Rankings and scores are still hidden"}
-        . {pending ? `${pending} pending invitations also need to be resolved.` : "Manage the panel on Judges."}
+        . {pendingInvites + pendingRequests
+          ? `${pendingInvites + pendingRequests} pending invitations or requests also need to be resolved.`
+          : "Manage the panel on Judges."}
       </div>
 
       {!released ? (

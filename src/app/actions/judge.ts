@@ -213,5 +213,8 @@ export async function submitJudgingPacket(
   revalidatePath("/comp/results");
   revalidatePath("/ops/comps", "layout");
   revalidatePath("/comp/judges");
+  revalidatePath("/moderator");
+  revalidatePath(`/moderator/${assignment.competitionId}`);
+  revalidatePath(`/moderator/${assignment.competitionId}/results`);
   return { ok: true };
 }

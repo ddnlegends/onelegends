@@ -1,14 +1,12 @@
 "use client";
 
 /**
- * One judge's rubric sheet for one anonymous team. Scores save the moment a
- * number is picked; comments save after a short pause, on blur, and when the
- * sheet unmounts (for example when it follows Moderator to the next team). All saves
- * for a sheet go through one ordered queue so an older save never overwrites a
- * newer one. The form never receives a team name.
+ * One judge's rubric sheet for one anonymous team. The judge must explicitly
+ * save each team before moving on. All saves for a sheet go through one ordered
+ * queue so an older save never overwrites a newer one. The form never receives a team name.
  */
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { saveTeamScores } from "@/app/actions/judge";
 import {
   RUBRIC_CATEGORIES,
@@ -19,7 +17,6 @@ import {
 import { SaveNotice } from "@/components/SaveNotice";
 
 const SCORE_OPTIONS = Array.from({ length: 11 }, (_, i) => i);
-const COMMENT_SAVE_DELAY_MS = 800;
 
 type Saved = {
   choreography: number | null;
@@ -103,8 +100,6 @@ export function JudgeScoreForm({
   const [inFlight, setInFlight] = useState(0);
   const pending = inFlight > 0;
   const [draft, setDraft] = useState(() => toDraft(saved));
-  const commentTimer = useRef<number | null>(null);
-  const pendingComment = useRef<Draft | null>(null);
   const filled = filledFromDraft(draft);
   const scoreLocked = locked || !scoreAvailable;
   const commentLocked = locked || (scoreLocked && filled === 0 && !saved);
@@ -132,11 +127,6 @@ export function JudgeScoreForm({
 
   function persist(draftToSave: Draft, mode: "score" | "comment") {
     if (mode === "score" ? scoreLocked : commentLocked) return;
-    if (commentTimer.current != null) {
-      window.clearTimeout(commentTimer.current);
-      commentTimer.current = null;
-    }
-    pendingComment.current = null;
     setInFlight((n) => n + 1);
     void enqueueSave(queueKey(assignmentId, position), toFormData(draftToSave, mode)).then(
       (result) => {
@@ -146,43 +136,14 @@ export function JudgeScoreForm({
     );
   }
 
-  useEffect(() => {
-    return () => {
-      if (commentTimer.current != null) {
-        window.clearTimeout(commentTimer.current);
-      }
-      const unsaved = pendingComment.current;
-      if (unsaved && !commentLocked) {
-        // The sheet can unmount when it follows the live team; queue the last
-        // typed comment behind earlier saves instead of dropping it.
-        void enqueueSave(queueKey(assignmentId, position), toFormData(unsaved, "comment"));
-      }
-    };
-    // toFormData only reads props that are fixed for this keyed instance.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [commentLocked]);
-
   function updateScore(key: RubricKey, value: string) {
     if (scoreLocked) return;
-    const draftToSave = { ...draft, [key]: value };
-    setDraft(draftToSave);
-    persist(draftToSave, "score");
+    setDraft((current) => ({ ...current, [key]: value }));
   }
 
   function updateComment(value: string) {
-    const draftToSave = { ...draft, comment: value };
-    setDraft(draftToSave);
     if (commentLocked) return;
-    pendingComment.current = draftToSave;
-    if (commentTimer.current != null) window.clearTimeout(commentTimer.current);
-    commentTimer.current = window.setTimeout(() => {
-      commentTimer.current = null;
-      if (pendingComment.current) persist(pendingComment.current, "comment");
-    }, COMMENT_SAVE_DELAY_MS);
-  }
-
-  function flushComment() {
-    if (pendingComment.current) persist(pendingComment.current, "comment");
+    setDraft((current) => ({ ...current, comment: value }));
   }
 
   return (
@@ -190,7 +151,7 @@ export function JudgeScoreForm({
       <div className="rounded-t-xl bg-brand px-4 py-3 text-white">
         <p className="font-heading text-lg tracking-wide">Team {position}</p>
         <p className="text-xs uppercase tracking-widest text-white/80">
-          Rubric · 0–10 whole numbers · Max 50 · Autosaves
+          Rubric · 0–10 whole numbers · Max 50 · Save before moving on
         </p>
       </div>
       <div className="grid gap-3 px-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -224,7 +185,6 @@ export function JudgeScoreForm({
           value={draft.comment}
           placeholder="Optional. Audio issues, wrong video on screen, etc."
           onChange={(event) => updateComment(event.target.value)}
-          onBlur={flushComment}
         />
         <p className="text-xs text-muted">
           The competition sees this after results unlock. Other judges never see
@@ -240,17 +200,35 @@ export function JudgeScoreForm({
       ) : null}
       <p className="px-4 text-sm text-muted">
         {complete
-          ? `Saved total: ${rubricTotal({
+          ? `Current total: ${rubricTotal({
               choreography: Number(draft.choreography),
               formations: Number(draft.formations),
               technique: Number(draft.technique),
               syncCleanliness: Number(draft.syncCleanliness),
               overallImpression: Number(draft.overallImpression),
-            })} / 50. Scores autosave as soon as you pick a number.`
+            })} / 50. Save this team before moving on.`
           : filled
-            ? `Autosaved ${filled} / 5 categories. Comments are optional.`
-            : "Pick a score. It saves as soon as you choose it."}
+            ? `Draft is ${filled} / 5 categories complete. Save before moving on.`
+            : "Pick a score and save before moving on."}
       </p>
+      <div className="flex flex-wrap items-center gap-2 px-4">
+        <button
+          type="button"
+          className="btn btn-primary"
+          disabled={scoreLocked || pending}
+          onClick={() => persist(draft, "score")}
+        >
+          {pending ? "Saving…" : "Save team scores"}
+        </button>
+        <button
+          type="button"
+          className="btn btn-ghost"
+          disabled={commentLocked || pending}
+          onClick={() => persist(draft, "comment")}
+        >
+          Save comment
+        </button>
+      </div>
       <div className="px-4">
         <SaveNotice
           state={state}

@@ -16,6 +16,7 @@ import {
 } from "@/lib/judging";
 import { hasModeratorAccess } from "@/lib/moderator";
 import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
+import { moderatorResultsReady } from "@/lib/judge-panel-completion";
 
 export default async function ModeratorCompetitionPage({
   params,
@@ -46,10 +47,13 @@ export default async function ModeratorCompetitionPage({
           team: { select: { avDriveUrl: true } },
         },
       },
+      judgeInvites: { select: { id: true } },
       judgeAssignments: {
-        where: { status: "APPROVED" },
+        where: { status: { in: ["APPROVED", "PENDING"] } },
         select: {
           id: true,
+          status: true,
+          submittedAt: true,
           judge: { select: { name: true } },
           slots: { where: { application: viewingEligibleApplicationWhere }, select: { applicationId: true, score: true } },
         },
@@ -58,11 +62,21 @@ export default async function ModeratorCompetitionPage({
   });
   if (!competition) notFound();
 
+  const activeJudges = competition.judgeAssignments.filter(
+    (assignment) => assignment.status === "APPROVED",
+  );
+  const unresolvedJudges = competition.judgeInvites.length +
+    competition.judgeAssignments.filter((assignment) => assignment.status === "PENDING").length;
+  const resultsReady = moderatorResultsReady(
+    competition.applications,
+    activeJudges,
+    unresolvedJudges,
+  );
   const status = competitionStatus(competition);
   const teams = competition.applications.map((app) => ({
     position: app.viewingPosition as number,
     avDriveUrl: app.team.avDriveUrl,
-    judges: competition.judgeAssignments.map((assignment) => ({
+    judges: activeJudges.map((assignment) => ({
       id: assignment.id,
       name: assignment.judge.name,
       complete: isScoreComplete(
@@ -76,7 +90,7 @@ export default async function ModeratorCompetitionPage({
 
   return (
     <div className="space-y-8">
-      <AutoRefresh active={!competition.resultsReleasedAt} intervalMs={6000} />
+      <AutoRefresh active={!resultsReady} intervalMs={6000} />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-2">
           <Link href="/moderator" className="text-sm text-muted underline">
@@ -87,11 +101,20 @@ export default async function ModeratorCompetitionPage({
             <CompStatusPill status={status} />
           </div>
           <p className="max-w-2xl text-sm text-muted">
-            Teams stay anonymous while judging is open. After results release,
-            you can view the final rankings.
+            Teams stay anonymous while judging is open. Rankings unlock for
+            moderators only after every active judge submits a complete packet.
           </p>
         </div>
-        {open && teams.length ? (
+        {open && resultsReady ? (
+          <Link
+            href={`/moderator/${competitionId}/results`}
+            className="btn btn-primary"
+          >
+            {competition.resultsReleasedAt
+              ? "View final rankings"
+              : "View completed rankings"}
+          </Link>
+        ) : open && teams.length ? (
           <div className="w-full max-w-xs">
             <LiveProgress current={livePosition} total={teams.length} />
           </div>
@@ -108,11 +131,15 @@ export default async function ModeratorCompetitionPage({
           <p className="mt-1 text-sm text-muted">
             {competition.resultsReleasedAt
               ? "Final rankings are available to moderators and competition admins."
+              : resultsReady
+                ? "Every active judge submitted a complete packet. Rankings are ready."
               : (lockMessage ?? "Circuit ops opens judging when it is time.")}
           </p>
-          {competition.resultsReleasedAt ? (
+          {resultsReady ? (
             <Link href={`/moderator/${competitionId}/results`} className="btn btn-primary mt-4 inline-flex">
-              View final rankings
+              {competition.resultsReleasedAt
+                ? "View final rankings"
+                : "View completed rankings"}
             </Link>
           ) : null}
         </div>

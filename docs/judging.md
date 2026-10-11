@@ -9,7 +9,7 @@ Every judge watches the same kind of audition and scores without knowing who the
 | **Teams** | One profile, one Drive audition file, apply to many comps. |
 | **Competition admins** | Claim a listing, set details, invite judges, and manage the approved panel before viewing. See applicant names, application dates, and dancer counts for manual payment checks. Finalize after every active judge submits and pending requests are resolved. After release, see rankings, scores, comments, full rosters, and accept / waitlist / decline. |
 | **Judges** | Approve an invite and score anonymous teams in the same shuffled order as every other judge. Their sheets follow the team the moderator is showing. |
-| **Moderator** | Runs the audition videos and selects the live team. During judging, sees anonymous team numbers, videos, and a checkmark for each judge who has finished each team. After results release, sees a read-only table of named final rankings. Cannot judge that competition. |
+| **Moderator** | Runs the audition videos and selects the live team. During judging, sees anonymous team numbers, videos, and a checkmark for each judge who has finished each team. Once every active judge submits and pending invitations are resolved, sees read-only named rankings; they are labeled final after admin finalization. Cannot judge that competition. |
 | **Circuit ops** | Create teams and listings, open/close judging on a **claimed** comp (apps must be closed first), monitor every subscore in Comp Dashboard, and export data. |
 
 This app does not send email. Invites wait on the person’s next login.

@@ -51,6 +51,7 @@ export function rankTeams(
   applications: AppInput[],
   submittedAssignments: AssignmentInput[],
 ): RankedTeam[] {
+  const applicationIds = new Set(applications.map((app) => app.id));
   const byApplication = new Map<string, RankedTeam>();
   for (const app of applications) {
     byApplication.set(app.id, {
@@ -65,13 +66,27 @@ export function rankTeams(
     });
   }
 
-  for (const assignment of submittedAssignments) {
+  const scoredAssignments = submittedAssignments.filter((assignment) => {
+    const hasCompleteScore = assignment.slots.some(
+      (slot) => applicationIds.has(slot.applicationId) && isScoreComplete(slot.score),
+    );
+
+    if (!hasCompleteScore) return false;
+
+    return !assignment.slots.some(
+      (slot) => applicationIds.has(slot.applicationId) && slot.score === null,
+    );
+  });
+
+  if (scoredAssignments.length === 0) return [];
+
+  for (const assignment of scoredAssignments) {
     const scored = assignment.slots.filter(
       (
         slot,
       ): slot is typeof slot & {
         score: RubricScores & { comment?: string | null };
-      } => isScoreComplete(slot.score),
+      } => applicationIds.has(slot.applicationId) && isScoreComplete(slot.score),
     );
     const totals = scored.map((slot) => rubricTotal(slot.score));
     const zs = zScores(totals);
