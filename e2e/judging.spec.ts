@@ -18,7 +18,8 @@ async function scoreTeam(page: Page, scores: Record<string, string>) {
   for (const [field, value] of Object.entries(scores)) {
     await page.locator(`#${field}`).selectOption(value);
   }
-  await expect(page.getByText(/Saved total:/)).toBeVisible();
+  await page.getByRole("button", { name: "Save team scores" }).click();
+  await expect(page.getByText(/Saved Team/)).toBeVisible();
 }
 
 test("ops opens judging, moderator drives the screen, a judge scores, and results release", async ({
@@ -64,7 +65,7 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
   await judge.goto(`/judge/${id}/team/1`);
   await scoreTeam(judge, SCORES[1]);
   await judge.locator("#comment").fill("Strong opener");
-  await judge.locator("#comment").blur();
+  await judge.getByRole("button", { name: "Save comment" }).click();
   await expect.poll(async () => (await savedScore(1))?.comment).toBe("Strong opener");
 
   await expect(async () => {
@@ -81,6 +82,7 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
   await judge.reload();
   await expect(judge.locator("#choreography")).toBeEnabled();
   await judge.locator("#choreography").selectOption("9");
+  await judge.getByRole("button", { name: "Save team scores" }).click();
   await expect.poll(async () => (await savedScore(1))?.choreography).toBe(9);
   await expect(judge.getByText("Saving…")).toHaveCount(0);
 
