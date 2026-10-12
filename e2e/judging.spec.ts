@@ -14,12 +14,12 @@ async function expectNoTeamNames(page: Page) {
   }
 }
 
-async function scoreTeam(page: Page, scores: Record<string, string>) {
+async function scoreTeam(page: Page, position: number, scores: Record<string, string>) {
   for (const [field, value] of Object.entries(scores)) {
     await page.locator(`#${field}`).selectOption(value);
   }
   await page.getByRole("button", { name: "Save team scores" }).click();
-  await expect(page.getByText(/Saved Team/)).toBeVisible();
+  await expect(page.getByRole("status")).toHaveText(`Scores saved for Team ${position}.`);
 }
 
 test("ops opens judging, moderator drives the screen, a judge scores, and results release", async ({
@@ -63,9 +63,10 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
   await judge.goto(`/judge/${id}/team/2?stay=1`);
   await expect(judge.locator("#choreography")).toBeDisabled();
   await judge.goto(`/judge/${id}/team/1`);
-  await scoreTeam(judge, SCORES[1]);
+  await scoreTeam(judge, 1, SCORES[1]);
   await judge.locator("#comment").fill("Strong opener");
   await judge.getByRole("button", { name: "Save comment" }).click();
+  await expect(judge.getByRole("status")).toHaveText("Comment saved for Team 1.");
   await expect.poll(async () => (await savedScore(1))?.comment).toBe("Strong opener");
 
   await expect(async () => {
@@ -74,7 +75,7 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
   }).toPass();
   await moderator.getByRole("button", { name: /Next: Team 2/ }).click();
   await expect(judge).toHaveURL(/\/team\/2/);
-  await scoreTeam(judge, SCORES[2]);
+  await scoreTeam(judge, 2, SCORES[2]);
   await expect.poll(async () => (await savedScore(2))?.overallImpression).toBe(6);
   await expect(judge.getByText("Saving…")).toHaveCount(0);
   await judge.getByRole("link", { name: "Team 1" }).click();
