@@ -26,7 +26,7 @@ export function BrandMark({
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/brand/legends-crown-sm.png" alt="" className="h-9 w-auto" />
-      <span className="translate-y-px font-heading text-sm tracking-[0.08em] text-ink sm:text-base">
+      <span className="translate-y-0.5 font-heading text-sm tracking-[0.08em] text-ink sm:text-base">
         OneLegends
       </span>
     </Link>
