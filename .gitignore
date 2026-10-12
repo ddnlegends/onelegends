@@ -43,6 +43,7 @@ yarn-error.log*
 !.env.example
 
 # local secrets (logins and claim codes)
+backup.sql
 CREDENTIALS.md
 docs/CREDENTIALS.md
 docs/claim-codes.md

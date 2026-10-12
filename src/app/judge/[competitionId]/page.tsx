@@ -131,7 +131,7 @@ export default async function JudgePacketPage({
                             scoreComment(slot.score) ? " · Note saved" : ""
                           }`
                         : rubricFilledCount(slot.score)
-                          ? `Autosaved · ${rubricFilledCount(slot.score)} / 5`
+                          ? `Draft · ${rubricFilledCount(slot.score)} / 5`
                           : "Not scored"}
                     </p>
                   </div>

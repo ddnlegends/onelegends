@@ -29,7 +29,7 @@ export function SubmitPacketButton({
         disabled={pending || !ready || closed}
         type="submit"
       >
-        {pending ? "Submitting…" : "Submit Judging"}
+        {pending ? "Submitting…" : "Submit Scores"}
       </button>
       {closed ? (
         <p className="text-sm text-muted">

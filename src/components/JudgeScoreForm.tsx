@@ -100,6 +100,7 @@ export function JudgeScoreForm({
   const [inFlight, setInFlight] = useState(0);
   const pending = inFlight > 0;
   const [draft, setDraft] = useState(() => toDraft(saved));
+  const [scoreSaved, setScoreSaved] = useState(() => isScoreComplete(saved));
   const filled = filledFromDraft(draft);
   const scoreLocked = locked || !scoreAvailable;
   const commentLocked = locked || (scoreLocked && filled === 0 && !saved);
@@ -131,6 +132,7 @@ export function JudgeScoreForm({
     void enqueueSave(queueKey(assignmentId, position), toFormData(draftToSave, mode)).then(
       (result) => {
         setState(result);
+        if (mode === "score" && result?.ok) setScoreSaved(true);
         setInFlight((n) => n - 1);
       },
     );
@@ -254,6 +256,11 @@ export function JudgeScoreForm({
           <Link href={`/judge/${competitionId}`} prefetch className="btn btn-ghost">
             Packet List
           </Link>
+          {!nextPosition && scoreSaved ? (
+            <Link href={`/judge/${competitionId}`} prefetch className="btn btn-primary">
+              Review Scores
+            </Link>
+          ) : null}
           {nextPosition && (locked || (livePosition != null && nextPosition <= livePosition)) ? (
             <Link
               href={`/judge/${competitionId}/team/${nextPosition}?stay=1`}
