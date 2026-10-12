@@ -218,7 +218,7 @@ export default async function DashboardPage() {
       ) : null}
 
       {moderatorCompetitions.length ? (
-        <section className="space-y-4">
+        <section className="space-y-6">
           <div>
             <h2 className="font-heading text-2xl">Live Viewing</h2>
             <p className="mt-1 text-sm text-muted">
@@ -230,7 +230,7 @@ export default async function DashboardPage() {
               <Link
                 key={competition.id}
                 href={`/moderator/${competition.id}`}
-                className="brand-gradient group flex min-h-44 flex-col justify-between rounded-2xl p-6 text-white shadow-sm transition hover:brightness-110"
+                className="brand-gradient group flex min-h-52 flex-col justify-between rounded-2xl p-8 text-white shadow-sm transition hover:brightness-110"
               >
                 <span
                   className="grid size-12 place-items-center rounded-xl border border-white/35 bg-white/10"
@@ -246,10 +246,10 @@ export default async function DashboardPage() {
                   <span className="block text-xs uppercase tracking-widest text-white/80">
                     Moderator access
                   </span>
-                  <span className="mt-1 block font-heading text-2xl tracking-wide">
+                  <span className="mt-2 block font-heading text-2xl tracking-wide">
                     {competition.name}
                   </span>
-                  <span className="mt-4 inline-flex rounded-full border border-white/40 px-4 py-2 text-sm font-semibold transition group-hover:bg-white group-hover:text-brand">
+                  <span className="mt-6 inline-flex rounded-full border border-white/40 px-4 py-2 text-sm font-semibold transition group-hover:bg-white group-hover:text-brand">
                     Open Live Viewing
                   </span>
                 </span>
