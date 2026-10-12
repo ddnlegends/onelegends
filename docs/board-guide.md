@@ -16,7 +16,7 @@ Use **Theme** in the header to choose **System**, **Light**, or **Dark**. System
 | Moderator | Assigned competition's live viewing: anonymous team numbers, each team's AV, and a checkmark per judge per team. After every active judge submits and pending invitations are resolved, can view read-only named rankings; admin finalization marks them final. |
 | Circuit tech admin | **Teams** and **Competitions** (click a row's arrow to expand every detail, including stage size, lighting, production notes, owners, judges, moderator access, and applications), **Comp Dashboard** for live judging, and **Export data** for .xlsx/CSV downloads. |
 
-Access checks run in server pages and actions. Giving someone a claim code or inviting them grants access only after they claim or approve it. Do not share test login credentials as a way to grant a normal role.
+Access checks run in server pages and actions. Giving someone a claim code or inviting them grants access only after they claim or approve it. Use normal Google accounts for role access.
 
 ## Start of season
 

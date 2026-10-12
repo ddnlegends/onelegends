@@ -3,8 +3,9 @@ import { isLegacyTestLogin, isPublicTestLogin } from "@/lib/auth-policy";
 
 type Environment = Record<string, string | undefined>;
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
-// Turn off after the production role-testing window; no deployment secret is needed.
-const TEMPORARY_PRODUCTION_TEST_LOGIN = true;
+// Production uses Google sign-in only. Password login remains available solely
+// for disposable local fixture databases used by automated tests.
+const TEMPORARY_PRODUCTION_TEST_LOGIN = false;
 
 export function isDisposableDatabase(raw: string | undefined): boolean {
   try {
@@ -37,7 +38,7 @@ export function assertDisposableDatabase(env: Environment = process.env): void {
 }
 
 export function testPasswordLoginEnabled(env: Environment = process.env): boolean {
-  // Temporary production demonstration access; preview deployments stay Google-only.
+  // Production and preview deployments stay Google-only.
   if (env.VERCEL_ENV === "production") return TEMPORARY_PRODUCTION_TEST_LOGIN;
   if (env.AUTH_ENABLE_TEST_LOGIN !== "true" || env.VERCEL || env.VERCEL_ENV) return false;
   if (!isDisposableDatabase(env.DATABASE_URL) || !isDisposableDatabase(env.DIRECT_URL)) return false;

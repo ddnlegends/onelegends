@@ -1,6 +1,6 @@
 # Role and navigation audit — October 9, 2026
 
-This report records the audit of commit `2345d655` before the roster and test-login release. Production has since moved to `41d5945`, which added temporary password login for four demonstration accounts. The functional defects below remain open; the guide changes do not repair them.
+This report records the audit of commit `2345d655` before the roster and authentication hardening release. The functional defects below remain open; the guide changes do not repair them.
 
 This is a historical audit of the earlier judging flow. Current code requires every active judge to submit and an admin to finalize results; references below to automatic release or a required judge count describe the audited build.
 

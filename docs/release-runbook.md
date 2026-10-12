@@ -18,9 +18,9 @@ Name a release lead, technical approver, competition-operations tester, and inci
 | --- | --- | --- |
 | Local/CI | Disposable loopback `onelegends_e2e`, generated fixtures, fake auth secret, no Google/Sheets keys | Automated tests, destructive seed, migrations from empty DB |
 | Staging/preview | Separate Supabase project, synthetic data, separate OAuth client/service credentials | Real Google login, device rehearsal, upgrade/restore rehearsal, capacity tests |
-| Production | Production-only DB and OAuth settings, four temporary demonstration passwords | Real users and controlled role testing; remove demonstration access after testing |
+| Production | Production-only DB and OAuth settings | Real users and controlled role testing |
 
-Preview deployments must never inherit production database URLs. Preview code is executable code with access to its environment secrets. Hosted staging uses Google; password login is unavailable there. Production temporarily permits only the four demonstration emails listed in `src/lib/auth-policy.ts`; those account rows and password hashes must already exist.
+Preview deployments must never inherit production database URLs. Preview code is executable code with access to its environment secrets. Hosted staging and production use Google sign-in; password login is unavailable outside disposable local fixtures.
 
 ## Activate the release gates (owner action)
 
@@ -47,8 +47,8 @@ Record date/time in Eastern Time, release SHA, Vercel deployment ID/URL, previou
 - [ ] Every P0/P1 finding closed or explicitly accepted by its accountable owner with evidence and expiry; no silent waiver in CI.
 - [ ] CI **Release gate** is green for the exact release SHA. No ignored failure, skipped prerequisite, focused test, or flaky-pass acceptance.
 - [ ] Staging role matrix, real Google Register/Log In, Safari/iPhone and Chrome/Android rehearsal passed.
-- [ ] Privileged admin Google login verified before removing password access. Expect all older sessions to need one fresh login with this rollout.
-- [ ] Exposed passwords and still-active published claim codes handled; privileged membership review complete.
+- [ ] Privileged admin Google login verified; privileged membership review complete.
+- [ ] Exposed credentials and still-active published claim codes handled.
 - [ ] Separate environment URLs verified without posting secrets. Google callback URL matches the exact production `AUTH_URL`; provider app access/publication settings permit intended users.
 - [ ] Backup taken and an earlier backup successfully restored to an isolated DB. Record restore duration and acceptable data-loss window.
 - [ ] Capacity evidence accepted against expected peaks and hosting/database limits. Application and database error alerts route to a named responder.
@@ -60,7 +60,7 @@ Apply only reviewed, backward-compatible migrations with `npm run db:migrate` us
 
 The production build runs a read-only Prisma migration-status check and fails if migrations are pending or the database cannot be checked. Apply and verify migrations before pushing code to `main`; the build check prevents another schema mismatch from reaching the live domain, but does not apply migrations or replace a backup and restore rehearsal. Production secrets must be scoped to Production; configure a separate database and credentials before enabling functional Preview deployments.
 
-The Point of Contact change adds `20261009120000_dancer_point_of_contact`. Apply it before deploying code that reads the new column. Existing roster rows receive `false`; the previous app ignores the column if a code rollback is needed. Confirm the four production demonstration accounts exist with password hashes and the intended access before inviting testers.
+The Point of Contact change adds `20261009120000_dancer_point_of_contact`. Apply it before deploying code that reads the new column. Existing roster rows receive `false`; the previous app ignores the column if a code rollback is needed.
 
 The Sober Monitor change adds `20261010120000_dancer_sober_monitor`. Apply it before deploying code that reads the new column. Existing roster rows receive `false`; the previous app ignores the column if a code rollback is needed.
 
@@ -84,6 +84,6 @@ Suggested initial alert/stop thresholds, to confirm against baseline: unexpected
 
 1. Incident responder records onset, affected competition/roles, deployment SHA, symptoms, and last known-good operation. Keep credentials and team data out of public issues.
 2. For scoring integrity issues, ops closes judging while the responder investigates; tell event staff which actions to pause through the established support channel.
-3. If the previous app is schema-compatible and retains the required authentication protections, use Vercel Instant Rollback to the recorded deployment; verify traffic actually uses it and rerun smoke. The pre-hardening baseline permits published test passwords, so it is **not a safe security rollback target**. If no safe earlier build exists, prepare a forward fix retaining the auth guard. Follow any rollback with a reviewed revert on `main` so the next deploy does not reintroduce the fault.
+3. If the previous app is schema-compatible and retains the required authentication protections, use Vercel Instant Rollback to the recorded deployment; verify traffic actually uses it and rerun smoke. The pre-hardening baseline permits published credentials, so it is **not a safe security rollback target**. If no safe earlier build exists, prepare a forward fix retaining the auth guard. Follow any rollback with a reviewed revert on `main` so the next deploy does not reintroduce the fault.
 4. A code rollback does not undo migrations or restore lost data. Use a reviewed forward migration or coordinated restore with the owner; reconcile any writes since the backup. Never blindly revert SQL under active users.
 5. Retain sanitized logs and timestamps, assign the root cause, add a reproducing regression, and document recovery time and prevention before normal feature work resumes.

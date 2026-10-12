@@ -1,9 +1,8 @@
 /**
  * Auth.js configuration (JWT sessions; separate from Supabase Auth).
  *
- * Google is the normal sign-in. Production temporarily accepts password
- * sign-in for four named demonstration accounts in `src/lib/auth-policy.ts`;
- * additional legacy fixtures work only against an opted-in local database.
+ * Google is the production sign-in. Password credentials work only against an
+ * opted-in disposable local fixture database.
  * The `signIn` callback creates new Google users only when the intent cookie says Register; from Log In an
  * unknown email is sent to `/register?error=no-account`. The session carries
  * `id`, `role`, and `platformAdmin`, kept in sync with the user row.

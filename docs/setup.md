@@ -12,7 +12,7 @@ Change `AUTH_SECRET` before a public deploy (`openssl rand -base64 32`). Keep `.
 
 ## Environment
 
-Login uses Auth.js, while Supabase hosts Postgres. You need Postgres URIs, not Supabase anon keys. Google is the sign-in path for regular accounts. Production temporarily allows password sign-in for the four named demonstration accounts shown on Log In; preview deployments remain Google-only. Those four user rows must already have password hashes and the intended role assignments. The app does not create them or set their passwords.
+Login uses Auth.js, while Supabase hosts Postgres. You need Postgres URIs, not Supabase anon keys. Google is the production sign-in path. Password login is available only for disposable local fixture databases used by automated tests.
 
 Google on **Register** creates an account. Google on **Log In** only signs in an email that already has an account; an unknown email is sent to `/register?error=no-account` and nothing is created.
 
@@ -28,7 +28,7 @@ In the hosting dashboard (for example Vercel), paste values **without quotes** a
 | `AUTH_URL` | yes | Site origin (`http://localhost:3000` locally). |
 | `AUTH_GOOGLE_ID` | launch | Google OAuth client ID. Shows Continue with Google when set with the secret. |
 | `AUTH_GOOGLE_SECRET` | launch | Google OAuth client secret. Redirect URI is `{AUTH_URL}/api/auth/callback/google`. |
-| `AUTH_ENABLE_TEST_LOGIN` | local tests only | Explicit `true`, loopback AUTH_URL, and both URLs targeting local `onelegends_e2e`. Production's four named demonstration accounts are enabled by code, independently of this flag; preview passwords stay disabled. |
+| `AUTH_ENABLE_TEST_LOGIN` | local tests only | Explicit `true`, loopback AUTH_URL, and both URLs targeting local `onelegends_e2e`. Hosted environments keep password login disabled. |
 
 URI-encode special characters in the database password (`@` → `%40`).
 

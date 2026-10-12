@@ -1079,7 +1079,7 @@ export function GrantModeratorForm({
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="legendstestmoderator@gmail.com"
+            placeholder="moderator@example.org"
           />
         </div>
         <button className="btn btn-primary" disabled={pending} type="submit">

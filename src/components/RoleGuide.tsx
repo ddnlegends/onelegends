@@ -199,8 +199,7 @@ export function RoleGuide({ signedIn, standalone }: { signedIn?: boolean; standa
             How it works
           </Heading>
           <p className="mt-2 max-w-2xl text-muted">
-            Regular accounts use Google sign-in; temporary test accounts have
-            a separate password option. Teams and competitions use claim codes,
+            Accounts use Google sign-in. Teams and competitions use claim codes,
             while judges and moderators receive access by email. Choose a role
             below for its steps.
           </p>

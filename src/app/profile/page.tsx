@@ -21,8 +21,8 @@ export default async function ProfilePage() {
       <div>
         <h1 className="font-heading text-4xl">Profile</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          Update your display name. Your login email stays tied to Google or
-          the existing test account. Team and competition details have their own pages.
+          Update your display name. Your login email stays tied to Google.
+          Team and competition details have their own pages.
         </p>
       </div>
       <section className="grid gap-4 lg:grid-cols-2">

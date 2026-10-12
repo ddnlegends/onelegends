@@ -1,4 +1,4 @@
-/** Temporary production demonstration accounts. Keep these distinct from staff accounts. */
+/** Disposable local fixture accounts used by the automated browser suite. */
 export const PUBLIC_TEST_ACCOUNTS = [
   { label: "Moderator", email: "legendstestmoderator@gmail.com" },
   { label: "Judge", email: "legendstestuser@gmail.com" },
@@ -16,7 +16,7 @@ export function isPublicTestLogin(email: string): boolean {
 const LEGACY_TEST_EMAILS = new Set([
   "legendstech@desidancenetwork.org",
   "legendstestuser@gmail.com",
-  "legendstestreg@gmail.com", // Existing test account keeps its login.
+  "legendstestreg@gmail.com",
   ...PUBLIC_TEST_EMAILS,
 ]);
 

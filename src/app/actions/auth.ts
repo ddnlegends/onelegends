@@ -3,8 +3,7 @@
 /**
  * Sign-in, sign-out, and account settings.
  *
- * Password login is limited to the named demonstration accounts in production
- * and a broader local-only fixture allowlist; everyone else uses Google. `googleSignInAction`
+ * Password login works only against an opted-in disposable local database; production uses Google. `googleSignInAction`
  * records whether the user pressed Google on Log In or Register so the
  * `signIn` callback in `src/auth.ts` can refuse to create accounts from Log In.
  * `requireUser` is the session check every other action starts with.
@@ -52,7 +51,7 @@ export async function loginAction(
     return { error: "Enter email and password." };
   }
   if (!testPasswordLoginAllowed(parsed.data.email)) {
-    return { error: "Use Google to sign in. Password login is only for the listed test accounts." };
+    return { error: "Use Google to sign in." };
   }
 
   try {
@@ -185,7 +184,7 @@ export async function changePasswordAction(
     return { error: "Account not found." };
   }
   if (!testPasswordLoginAllowed(user.email)) {
-    return { error: "Password changes are only available for existing test accounts." };
+    return { error: "Password changes are managed through Google." };
   }
   if (!user.passwordHash) {
     return { error: "This login uses Google. There is no password to change." };

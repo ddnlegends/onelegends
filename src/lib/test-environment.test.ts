@@ -43,14 +43,14 @@ describe("local password login", () => {
   });
 });
 
-describe("temporary production test login", () => {
+describe("production password login", () => {
   const production = { ...local, VERCEL: "1", VERCEL_ENV: "production", AUTH_ENABLE_TEST_LOGIN: "false" };
 
   it.each([
     "legendstestadmin@gmail.com", "legendstestcomp@gmail.com",
     "legendstestmoderator@gmail.com", "legendstestuser@gmail.com",
-  ])("accepts the named demonstration account %s", (email) => {
-    expect(testPasswordLoginAllowed(email, production)).toBe(true);
+  ])("rejects removed demonstration account %s", (email) => {
+    expect(testPasswordLoginAllowed(email, production)).toBe(false);
   });
 
   it.each(["legendstech@desidancenetwork.org", "legendstestreg@gmail.com", "new@example.org"])(
