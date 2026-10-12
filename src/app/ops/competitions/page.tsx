@@ -92,6 +92,15 @@ export default async function OpsCompetitionsPage() {
             const accepted = competition.applications.filter(
               (application) => application.status === "ACCEPTED",
             ).length;
+            const waitlisted = competition.applications.filter(
+              (application) => application.status === "WAITLISTED",
+            ).length;
+            const declined = competition.applications.filter(
+              (application) => application.status === "DECLINED",
+            ).length;
+            const paymentsReceived = competition.applications.filter(
+              (application) => application.compPaymentReceivedAt,
+            ).length;
 
             return (
               <ExpandableRow
@@ -202,8 +211,9 @@ export default async function OpsCompetitionsPage() {
                       },
                       {
                         label: "Applications",
-                        value: `${competition.applications.length} total · ${accepted} accepted`,
+                        value: `${competition.applications.length} total · ${accepted} accepted · ${waitlisted} waitlisted · ${declined} declined`,
                       },
+                      { label: "Host payments", value: `${paymentsReceived} received of ${accepted} accepted` },
                       { label: "Active judges", value: competition.judgeAssignments.filter((row) => row.status === "APPROVED").length },
                       { label: "Judging open", value: competition.judgingOpen ? "Yes" : "No" },
                       {

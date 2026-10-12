@@ -2,12 +2,11 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { StatusSelect } from "@/components/StatusSelect";
 import { rankTeams } from "@/lib/results";
-import { formatDate, formatDateTime } from "@/lib/utils";
+import { formatDateTime } from "@/lib/utils";
 import { getActiveCompetitionId } from "@/lib/team-access";
 import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
-import { CompPaymentCheckbox } from "@/components/PaymentForms";
+import { CompDecisionBoard } from "@/components/CompDecisionBoard";
 import { moderatorResultsReady } from "@/lib/judge-panel-completion";
 
 export default async function CompResultsPage() {
@@ -54,6 +53,13 @@ export default async function CompResultsPage() {
   const paymentByApplication = new Map(
     competition.applications.map((application) => [application.id, application.compPaymentReceivedAt]),
   );
+  const decisionRows = ranked.map((row, index) => ({
+    applicationId: row.applicationId,
+    teamName: row.name,
+    rank: index + 1,
+    status: row.status,
+    paymentReceived: Boolean(paymentByApplication.get(row.applicationId)),
+  }));
 
   return (
     <div className="space-y-8">
@@ -89,6 +95,7 @@ export default async function CompResultsPage() {
       ) : (
         <div className="space-y-6">
           <Link href="/comp/applicants" className="btn btn-primary inline-flex">View applied teams and full rosters</Link>
+          <CompDecisionBoard rows={decisionRows} />
           <div className="overflow-x-auto rounded-xl border border-line bg-card">
             <table className="w-full min-w-[48rem] text-left text-sm">
               <thead className="border-b border-line bg-blush text-xs uppercase tracking-wide text-muted">
@@ -99,7 +106,6 @@ export default async function CompResultsPage() {
                   <th className="px-4 py-3 font-medium">Avg Z-Score</th>
                   <th className="px-4 py-3 font-medium">Judges</th>
                   <th className="px-4 py-3 font-medium">Notes</th>
-                  <th className="px-4 py-3 font-medium">Decision</th>
                 </tr>
               </thead>
               <tbody>
@@ -112,21 +118,6 @@ export default async function CompResultsPage() {
                     <td className="px-4 py-3">{row.judges.length}</td>
                     <td className="px-4 py-3">
                       {row.judges.filter((judge) => judge.comment).length || "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="space-y-2">
-                        <StatusSelect applicationId={row.applicationId} value={row.status} />
-                        {row.status === "ACCEPTED" ? (
-                          <CompPaymentCheckbox
-                            applicationId={row.applicationId}
-                            received={Boolean(paymentByApplication.get(row.applicationId))}
-                          />
-                        ) : paymentByApplication.get(row.applicationId) ? (
-                          <p className="text-xs text-muted">
-                            Host payment recorded {formatDate(paymentByApplication.get(row.applicationId)!)}
-                          </p>
-                        ) : null}
-                      </div>
                     </td>
                   </tr>
                 ))}

@@ -158,3 +158,83 @@ export async function setApplicationStatus(
   revalidatePath(`/comp/applicants/${app.teamId}`);
   return {};
 }
+
+type ApplicantDecision = {
+  applicationId: string;
+  status: ApplicationStatus;
+  paymentReceived: boolean;
+};
+
+export async function saveCompApplicantDecisions(
+  _prev: { error?: string; ok?: boolean; message?: string } | undefined,
+  formData: FormData,
+): Promise<{ error?: string; ok?: boolean; message?: string }> {
+  const user = await requireUser();
+  if (!user) return { error: "Unauthorized." };
+
+  const competition = await requireActiveCompetition(user.id);
+  if (!competition) return { error: "Competition profile missing." };
+  if (!competition.resultsReleasedAt) {
+    return { error: "Decisions unlock after results are released." };
+  }
+
+  let decisions: ApplicantDecision[];
+  try {
+    const parsed: unknown = JSON.parse(String(formData.get("decisions") ?? "[]"));
+    if (!Array.isArray(parsed)) throw new Error("Invalid decisions.");
+    decisions = parsed.map((value) => {
+      if (!value || typeof value !== "object") throw new Error("Invalid decisions.");
+      const row = value as Record<string, unknown>;
+      const statuses: ApplicationStatus[] = ["PENDING", "ACCEPTED", "WAITLISTED", "DECLINED"];
+      if (typeof row.applicationId !== "string" || !statuses.includes(row.status as ApplicationStatus)) {
+        throw new Error("Invalid decision.");
+      }
+      return {
+        applicationId: row.applicationId,
+        status: row.status as ApplicationStatus,
+        paymentReceived: row.paymentReceived === true,
+      };
+    });
+  } catch {
+    return { error: "Could not read the decision changes." };
+  }
+
+  if (!decisions.length || new Set(decisions.map((decision) => decision.applicationId)).size !== decisions.length) {
+    return { error: "Include each application exactly once." };
+  }
+  if (decisions.some((decision) => decision.paymentReceived && decision.status !== "ACCEPTED")) {
+    return { error: "Only accepted teams can have a recorded host payment." };
+  }
+
+  const applications = await prisma.application.findMany({
+    where: {
+      competitionId: competition.id,
+      id: { in: decisions.map((decision) => decision.applicationId) },
+      ...visibleApplicationWhere,
+    },
+    select: { id: true },
+  });
+  if (applications.length !== decisions.length) return { error: "One or more applications were not found." };
+
+  await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${competition.id}))`;
+    for (const decision of decisions) {
+      await tx.application.update({
+        where: { id: decision.applicationId },
+        data: {
+          status: decision.status,
+          compPaymentReceivedAt: decision.paymentReceived ? new Date() : null,
+          compPaymentRecordedByEmail: decision.paymentReceived ? user.email : null,
+        },
+      });
+    }
+  });
+
+  revalidatePath("/comp");
+  revalidatePath("/comp/results");
+  revalidatePath("/comp/applicants");
+  revalidatePath("/ops/comps", "layout");
+  revalidatePath("/ops/competitions", "layout");
+  revalidatePath("/ops/payments");
+  return { ok: true, message: `${decisions.length} team decisions saved.` };
+}

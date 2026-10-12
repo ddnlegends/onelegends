@@ -4,6 +4,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Replace per-row decision and payment autosaves with a competition-admin batch save board, and show accepted, waitlisted, declined, and host-payment counts in the tech-admin competition view.
 - Restrict competition result validation to Legends tech admins; competition accounts keep rankings and judge scores sealed until tech-admin validation.
 - Fix the judging browser regression to assert the score and comment confirmations returned by explicit saves, including the team number. Keep the persisted-score, anonymity, and result-finalization checks.
 - Require the complete active judge panel—not a legacy numeric threshold—before any moderator ranking page can calculate or reveal results. Moderators receive read-only rankings once every active judge submits and pending judge invitations are resolved; admin finalization still controls official release and competition decisions. Legacy release flags cannot bypass the complete-panel gate.

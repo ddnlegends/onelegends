@@ -198,8 +198,8 @@ describe("judging with real PostgreSQL transactions", () => {
     const results = await Promise.all([submitJudgingPacket(undefined, form()), submitJudgingPacket(undefined, form())]);
     expect(results).toEqual([{ ok: true }, { ok: true }]);
     expect((await prisma.competitionProfile.findUniqueOrThrow({ where: { id: competitionId } })).resultsReleasedAt).toBeNull();
-    const comp = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.comp } });
-    session.userId = comp.id;
+    const tech = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.tech } });
+    session.userId = tech.id;
     const confirm = new FormData();
     confirm.set("competitionId", competitionId);
     confirm.set("confirmation", "FINALIZE");
@@ -226,7 +226,7 @@ describe("judging with real PostgreSQL transactions", () => {
     const removal = new FormData(); removal.set("assignmentId", second.id); removal.set("confirmation", "REMOVE"); removal.set("reason", "Unavailable during viewing");
     expect(await removeJudgeAssignment(undefined, removal)).toMatchObject({ ok: true });
     expect((await prisma.judgeAssignment.findUniqueOrThrow({ where: { id: second.id } })).status).toBe("REMOVED");
-    session.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.comp } })).id;
+    session.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.tech } })).id;
     expect(await finalizeCompetitionResults(undefined, confirm)).toMatchObject({ ok: true });
   });
   it("the database rejects accepting applications while judging is open", async () => {

@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getActiveCompetitionId, isCompAdmin } from "@/lib/team-access";
 import { formatDate, statusLabel } from "@/lib/utils";
 import { visibleApplicationWhere } from "@/lib/payment-eligibility";
-import { CompPaymentCheckbox } from "@/components/PaymentForms";
+import { CompDecisionBoard } from "@/components/CompDecisionBoard";
 
 export default async function CompApplicantsPage() {
   const session = await auth();
@@ -39,6 +39,12 @@ export default async function CompApplicantsPage() {
   });
   if (!competition) redirect("/comp");
   const released = Boolean(competition.resultsReleasedAt);
+  const decisionRows = competition.applications.map((application) => ({
+    applicationId: application.id,
+    teamName: application.team.name,
+    status: application.status,
+    paymentReceived: Boolean(application.compPaymentReceivedAt),
+  }));
   return (
     <div className="space-y-6">
       <div>
@@ -48,6 +54,7 @@ export default async function CompApplicantsPage() {
       {!released ? (
         <p className="rounded-xl border border-line bg-blush p-5 text-sm">Tech admins verify OneLegends registration payments before AV viewing. Competition payments are tracked after final acceptance. Viewing order, AV links, scores, and full team details remain hidden until results release.</p>
       ) : null}
+      {released ? <CompDecisionBoard rows={decisionRows} /> : null}
       {competition.applications.length ? (
         <ul className="divide-y divide-line rounded-xl border border-line bg-card">
           {competition.applications.map((application) => (
@@ -66,11 +73,7 @@ export default async function CompApplicantsPage() {
               {released ? (
                 <div className="space-y-2">
                   <span className="text-sm text-muted">{statusLabel(application.status)}</span>
-                  {application.status === "ACCEPTED" ? (
-                    <CompPaymentCheckbox applicationId={application.id} received={Boolean(application.compPaymentReceivedAt)} />
-                  ) : application.compPaymentReceivedAt ? (
-                    <p className="text-sm text-muted">Host payment recorded {formatDate(application.compPaymentReceivedAt)}</p>
-                  ) : null}
+                  {application.compPaymentReceivedAt ? " · Host payment received" : ""}
                 </div>
               ) : null}
             </li>
