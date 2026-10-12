@@ -35,7 +35,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Invite secondary admins by email",
-        body: "The primary admin can invite other admins by email. Invites appear under Requests when those people sign in or register; they must approve before they can manage the team. The app does not send invitation emails.",
+        body: "Any approved admin can invite other admins by email. Invites appear under Requests when those people sign in or register; they must approve before they can manage the team. The primary admin can later transfer ownership, and only the primary can remove other admins. The app does not send invitation emails.",
       },
       {
         title: "Fill Team Profile and roster",
@@ -71,11 +71,11 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Score Team 1, Team 2, …",
-        body: "The moderator selects the live team, and your sheet follows. Score choreography, formations, technique, sync & cleanliness, and overall impression from 0–10 each. Scores save automatically; wait for Saving… to finish and resolve errors before moving on. You may edit earlier teams until submission; future teams stay locked. Comments are optional.",
+        body: "The moderator selects the live team, and your sheet follows. Score choreography, formations, technique, sync & cleanliness, and overall impression from 0–10 each, then click Save team scores. Save comments separately when needed. You may edit earlier teams until submission; future teams stay locked.",
       },
       {
-        title: "Submit Judging when every slot is filled",
-        body: "Once every team has all five scores, submit your packet to lock it. Your submission does not release results; a competition or tech admin finalizes after every active judge submits and pending invitations are resolved. Judges do not see team names, other judges’ scores, or rankings.",
+        title: "Review Scores, then Submit Scores",
+        body: "After the last team is saved, choose Review Scores to return to the packet list and check every team. When every slot has all five scores, click Submit Scores to lock the packet. Your submission does not release results; only a tech admin validates results after every active judge submits and pending invitations are resolved. Judges do not see team names, other judges’ scores, or rankings.",
       },
     ],
     cta: { href: "/register", label: "Create an account" },
@@ -127,7 +127,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Invite secondary admins",
-        body: "The primary admin can invite other competition admins by email. They approve the invitation under Requests on their dashboard before gaining access.",
+        body: "Any approved competition admin can invite additional admins by email. Invitees approve under Requests before gaining access. The primary admin can transfer ownership, and only the primary can remove other admins.",
       },
       {
         title: "Set Comp Details",
@@ -139,7 +139,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Review released results",
-        body: "Circuit ops opens judging after applications close. Once every active judge submits and pending invitations are resolved, a competition or tech admin confirms finalization. Rankings, comments, videos, full applicant rosters, and accept / waitlist / decline decisions then unlock. Non-partner admins can also run live viewing; Partner competitions use moderators assigned by circuit ops.",
+        body: "Circuit ops opens judging after applications close. Once every active judge submits and pending invitations are resolved, a tech admin validates the results. Rankings, comments, full applicant rosters, and accept / waitlist / decline decisions then unlock for the competition account. Non-partner admins can also run live viewing; Partner competitions use moderators assigned by circuit ops.",
       },
     ],
     cta: { href: "/register", label: "Create an account" },
@@ -159,7 +159,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Manage access",
-        body: "Review team and competition admins, grant Partner competition moderator access, and rotate claim codes or reset access when needed. Mark OneLegends registration payments on Fees, block a team circuit-wide, or remove one application before viewing starts.",
+        body: "Review team and competition admins, grant Partner competition moderator access, transfer or reset ownership when needed, and rotate claim codes. Mark OneLegends registration payments on Fees, block a team circuit-wide, or remove one application before viewing starts.",
       },
       {
         title: "Open judging",
@@ -167,7 +167,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Monitor and export",
-        body: "Follow live scoring progress, help manage the judge panel, finalize results when every active judge submits, and download CSV or XLSX reports for permitted operations. Keep exports private because they may contain emails and rosters.",
+        body: "Follow live scoring progress, help manage the judge panel, validate results when every active judge submits, and download CSV or XLSX reports for permitted operations. Keep exports private because they may contain emails and rosters.",
       },
     ],
     cta: { href: "/login", label: "Log in" },
