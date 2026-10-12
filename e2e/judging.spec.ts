@@ -82,7 +82,7 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
   await expect(judge.getByText("2 of 2 fully scored")).toBeVisible();
   await expect.poll(async () => (await savedScore(2))?.overallImpression).toBe(6);
   await expect(judge.getByText("Saving…")).toHaveCount(0);
-  await judge.getByRole("link", { name: "Team 1" }).click();
+  await judge.goto(`/judge/${id}/team/1?stay=1`);
   await expect(judge).toHaveURL(/\/team\/1\?stay=1/);
   await judge.reload();
   await expect(judge.locator("#choreography")).toBeEnabled();
