@@ -550,7 +550,7 @@ async function OpsDashboard({
 
       <div className="grid gap-6 lg:grid-cols-2"><CreateTeamForm /><CreateCompForm /></div>
 
-      <section className="space-y-4 rounded-xl border border-line bg-card p-6">
+      <section className="space-y-6 rounded-xl border border-line bg-card p-8">
         <h2 className="font-heading text-xl">Moderator access</h2>
         <p className="text-sm text-muted">Grant an account control of live viewing for a competition.</p>
         <GrantModeratorForm competitions={competitions} />

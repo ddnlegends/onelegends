@@ -126,7 +126,7 @@ export default async function CompDashboardPage() {
               <li key={comp.id}>
                 <Link
                   href={`/ops/comps/${comp.id}`}
-                  className={`group flex h-full flex-col gap-4 rounded-2xl border bg-card p-5 transition hover:-translate-y-0.5 hover:shadow-md ${
+                  className={`group flex h-full flex-col gap-6 rounded-2xl border bg-card p-6 transition hover:-translate-y-0.5 hover:shadow-md ${
                     live
                       ? "border-accent-ember/50 shadow-sm ring-1 ring-accent-ember/20"
                       : "border-line hover:border-accent/40"
