@@ -23,7 +23,7 @@ What the board asked for, what is done, and what is still open. The [README](../
 | [Branding review](#branding-review) | Sreya and MD | Not started |
 | [Regression workflow merge](#regression-workflow-merge) | Rushi and tech | Expanded suite prepared; merge/CI activation pending |
 | [Test-account passwords](#test-account-passwords) | Tech | Four temporary production demonstration logins need account verification, password rotation, and a removal date |
-| [Transfer primary admin](#transfer-primary-admin) | Tech | Not built |
+| [Transfer primary admin](#transfer-primary-admin) | Tech | Built |
 | [Partner competitions by year](#partner-competitions-by-year) | Tech | Not built |
 | [MOU tracking](#mou-tracking) | Board | Nice-to-have |
 | [Owner decisions from the audit](#owner-decisions-from-the-audit) | Board | Needs a decision |
@@ -71,7 +71,7 @@ Team and competition primary admins can hand primary ownership to another user.
 4. The previous primary admin becomes a secondary admin. One primary remains.
 5. The roster, profile, applications, and listing stay on the same team or competition.
 
-Today a primary admin can invite and remove secondary admins only. Circuit ops can remove a primary and select an approved replacement without clearing the other admins, or leave the listing unclaimed with a rotated code. A self-service transfer by the current primary remains to be built.
+Approved admins can invite additional admins. The current primary can transfer ownership to an approved secondary, who becomes primary while the previous primary remains a secondary admin. Only the primary can remove other admins. Circuit ops can still remove a primary and select an approved replacement without clearing the other admins, or leave the listing unclaimed with a rotated code.
 
 ### Partner competitions by year
 

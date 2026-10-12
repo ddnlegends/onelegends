@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { getActiveTeamId, isTeamPrimary } from "@/lib/team-access";
+import { getActiveTeamId, isTeamAdmin, isTeamPrimary } from "@/lib/team-access";
 import {
   CancelTeamInviteForm,
   InviteTeamAdminForm,
   RevokeTeamAccessForm,
+  TransferTeamPrimaryForm,
 } from "@/components/AccountForms";
 
 export default async function TeamAccessPage() {
@@ -16,6 +17,7 @@ export default async function TeamAccessPage() {
   if (!teamId) redirect("/dashboard");
 
   const primary = await isTeamPrimary(userId, teamId);
+  const admin = await isTeamAdmin(userId, teamId);
   const team = await prisma.teamProfile.findUnique({
     where: { id: teamId },
     include: {
@@ -36,19 +38,19 @@ export default async function TeamAccessPage() {
       <div>
         <h1 className="font-heading text-4xl">Admins · {team.name}</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          The primary admin claimed this team with the code. Only they can
-          invite secondary admins by email. Secondaries approve the invite the
-          next time they log in — the app does not send email.
+          Approved admins can add secondary admins by email. The primary admin
+          can transfer ownership or remove other admins. No email is sent from
+          the app; invitees approve access the next time they log in.
         </p>
       </div>
 
-      {primary ? <InviteTeamAdminForm teamId={team.id} /> : (
+      {admin ? <InviteTeamAdminForm teamId={team.id} /> : (
         <p className="text-sm text-muted">
-          Only the primary admin can invite more admins.
+          Only an approved admin can invite more admins.
         </p>
       )}
 
-      {primary && (team.invites.length || waiting.length) ? (
+      {admin && (team.invites.length || waiting.length) ? (
         <section>
           <h2 className="mb-3 font-heading text-2xl">Request sent</h2>
           <ul className="divide-y divide-line rounded-xl border border-line bg-card text-sm">
@@ -76,7 +78,7 @@ export default async function TeamAccessPage() {
                   {row.user.email}
                   <span className="text-muted"> — waiting to approve</span>
                 </span>
-                <RevokeTeamAccessForm membershipId={row.id} />
+                {primary ? <RevokeTeamAccessForm membershipId={row.id} /> : null}
               </li>
             ))}
           </ul>
@@ -99,7 +101,10 @@ export default async function TeamAccessPage() {
                 </p>
               </div>
               {primary && !row.isPrimary && row.userId !== userId ? (
-                <RevokeTeamAccessForm membershipId={row.id} />
+                <div className="flex flex-wrap gap-2">
+                  <TransferTeamPrimaryForm membershipId={row.id} adminLabel={row.user.email} />
+                  <RevokeTeamAccessForm membershipId={row.id} />
+                </div>
               ) : null}
             </li>
           ))}

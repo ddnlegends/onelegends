@@ -24,6 +24,7 @@ import {
   isCompAdmin,
   isCompPrimary,
   isPlatformAdmin,
+  isTeamAdmin,
   isTeamPrimary,
   setActiveCompCookie,
   setActiveTeamCookie,
@@ -465,8 +466,8 @@ export async function inviteTeamAdmin(
   }
 
   const { teamId, email } = parsed.data;
-  if (!(await isTeamPrimary(user.id, teamId))) {
-    return { error: "Only the primary admin can invite secondary admins." };
+  if (!(await isTeamAdmin(user.id, teamId))) {
+    return { error: "Only an approved team admin can invite secondary admins." };
   }
   if (email === user.email?.toLowerCase()) {
     return { error: "You already admin this team." };
@@ -538,8 +539,8 @@ export async function inviteCompAdmin(
   }
 
   const { competitionId, email } = parsed.data;
-  if (!(await isCompPrimary(user.id, competitionId))) {
-    return { error: "Only the primary admin can invite secondary admins." };
+  if (!(await isCompAdmin(user.id, competitionId))) {
+    return { error: "Only an approved competition admin can invite secondary admins." };
   }
   if (email === user.email?.toLowerCase()) {
     return { error: "You already admin this competition." };
@@ -679,6 +680,103 @@ export async function inviteJudge(
     ok: true,
     message: `Request sent to ${email}.`,
   };
+}
+
+export async function transferTeamPrimary(
+  _prev: { error?: string; ok?: boolean; message?: string } | undefined,
+  formData: FormData,
+): Promise<{ error?: string; ok?: boolean; message?: string }> {
+  const user = await requireUser();
+  if (!user) return { error: "You must be signed in." };
+  const membershipId = String(formData.get("membershipId") ?? "");
+  const target = await prisma.teamMembership.findUnique({
+    where: { id: membershipId },
+    select: { id: true, teamId: true, userId: true, status: true, isAdmin: true },
+  });
+  if (!target || target.status !== "APPROVED" || !target.isAdmin) {
+    return { error: "Choose an approved secondary admin." };
+  }
+  if (!(await isTeamPrimary(user.id, target.teamId))) {
+    return { error: "Only the primary admin can transfer ownership." };
+  }
+  if (target.userId === user.id) return { error: "You are already the primary admin." };
+
+  const result = await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "TeamProfile" WHERE id = ${target.teamId} FOR UPDATE`;
+    const actor = await tx.teamMembership.findUnique({
+      where: { userId_teamId: { userId: user.id, teamId: target.teamId } },
+      select: { id: true, status: true, isPrimary: true },
+    });
+    const currentTarget = await tx.teamMembership.findUnique({
+      where: { id: membershipId },
+      select: { id: true, status: true, isAdmin: true, isPrimary: true },
+    });
+    if (!actor?.isPrimary || actor.status !== "APPROVED") {
+      return { error: "Only the primary admin can transfer ownership." };
+    }
+    if (!currentTarget || currentTarget.status !== "APPROVED" || !currentTarget.isAdmin || currentTarget.isPrimary) {
+      return { error: "Choose an approved secondary admin." };
+    }
+    await tx.teamMembership.update({ where: { id: actor.id }, data: { isPrimary: false } });
+    await tx.teamMembership.update({ where: { id: currentTarget.id }, data: { isPrimary: true } });
+    return { ok: true, message: "Primary team ownership transferred." };
+  });
+  if (result.error) return result;
+  revalidateAccessPaths();
+  return result;
+}
+
+export async function transferCompPrimary(
+  _prev: { error?: string; ok?: boolean; message?: string } | undefined,
+  formData: FormData,
+): Promise<{ error?: string; ok?: boolean; message?: string }> {
+  const user = await requireUser();
+  if (!user) return { error: "You must be signed in." };
+  const membershipId = String(formData.get("membershipId") ?? "");
+  const target = await prisma.competitionMembership.findUnique({
+    where: { id: membershipId },
+    select: { id: true, competitionId: true, userId: true, status: true, isAdmin: true },
+  });
+  if (!target || target.status !== "APPROVED" || !target.isAdmin) {
+    return { error: "Choose an approved secondary admin." };
+  }
+  if (!(await isCompPrimary(user.id, target.competitionId))) {
+    return { error: "Only the primary admin can transfer ownership." };
+  }
+  if (target.userId === user.id) return { error: "You are already the primary admin." };
+
+  const result = await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "CompetitionProfile" WHERE id = ${target.competitionId} FOR UPDATE`;
+    const actor = await tx.competitionMembership.findUnique({
+      where: { userId_competitionId: { userId: user.id, competitionId: target.competitionId } },
+      select: { id: true, status: true, isPrimary: true },
+    });
+    const currentTarget = await tx.competitionMembership.findUnique({
+      where: { id: membershipId },
+      select: { id: true, status: true, isAdmin: true, isPrimary: true, userId: true },
+    });
+    if (!actor?.isPrimary || actor.status !== "APPROVED") {
+      return { error: "Only the primary admin can transfer ownership." };
+    }
+    if (!currentTarget || currentTarget.status !== "APPROVED" || !currentTarget.isAdmin || currentTarget.isPrimary) {
+      return { error: "Choose an approved secondary admin." };
+    }
+    const otherListing = await tx.competitionProfile.findFirst({
+      where: { userId: currentTarget.userId, id: { not: target.competitionId } },
+      select: { id: true },
+    });
+    if (otherListing) return { error: "That admin is already primary for another competition." };
+    await tx.competitionProfile.update({
+      where: { id: target.competitionId },
+      data: { userId: currentTarget.userId },
+    });
+    await tx.competitionMembership.update({ where: { id: actor.id }, data: { isPrimary: false } });
+    await tx.competitionMembership.update({ where: { id: currentTarget.id }, data: { isPrimary: true } });
+    return { ok: true, message: "Primary competition ownership transferred." };
+  });
+  if (result.error) return result;
+  revalidateAccessPaths();
+  return result;
 }
 
 export async function revokeTeamAccess(

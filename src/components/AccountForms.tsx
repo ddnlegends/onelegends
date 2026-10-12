@@ -35,6 +35,8 @@ import {
   setTeamApplyBlock,
   revokeCompAccess,
   revokeTeamAccess,
+  transferCompPrimary,
+  transferTeamPrimary,
   setCompetitionPartnerStatus,
 } from "@/app/actions/team-access";
 import {
@@ -492,6 +494,66 @@ export function RevokeCompAccessForm({
         ) : null}
       </div>
       {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
+    </form>
+  );
+}
+
+export function TransferTeamPrimaryForm({
+  membershipId,
+  adminLabel,
+}: {
+  membershipId: string;
+  adminLabel: string;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [state, formAction, pending] = useActionState(transferTeamPrimary, undefined);
+  if (!confirming) {
+    return (
+      <button className="btn btn-ghost py-1.5" type="button" onClick={() => setConfirming(true)}>
+        Make primary
+      </button>
+    );
+  }
+  return (
+    <form action={formAction} className="space-y-2 rounded-md border border-line bg-blush p-3">
+      <input type="hidden" name="membershipId" value={membershipId} />
+      <p className="text-sm">Transfer primary team ownership to <strong>{adminLabel}</strong>? You will remain a secondary admin.</p>
+      <div className="flex gap-2">
+        <button className="btn btn-primary py-1.5" disabled={pending} type="submit">{pending ? "Transferring…" : "Confirm transfer"}</button>
+        <button className="btn btn-ghost py-1.5" type="button" onClick={() => setConfirming(false)}>Cancel</button>
+      </div>
+      {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
+      {state?.ok ? <p className="text-xs text-success">{state.message}</p> : null}
+    </form>
+  );
+}
+
+export function TransferCompPrimaryForm({
+  membershipId,
+  adminLabel,
+}: {
+  membershipId: string;
+  adminLabel: string;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [state, formAction, pending] = useActionState(transferCompPrimary, undefined);
+  if (!confirming) {
+    return (
+      <button className="btn btn-ghost py-1.5" type="button" onClick={() => setConfirming(true)}>
+        Make primary
+      </button>
+    );
+  }
+  return (
+    <form action={formAction} className="space-y-2 rounded-md border border-line bg-blush p-3">
+      <input type="hidden" name="membershipId" value={membershipId} />
+      <p className="text-sm">Transfer primary competition ownership to <strong>{adminLabel}</strong>? You will remain a secondary admin.</p>
+      <div className="flex gap-2">
+        <button className="btn btn-primary py-1.5" disabled={pending} type="submit">{pending ? "Transferring…" : "Confirm transfer"}</button>
+        <button className="btn btn-ghost py-1.5" type="button" onClick={() => setConfirming(false)}>Cancel</button>
+      </div>
+      {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
+      {state?.ok ? <p className="text-xs text-success">{state.message}</p> : null}
     </form>
   );
 }

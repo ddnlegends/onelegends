@@ -3,12 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import {
   getActiveCompetitionId,
+  isCompAdmin,
   isCompPrimary,
 } from "@/lib/team-access";
 import {
   CancelCompInviteForm,
   InviteCompAdminForm,
   RevokeCompAccessForm,
+  TransferCompPrimaryForm,
 } from "@/components/AccountForms";
 
 export default async function CompAccessPage() {
@@ -19,6 +21,7 @@ export default async function CompAccessPage() {
   if (!competitionId) redirect("/dashboard");
 
   const primary = await isCompPrimary(userId, competitionId);
+  const admin = await isCompAdmin(userId, competitionId);
   const competition = await prisma.competitionProfile.findUnique({
     where: { id: competitionId },
     include: {
@@ -39,20 +42,21 @@ export default async function CompAccessPage() {
       <div>
         <h1 className="font-heading text-4xl">Admins · {competition.name}</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          The primary admin claimed this listing with the claim code. Only they
-          can invite secondary admins by email. No email is sent from this app.
+          Approved admins can add secondary admins by email. The primary admin
+          can transfer ownership or remove other admins. No email is sent from
+          this app.
         </p>
       </div>
 
-      {primary ? (
+      {admin ? (
         <InviteCompAdminForm competitionId={competition.id} />
       ) : (
         <p className="text-sm text-muted">
-          Only the primary admin can invite more admins.
+          Only an approved admin can invite more admins.
         </p>
       )}
 
-      {primary && (competition.invites.length || waiting.length) ? (
+      {admin && (competition.invites.length || waiting.length) ? (
         <section>
           <h2 className="mb-3 font-heading text-2xl">Request sent</h2>
           <ul className="divide-y divide-line rounded-xl border border-line bg-card text-sm">
@@ -80,7 +84,7 @@ export default async function CompAccessPage() {
                   {row.user.email}
                   <span className="text-muted"> — waiting to approve</span>
                 </span>
-                <RevokeCompAccessForm membershipId={row.id} />
+                {primary ? <RevokeCompAccessForm membershipId={row.id} /> : null}
               </li>
             ))}
           </ul>
@@ -103,7 +107,10 @@ export default async function CompAccessPage() {
                 </p>
               </div>
               {primary && !row.isPrimary && row.userId !== userId ? (
-                <RevokeCompAccessForm membershipId={row.id} />
+                <div className="flex flex-wrap gap-2">
+                  <TransferCompPrimaryForm membershipId={row.id} adminLabel={row.user.email} />
+                  <RevokeCompAccessForm membershipId={row.id} />
+                </div>
               ) : null}
             </li>
           ))}
