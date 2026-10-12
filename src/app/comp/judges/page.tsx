@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { JudgeDecisionButtons } from "@/components/JudgeDecisionButtons";
-import { FinalizeResultsForm, RemoveJudgeForm } from "@/components/JudgePanelControls";
+import { RemoveJudgeForm } from "@/components/JudgePanelControls";
 import { formatDateTime } from "@/lib/utils";
 import { getActiveCompetitionId, isPlatformAdmin } from "@/lib/team-access";
 import { InviteJudgeForm, CancelJudgeInviteForm } from "@/components/AccountForms";
@@ -34,7 +34,6 @@ export default async function CompJudgesPage() {
   const approved = competition.judgeAssignments.filter((a) => a.status === "APPROVED");
   const denied = competition.judgeAssignments.filter((a) => a.status === "DENIED");
   const removed = competition.judgeAssignments.filter((a) => a.status === "REMOVED");
-  const completed = approved.filter((a) => a.submittedAt).length;
   const released = Boolean(competition.resultsReleasedAt);
   const started = competition.applications.some((app) => app.viewingPosition != null);
   const techAdmin = await isPlatformAdmin(session.user.id);
@@ -56,14 +55,6 @@ export default async function CompJudgesPage() {
       </div>
 
       {!released ? <InviteJudgeForm competitionId={competition.id} /> : null}
-
-      <FinalizeResultsForm
-        competitionId={competition.id}
-        approved={approved.length}
-        submitted={completed}
-        pending={pending.length + competition.judgeInvites.length}
-        released={released}
-      />
 
       <section className="space-y-3">
         <h2 className="font-heading text-2xl">Pending</h2>

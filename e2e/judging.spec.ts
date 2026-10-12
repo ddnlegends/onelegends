@@ -91,6 +91,9 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
   await comp.goto("/comp/results");
   await expect(comp.getByText(/Rankings and scores are still hidden/)).toBeVisible();
   await expectNoTeamNames(comp);
+  await comp.goto("/comp/judges");
+  await expect(comp.getByRole("button", { name: "Validate Comp Results", exact: true })).toHaveCount(0);
+  await comp.goto("/comp/results");
 
   await expect(async () => {
     await moderator.reload();
@@ -132,8 +135,8 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
   await moderator.goto(`/moderator/${id}`);
 
   await ops.reload();
-  await ops.getByRole("button", { name: "Finalize results", exact: true }).click();
-  await ops.getByRole("button", { name: "Yes, finalize results" }).click();
+  await ops.getByRole("button", { name: "Validate Comp Results", exact: true }).click();
+  await ops.getByRole("button", { name: "Yes, validate comp results" }).click();
   await expect(ops.getByText(/Results finalized/)).toBeVisible();
   await judge.goto(`/judge/${id}/team/1`);
   await expect(judge.locator("#choreography")).toBeDisabled();

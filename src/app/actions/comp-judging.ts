@@ -11,7 +11,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
 import { finalizeResults } from "@/lib/release";
 import { hasModeratorAccess } from "@/lib/moderator";
-import { isCompAdmin, requireActiveCompetition } from "@/lib/team-access";
+import { isPlatformAdmin, requireActiveCompetition } from "@/lib/team-access";
 
 function refreshJudgeViews(competitionId: string) {
   revalidatePath("/comp/judges");
@@ -83,7 +83,7 @@ export async function finalizeCompetitionResults(
   if (!user) return { error: "Unauthorized." };
   const competitionId = String(formData.get("competitionId") ?? "");
   if (formData.get("confirmation") !== "FINALIZE") return { error: "Confirm finalization first." };
-  if (!(await isCompAdmin(user.id, competitionId))) return { error: "Only competition or tech admins can finalize results." };
+  if (!(await isPlatformAdmin(user.id))) return { error: "Only tech admins can validate competition results." };
   const actor = await prisma.user.findUnique({ where: { id: user.id }, select: { email: true } });
   if (!actor) return { error: "Account not found." };
   const result = await finalizeResults(competitionId, actor.email);

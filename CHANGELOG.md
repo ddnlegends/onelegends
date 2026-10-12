@@ -4,6 +4,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Restrict competition result validation to Legends tech admins; competition accounts keep rankings and judge scores sealed until tech-admin validation.
 - Fix the judging browser regression to assert the score and comment confirmations returned by explicit saves, including the team number. Keep the persisted-score, anonymity, and result-finalization checks.
 - Require the complete active judge panel—not a legacy numeric threshold—before any moderator ranking page can calculate or reveal results. Moderators receive read-only rankings once every active judge submits and pending judge invitations are resolved; admin finalization still controls official release and competition decisions. Legacy release flags cannot bypass the complete-panel gate.
 - Track the two external payment flows separately. Circuit ops records $25 team, $25 Partner competition, and $40 Non-partner competition OneLegends registration fees; only paid, unblocked teams at a paid competition enter the frozen AV roster. Circuit ops can remove one application before that roster locks. After final acceptance, competition admins track their own received payments without changing judging, while circuit ops has read-only visibility. Apply migration `20261011180000_registration_and_comp_payment_tracking` before deploying.

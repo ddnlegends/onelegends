@@ -21,7 +21,7 @@ export function FinalizeResultsForm({
   const ready = !released && approved > 0 && submitted === approved && pending === 0;
   return (
     <div className="space-y-3 rounded-xl border border-line bg-card p-5">
-      <h2 className="font-heading text-xl">Finalize judging results</h2>
+      <h2 className="font-heading text-xl">Validate Comp Results</h2>
       <p className="text-sm text-muted">
         {submitted} of {approved} active judges submitted
         {pending ? ` · ${pending} pending invitation${pending === 1 ? "" : "s"} or request${pending === 1 ? "" : "s"} must be resolved` : ""}.
@@ -31,7 +31,7 @@ export function FinalizeResultsForm({
       {state?.ok ? <p className="notice notice-ok">Results finalized.</p> : null}
       {!released && !confirming ? (
         <button className="btn btn-primary" type="button" disabled={!ready} onClick={() => setConfirming(true)}>
-          Finalize results
+          Validate Comp Results
         </button>
       ) : null}
       {!released && confirming ? (
@@ -40,7 +40,7 @@ export function FinalizeResultsForm({
           <input type="hidden" name="confirmation" value="FINALIZE" />
           <p className="text-sm">Release named rankings using the {submitted} submitted judge packets? This closes judging and locks the panel and scores.</p>
           <div className="flex gap-2">
-            <button className="btn btn-primary" disabled={saving} type="submit">{saving ? "Finalizing…" : "Yes, finalize results"}</button>
+            <button className="btn btn-primary" disabled={saving} type="submit">{saving ? "Validating…" : "Yes, validate comp results"}</button>
             <button className="btn btn-ghost" type="button" onClick={() => setConfirming(false)}>Cancel</button>
           </div>
         </form>
