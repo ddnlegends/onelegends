@@ -43,7 +43,6 @@ const dancerSchema = z.object({
   tshirtSize: z.string(),
   inAV: z.boolean(),
   pointOfContact: z.boolean().default(false),
-  soberMonitor: z.boolean().default(false),
 });
 
 function revalidateLiveTeamSurfaces() {
@@ -206,7 +205,6 @@ export async function saveDancers(
               tshirtSize: d.tshirtSize.trim(),
               inAV: d.inAV,
               pointOfContact: d.pointOfContact,
-              soberMonitor: d.soberMonitor,
             })),
           }),
         ]

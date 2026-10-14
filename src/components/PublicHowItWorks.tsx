@@ -4,7 +4,7 @@ const steps = [
   {
     number: "01",
     title: "Build one team profile",
-    body: "Keep your team story, logo, captains, audition video, and dancer roster together. Mark dancers who are points of contact or sober monitors, then use that profile throughout the season.",
+    body: "Keep your team story, logo, captains, audition video, and dancer roster together. Mark dancers who are points of contact, then use that profile throughout the season.",
   },
   {
     number: "02",

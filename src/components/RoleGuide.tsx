@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { DriveAvPlayer } from "@/components/DriveAvPlayer";
 
 type GuideId = "TEAM" | "JUDGE" | "MODERATOR" | "COMP" | "OPS";
 
@@ -39,7 +40,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Fill Team Profile and roster",
-        body: "Save Team Profile with the blurb, captains, logo, years established, roster size, and a shareable Google Drive file for the audition video. Separately add each dancer with a shirt size, mark anyone serving as Point of Contact or Sober Monitor, and Save roster. Both saves must be complete before applying.",
+        body: "Save Team Profile with the blurb, captains, logo, years established, roster size, and a shareable Google Drive file for the audition video. Separately add each dancer with a shirt size, mark anyone serving as Point of Contact, and Save roster. Both saves must be complete before applying.",
       },
       {
         title: "Apply with checkboxes",
@@ -175,12 +176,23 @@ const GUIDES: Guide[] = [
   },
 ];
 
-export function RoleGuide({ signedIn, standalone }: { signedIn?: boolean; standalone?: boolean }) {
-  const [activeId, setActiveId] = useState<GuideId>("TEAM");
+export function RoleGuide({
+  signedIn,
+  standalone,
+  teamVideoUrl,
+  compVideoUrl,
+}: {
+  signedIn?: boolean;
+  standalone?: boolean;
+  teamVideoUrl?: string;
+  compVideoUrl?: string;
+}) {
+  const [activeId, setActiveId] = useState<GuideId>(compVideoUrl && !teamVideoUrl ? "COMP" : "TEAM");
   const Heading = standalone ? "h1" : "h2";
   const GuideHeading = standalone ? "h2" : "h3";
   const index = GUIDES.findIndex((g) => g.id === activeId);
   const guide = GUIDES[index] ?? GUIDES[0];
+  const videoUrl = guide.id === "TEAM" ? teamVideoUrl : guide.id === "COMP" ? compVideoUrl : undefined;
 
   function go(delta: number) {
     const next = (index + delta + GUIDES.length) % GUIDES.length;
@@ -282,6 +294,15 @@ export function RoleGuide({ signedIn, standalone }: { signedIn?: boolean; standa
               </li>
             ))}
           </ol>
+
+          {videoUrl ? (
+            <div className="mt-8 max-w-3xl border-t border-line pt-6">
+              <h3 className="mb-3 font-heading text-lg tracking-[0.08em]">
+                {guide.id === "TEAM" ? "Team video walkthrough" : "Competition video walkthrough"}
+              </h3>
+              <DriveAvPlayer url={videoUrl} label={`${guide.tab} video walkthrough`} />
+            </div>
+          ) : null}
 
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <Link href={cta.href} className="btn btn-primary w-fit">

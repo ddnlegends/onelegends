@@ -4,6 +4,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Remove the Sober Monitor field from team roster editing, roster views, and exports. Keep the existing database column so previously stored values are not deleted. Add separate Team and Competition video walkthroughs for approved accounts on the signed-in How it works page.
 - Replace per-row decision and payment autosaves with a competition-admin batch save board, and show accepted, waitlisted, declined, and host-payment counts in the tech-admin competition view.
 - Restrict competition result validation to Legends tech admins; competition accounts keep rankings and judge scores sealed until tech-admin validation.
 - Fix the judging browser regression to assert the score and comment confirmations returned by explicit saves, including the team number. Keep the persisted-score, anonymity, and result-finalization checks.

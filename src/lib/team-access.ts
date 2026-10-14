@@ -111,14 +111,13 @@ export const getNavAccess = cache(async (userId: string) => {
     hasAnyModeratorAccess(userId),
   ]);
   const ops = Boolean(user?.platformAdmin);
+  const compAccountAccess = Boolean(user?.competitionMemberships.length) || Boolean(user?.competition);
   return {
     ops,
     moderatorAccess,
     teamAccess: Boolean(user?.memberships.length),
-    compAccess:
-      ops ||
-      Boolean(user?.competitionMemberships.length) ||
-      Boolean(user?.competition),
+    compAccountAccess,
+    compAccess: ops || compAccountAccess,
     judgeAccess: Boolean(user?.judge?.assignments.length),
   };
 });
