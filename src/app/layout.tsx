@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import localFont from "next/font/local";
+import { Analytics } from "@vercel/analytics/next";
 import { Nav } from "@/components/Nav";
 import { ThemeSelect } from "@/components/ThemeSelect";
 import { NavigationPulse } from "@/components/NavigationPulse";
@@ -68,6 +69,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </p>
           </div>
         </footer>
+        <Analytics />
       </body>
     </html>
   );
