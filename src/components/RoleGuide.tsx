@@ -190,9 +190,13 @@ export function RoleGuide({
   const [activeId, setActiveId] = useState<GuideId>(compVideoUrl && !teamVideoUrl ? "COMP" : "TEAM");
   const Heading = standalone ? "h1" : "h2";
   const GuideHeading = standalone ? "h2" : "h3";
+  const VideoHeading = standalone ? "h2" : "h3";
   const index = GUIDES.findIndex((g) => g.id === activeId);
   const guide = GUIDES[index] ?? GUIDES[0];
-  const videoUrl = guide.id === "TEAM" ? teamVideoUrl : guide.id === "COMP" ? compVideoUrl : undefined;
+  const videos = [
+    teamVideoUrl ? { url: teamVideoUrl, title: "Team tutorial video" } : null,
+    compVideoUrl ? { url: compVideoUrl, title: "Competition tutorial video" } : null,
+  ].filter((video): video is { url: string; title: string } => video !== null);
 
   function go(delta: number) {
     const next = (index + delta + GUIDES.length) % GUIDES.length;
@@ -205,18 +209,28 @@ export function RoleGuide({
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-10">
-      <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <Heading className="font-heading text-2xl tracking-[0.12em]">
-            How it works
-          </Heading>
-          <p className="mt-2 max-w-2xl text-muted">
-            Accounts use Google sign-in. Teams and competitions use claim codes,
-            while judges and moderators receive access by email. Choose a role
-            below for its steps.
-          </p>
+      <Heading className="font-heading text-2xl tracking-[0.12em]">
+        How it works
+      </Heading>
+
+      {videos.length > 0 ? (
+        <div className={`mx-auto mt-6 grid gap-8 ${videos.length === 1 ? "max-w-3xl" : "md:grid-cols-2"}`}>
+          {videos.map((video) => (
+            <div key={video.title}>
+              <VideoHeading className="mb-3 text-center font-heading text-lg tracking-[0.08em]">
+                {video.title}
+              </VideoHeading>
+              <DriveAvPlayer url={video.url} label={video.title} />
+            </div>
+          ))}
         </div>
-      </div>
+      ) : null}
+
+      <p className="mb-5 mt-6 max-w-2xl text-muted">
+        Accounts use Google sign-in. Teams and competitions use claim codes,
+        while judges and moderators receive access by email. Choose a role
+        below for its steps.
+      </p>
 
       <div className="overflow-hidden rounded-2xl border border-line bg-card shadow-[0_12px_40px_rgba(142,28,66,0.06)]">
         <div
@@ -294,15 +308,6 @@ export function RoleGuide({
               </li>
             ))}
           </ol>
-
-          {videoUrl ? (
-            <div className="mt-8 max-w-3xl border-t border-line pt-6">
-              <h3 className="mb-3 font-heading text-lg tracking-[0.08em]">
-                {guide.id === "TEAM" ? "Team video walkthrough" : "Competition video walkthrough"}
-              </h3>
-              <DriveAvPlayer url={videoUrl} label={`${guide.tab} video walkthrough`} />
-            </div>
-          ) : null}
 
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <Link href={cta.href} className="btn btn-primary w-fit">
