@@ -10,8 +10,8 @@ test("competition stays hidden until its host fills every required detail", asyn
   try {
     await publicPage.goto("/");
     await expect(publicPage.getByText(E2E.comps.showcase.name)).toHaveCount(0);
-    const hiddenDetail = await publicPage.goto(`/comps/${competition.id}`);
-    expect(hiddenDetail?.status()).toBe(404);
+    await publicPage.goto(`/comps/${competition.id}`);
+    await expect(publicPage.getByText("404", { exact: true })).toBeVisible();
 
     await login(page, "team");
     await page.goto("/team/apply");

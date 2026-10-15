@@ -31,7 +31,7 @@ export default async function CompProfilePage() {
           <p className="mt-2">Still needed: {gaps.join(", ")}.</p>
         </div>
       ) : (
-        <p className="notice notice-ok">All required details are filled. Your listing is visible to teams.</p>
+        <p className="rounded-xl border border-success-line bg-success-soft p-4 text-sm">All required details are filled. Your listing is visible to teams.</p>
       )}
       <CompProfileForm
         profile={{
