@@ -141,19 +141,15 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
             const group = closed.filter((comp) => comp.isPartner === isPartner);
             if (!group.length) return null;
             return (
-              <section key={label} className="mt-3 space-y-1" aria-label={`${label} not accepting applications`}>
+              <section key={label} className="mt-5" aria-label={`${label} not accepting applications`}>
                 <h4 className="font-medium">{label}</h4>
-                <ul className="space-y-3">
+                <ul className="mt-3 space-y-5 text-sm text-muted">
                   {group.map((comp) => (
-                    <li key={comp.id} className="rounded-xl border border-line bg-card p-4 sm:p-5">
-                      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-semibold">{comp.name}</span>
-                          <CompetitionTypeBadge isPartner={comp.isPartner} />
-                        </div>
-                        <Link href={`/comps/${comp.id}`} className="text-sm font-medium text-accent underline">View details</Link>
-                      </div>
-                      <CompetitionSummary comp={comp} />
+                    <li key={comp.id} className="leading-relaxed">
+                      {comp.name} <CompetitionTypeBadge isPartner={comp.isPartner} />
+                      {comp.dates ? ` — ${comp.dates}` : ""}
+                      {comp.earlyDeadline ? ` · Regular deadline ${comp.earlyDeadline}` : ""}
+                      {comp.lateDeadline ? ` · Late deadline ${comp.lateDeadline}` : ""}
                     </li>
                   ))}
                 </ul>
