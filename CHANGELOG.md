@@ -4,6 +4,8 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Make the application packet file chooser visibly button-shaped and label the submit action Save packet, with instructions distinguishing selection from saving.
+
 - Add competition date-range pickers, regular and late application fees, venue address, and public payment instructions. Rename Lighting to AV guidelines and Comp details to Competition bio while retaining existing content. Hosts can upload, replace, and remove a PDF application packet (up to 3 MB); public downloads follow listing visibility. Apply migration `20261015120000_competition_details` before deploying.
 
 - Keep competitions hidden from public and team application views until claimed and all required host details are filled; show hosts missing details on Home and Comp Details, accept N/A/TBD text, and require an explicit switch to open applications after claiming.
