@@ -17,7 +17,7 @@ import { z } from "zod";
 import { auth, signIn, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { passwordMeetsRules, passwordRuleMessage } from "@/lib/password";
-import { dashboardPath } from "@/lib/roles";
+import { signInRedirectPath } from "@/lib/roles";
 import {
   AUTH_INTENT_COOKIE,
   parseAuthIntent,
@@ -58,7 +58,7 @@ export async function loginAction(
     await signIn("credentials", {
       email: parsed.data.email,
       password: parsed.data.password,
-      redirectTo: dashboardPath(),
+      redirectTo: signInRedirectPath(formData.get("returnTo")),
     });
   } catch (error) {
     if (error instanceof AuthError) {
@@ -79,7 +79,7 @@ export async function googleSignInAction(formData: FormData) {
     path: "/",
     maxAge: 600,
   });
-  await signIn("google", { redirectTo: dashboardPath() });
+  await signIn("google", { redirectTo: signInRedirectPath(formData.get("returnTo")) });
 }
 
 export async function signOutAction() {
