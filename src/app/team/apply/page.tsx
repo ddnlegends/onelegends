@@ -67,6 +67,8 @@ export default async function TeamApplyPage() {
             dates: c.dates,
             location: c.location,
             venue: c.venue,
+            regularApplicationFeeCents: c.regularApplicationFeeCents,
+            lateApplicationFeeCents: c.lateApplicationFeeCents,
             earlyDeadline: c.earlyApplicationDeadline
               ? formatDateTime(c.earlyApplicationDeadline)
               : undefined,

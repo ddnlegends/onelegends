@@ -158,8 +158,14 @@ model CompetitionProfile {
   resultsReleasedAt        DateTime?
   resultsFinalizedByEmail  String?
   dates                    String    @default("")
+  eventStartDate           DateTime? @db.Date
+  eventEndDate             DateTime? @db.Date
   location                 String    @default("")
   venue                    String    @default("")
+  venueAddress             String    @default("")
+  regularApplicationFeeCents Int?
+  lateApplicationFeeCents    Int?
+  paymentInstructions      String    @default("")
   stageSize                String    @default("")
   productionNotes          String    @default("")
   lighting                 String    @default("")
@@ -178,6 +184,16 @@ model CompetitionProfile {
   judgeInvites     JudgeInvite[]
   moderatorAccess  ModeratorAccess[]
   moderatorInvites ModeratorInvite[]
+  applicationPacket CompetitionPacketBlob?
+}
+
+// Keep binary data out of ordinary competition queries.
+model CompetitionPacketBlob {
+  competitionId String @id
+  competition CompetitionProfile @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  filename String
+  bytes Bytes
+  updatedAt DateTime @updatedAt
 }
 
 model ModeratorAccess {

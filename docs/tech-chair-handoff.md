@@ -59,3 +59,17 @@ Step-by-step recipes for pages, actions, migrations, permissions, exports, tests
 - Update this guide, [action-items.md](action-items.md), and [CHANGELOG.md](../CHANGELOG.md) when behavior changes. Self-service primary ownership transfer, year-specific partner listings, and integrated payment confirmation remain planned work.
 
 The current launch decision and evidence are in [release-readiness.md](release-readiness.md). Follow [release-runbook.md](release-runbook.md) for required checks, deployment activation, ownership, and rollback.
+
+## Competition profile additions (October 15, 2026)
+
+Apply `20261015120000_competition_details` with `npm run db:migrate` against the intended deployment database before deploying this version. Production builds refuse pending migrations. The migration adds nullable calendar date and fee columns, optional address/payment text, and a separate packet blob table; it does not overwrite existing listings. Test on an isolated database first.
+
+`eventStartDate`/`eventEndDate` are PostgreSQL DATE values. Saving date pickers also updates the legacy `dates` display string used throughout the app; existing free-text dates remain until explicitly replaced. Lighting and description columns retain their data and now appear as AV guidelines and Competition bio. Existing visibility requirements remain, with the new optional fields excluded from completeness checks.
+
+Application fees are nullable integer cents in USD, separate from `registrationFeeCents` and payment reconciliation. Blank means unknown; zero means free. Payment instructions are public text and do not process or automatically verify payment.
+
+`CompetitionPacketBlob` stores one PDF per competition, separately from normal profile queries. Only approved competition admins can upload, replace, or remove it. File size (3 MiB), extension, MIME type, PDF header and EOF marker are checked; these checks are not malware scanning. Downloads use attachment disposition, nosniff, sandbox CSP and no-store caching. Hidden listings return 404 to visitors; their admins and circuit ops can preview the packet. Full claim resets remove the file and new details; soft resets preserve them.
+
+The 3 MiB cap leaves multipart overhead below [Vercel’s 4.5 MB function payload limit](https://vercel.com/docs/functions/limitations#request-body-size). No new storage service or credentials are required. For larger packets or high download volume, move binaries to object storage with equivalent access checks.
+
+Validation: `npm run check`, `npm run test:integration`, and `npm run test:e2e -- --project=chromium e2e/competition-details.spec.ts e2e/competition-visibility.spec.ts`; repeat browser coverage with `--project=webkit`.
