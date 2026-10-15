@@ -1,7 +1,7 @@
 import { expect } from "@playwright/test";
 import { db, E2E, login, test } from "./helpers";
 
-test("host details and PDF packet survive saving and appear to teams", async ({ page, browser }) => {
+test("host details and Drive packet link survive saving and appear to teams", async ({ page, browser }) => {
   const competition = await db.competitionProfile.findUniqueOrThrow({ where: { slug: E2E.comps.showcase.slug } });
   await login(page, "comp");
   await page.goto("/comp/profile");
@@ -20,13 +20,10 @@ test("host details and PDF packet survive saving and appear to teams", async ({ 
   await expect(page.getByLabel("Event end date", { exact: true })).toHaveValue("2027-03-07");
   await expect(page.getByLabel("Regular application fee (USD per team)", { exact: true })).toHaveValue("35.29");
 
-  const packet = Buffer.from("%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [] /Count 0 >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n");
-  const chooserPromise = page.waitForEvent("filechooser");
-  await page.getByLabel("Application packet PDF", { exact: true }).click();
-  const chooser = await chooserPromise;
-  await chooser.setFiles({ name: "application-packet.pdf", mimeType: "application/pdf", buffer: packet });
-  await page.getByRole("button", { name: "Save packet", exact: true }).click();
-  await expect(page.getByText("Application packet saved.", { exact: true })).toBeVisible();
+  const packetUrl = "https://drive.google.com/file/d/1EvaXITNNCUf_u22R0gHwSxW7ytge3zaX/view";
+  await page.getByLabel("Google Drive file link", { exact: true }).fill(`${packetUrl}?usp=sharing`);
+  await page.getByRole("button", { name: "Save packet link", exact: true }).click();
+  await expect(page.getByText("Application packet link saved.", { exact: true })).toBeVisible();
 
   const visitor = await browser.newPage({ timezoneId: "America/Los_Angeles" });
   try {
@@ -38,20 +35,17 @@ test("host details and PDF packet survive saving and appear to teams", async ({ 
     await expect(visitor.getByText("Submit a 1080p MP4 with stereo audio.", { exact: true })).toBeVisible();
     await expect(visitor.getByText("A weekend celebrating dance.", { exact: false })).toBeVisible();
     await expect(visitor.getByText("Pay https://example.com/payment.", { exact: false })).toBeVisible();
-    const download = await visitor.request.get(`/api/competitions/${competition.id}/packet`);
-    expect(download.status()).toBe(200);
-    expect(download.headers()["content-type"]).toBe("application/pdf");
-    expect(await download.body()).toEqual(packet);
-    await expect(visitor.getByRole("link", { name: "Download application packet (PDF)" })).toBeVisible();
+    await expect(visitor.getByRole("link", { name: "Open application packet on Google Drive" })).toHaveAttribute("href", packetUrl);
 
-    await page.getByLabel("Application packet PDF", { exact: true }).setInputFiles({ name: "invalid.pdf", mimeType: "application/pdf", buffer: Buffer.from("not a PDF") });
-    await page.getByRole("button", { name: "Save packet", exact: true }).click();
-    await expect(page.getByText(/does not appear to be a PDF/)).toBeVisible();
-    expect(await (await visitor.request.get(`/api/competitions/${competition.id}/packet`)).body()).toEqual(packet);
-    await page.getByRole("button", { name: "Remove packet", exact: true }).click();
-    await expect(page.getByText("Application packet removed.", { exact: true })).toBeVisible();
+    await page.getByLabel("Google Drive file link", { exact: true }).fill("https://example.com/packet.pdf");
+    await page.getByRole("button", { name: "Save packet link", exact: true }).click();
+    await expect(page.getByText("Enter a valid Google Drive file link.")).toBeVisible();
     await visitor.reload();
-    await expect(visitor.getByRole("link", { name: "Download application packet (PDF)" })).toHaveCount(0);
+    await expect(visitor.getByRole("link", { name: "Open application packet on Google Drive" })).toHaveAttribute("href", packetUrl);
+    await page.getByRole("button", { name: "Remove packet", exact: true }).click();
+    await expect(page.getByText("Application packet link removed.", { exact: true })).toBeVisible();
+    await visitor.reload();
+    await expect(visitor.getByRole("link", { name: "Open application packet on Google Drive" })).toHaveCount(0);
     expect((await visitor.request.get(`/api/competitions/${competition.id}/packet`)).status()).toBe(404);
   } finally {
     await visitor.close();

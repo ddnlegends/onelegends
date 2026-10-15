@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { formatApplicationFee, formatEventDateRange, parseApplicationFee, parseEventDate } from "./competition-details";
-import { PACKET_MAX_BYTES, readApplicationPacket } from "./competition-packet";
+import { normalizePacketDriveUrl } from "./competition-packet";
 
 describe("competition dates and fees", () => {
   it("rejects impossible dates and accepts leap days without timezone shifts", () => {
@@ -20,16 +20,15 @@ describe("competition dates and fees", () => {
   });
 });
 
-describe("application packet validation", () => {
-  it("checks actual file contents and sanitizes names", async () => {
-    expect(await readApplicationPacket(new File(["<html>not a PDF</html>"], "packet.pdf", { type: "application/pdf" }))).toHaveProperty("error");
-    expect(await readApplicationPacket(new File(["%PDF-1.7\ntruncated"], "packet.pdf"))).toHaveProperty("error");
-    const valid = await readApplicationPacket(new File(["%PDF-1.7\n%%EOF\n"], 'packet"\r\n.pdf', { type: "application/pdf" }));
-    expect(valid).toHaveProperty("filename", "packet___.pdf");
+describe("application packet link validation", () => {
+  const id = "1EvaXITNNCUf_u22R0gHwSxW7ytge3zaX";
+  it("accepts a Drive file link and removes tracking parameters", () => {
+    expect(normalizePacketDriveUrl(`https://drive.google.com/file/d/${id}/view?usp=sharing`)).toBe(`https://drive.google.com/file/d/${id}/view`);
+    expect(normalizePacketDriveUrl(`https://drive.google.com/open?id=${id}`)).toBe(`https://drive.google.com/file/d/${id}/view`);
   });
-  it("rejects empty, wrong-type and oversized files", async () => {
-    for (const file of [new File([], "packet.pdf"), new File(["%PDF-1.7\n%%EOF"], "packet.html"), new File([new Uint8Array(PACKET_MAX_BYTES + 1)], "packet.pdf")]) {
-      expect(await readApplicationPacket(file)).toHaveProperty("error");
+  it("rejects non-file, insecure, and lookalike links", () => {
+    for (const url of ["", `http://drive.google.com/file/d/${id}/view`, `https://drive.google.com.evil.test/file/d/${id}/view`, `https://drive.google.com/drive/folders/${id}`, "https://example.com/file.pdf"]) {
+      expect(normalizePacketDriveUrl(url)).toBeNull();
     }
   });
 });

@@ -1,34 +1,24 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { saveCompetitionPacket } from "@/app/actions/competition-packet";
-import { packetFileError } from "@/lib/competition-packet";
+import { useActionState } from "react";
+import { saveCompetitionPacketLink } from "@/app/actions/competition-packet";
 import { SaveNotice } from "@/components/SaveNotice";
 
-export function CompetitionPacketForm({ competitionId, filename }: { competitionId: string; filename: string | null }) {
-  const [state, action, pending] = useActionState(saveCompetitionPacket, undefined);
-  const [fileError, setFileError] = useState<string | null>(null);
+export function CompetitionPacketForm({ competitionId, url, legacyFilename }: { competitionId: string; url: string | null; legacyFilename: string | null }) {
+  const [state, action, pending] = useActionState(saveCompetitionPacketLink, undefined);
   return (
-    <form action={action} className="space-y-4 rounded-xl border border-line bg-card p-6" onSubmit={(event) => {
-      const submitter = (event.nativeEvent as SubmitEvent).submitter;
-      if (submitter instanceof HTMLButtonElement && submitter.value === "remove") return;
-      const file = new FormData(event.currentTarget).get("packet");
-      const error = file instanceof File ? packetFileError(file) : "Choose a PDF application packet.";
-      setFileError(error);
-      if (error) event.preventDefault();
-    }}>
+    <form action={action} className="space-y-4 rounded-xl border border-line bg-card p-6">
       <h2 className="font-heading text-2xl">Application packet</h2>
-      <p className="text-sm text-muted">Choose a PDF up to 3 MB, then click Save packet to submit it. Teams can download it from your public listing once your required competition details are complete. Saving a new packet replaces the previous file.</p>
-      {filename ? <p className="text-sm">Current packet: <a className="text-accent underline" href={`/api/competitions/${competitionId}/packet`}>{filename}</a></p> : <p className="text-sm text-muted">No application packet uploaded.</p>}
+      <p className="text-sm text-muted">Paste a Google Drive file link. In Google Drive, set Share → General access to <strong>Anyone with the link</strong> and the role to <strong>Viewer</strong>. Test the link in a private window so teams can open it without requesting access.</p>
+      {url ? <p className="text-sm">Current packet: <a className="break-all text-accent underline" href={url} target="_blank" rel="noopener noreferrer">Open Google Drive link</a></p> : legacyFilename ? <p className="text-sm">Current packet: <a className="text-accent underline" href={`/api/competitions/${competitionId}/packet`}>{legacyFilename}</a></p> : <p className="text-sm text-muted">No application packet linked.</p>}
       <div className="field">
-        <label htmlFor="packet">Application packet PDF</label>
-        <input id="packet" name="packet" type="file" className="packet-file-input" accept=".pdf,application/pdf" disabled={pending} onChange={(event) => setFileError(event.target.files?.[0] ? packetFileError(event.target.files[0]) : null)} />
+        <label htmlFor="packetDriveUrl">Google Drive file link</label>
+        <input id="packetDriveUrl" name="packetDriveUrl" type="url" defaultValue={url ?? ""} placeholder="https://drive.google.com/file/d/…/view" disabled={pending} />
       </div>
-      {fileError ? <p role="alert" className="notice notice-error">{fileError}</p> : null}
       <SaveNotice state={state} scroll={false} />
       <div className="flex flex-wrap gap-3">
-        <button type="submit" name="intent" value="upload" className="btn btn-primary" disabled={pending}>{pending ? "Saving…" : "Save packet"}</button>
-        {filename ? <button type="submit" name="intent" value="remove" className="btn btn-ghost" disabled={pending} onClick={() => setFileError(null)}>Remove packet</button> : null}
+        <button type="submit" name="intent" value="save" className="btn btn-primary" disabled={pending}>{pending ? "Saving…" : "Save packet link"}</button>
+        {url || legacyFilename ? <button type="submit" name="intent" value="remove" formNoValidate className="btn btn-ghost" disabled={pending}>Remove packet</button> : null}
       </div>
     </form>
   );

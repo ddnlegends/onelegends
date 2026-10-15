@@ -56,7 +56,11 @@ export default async function CompProfilePage() {
           applicationDeadline: competition.applicationDeadline?.toISOString() ?? "",
         }}
       />
-      <CompetitionPacketForm competitionId={competition.id} filename={competition.applicationPacket?.filename ?? null} />
+      <CompetitionPacketForm
+        competitionId={competition.id}
+        url={competition.applicationPacketDriveUrl}
+        legacyFilename={competition.applicationPacketLegacyHidden ? null : competition.applicationPacket?.filename ?? null}
+      />
     </div>
   );
 }

@@ -203,6 +203,8 @@ model CompetitionProfile {
   regularApplicationFeeCents Int?
   lateApplicationFeeCents    Int?
   paymentInstructions      String    @default("")
+  applicationPacketDriveUrl String?
+  applicationPacketLegacyHidden Boolean @default(false)
   stageSize                String    @default("")
   productionNotes          String    @default("")
   lighting                 String    @default("")

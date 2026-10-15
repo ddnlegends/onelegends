@@ -4,6 +4,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Replace competition application packet PDF uploads with Google Drive file links and clear sharing instructions. Keep existing PDFs readable until old storage is safely retired.
 - Remove Feedback inbox from the top navigation to reduce header crowding; tech admins can open it from the dashboard.
 - Make the application packet file chooser visibly button-shaped and label the submit action Save packet, with instructions distinguishing selection from saving.
 - Add a footer Feedback form for signed-in users, with private circuit tech-admin triage at `/ops/feedback`. Capture account/contact/access and page context on the server, deduplicate retries, and limit each account to five messages per 15 minutes. Apply migration `20261015170000_feedback` before deploying.

@@ -8,6 +8,9 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   const { id } = await context.params;
   const competition = await prisma.competitionProfile.findUnique({ where: { id } });
   if (!competition) return new NextResponse(null, { status: 404 });
+  if (competition.applicationPacketDriveUrl || competition.applicationPacketLegacyHidden) {
+    return new NextResponse(null, { status: 404 });
+  }
   if (!isCompetitionVisibleToTeams(competition)) {
     const session = await auth();
     if (!session?.user || !(await isCompAdmin(session.user.id, id))) {

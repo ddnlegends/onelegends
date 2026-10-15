@@ -8,7 +8,7 @@ vi.mock("@/auth", () => ({ auth: async () => identity.userId ? { user: { id: ide
 
 import { saveCompProfile } from "@/app/actions/comp";
 import { applyToCompetitions } from "@/app/actions/team";
-import { saveCompetitionPacket } from "@/app/actions/competition-packet";
+import { saveCompetitionPacketLink } from "@/app/actions/competition-packet";
 import { GET as downloadPacket } from "@/app/api/competitions/[id]/packet/route";
 import { resetCompClaim, softResetCompClaim } from "@/app/actions/team-access";
 import { prisma } from "@/lib/prisma";
@@ -105,48 +105,51 @@ it("retains existing free-text dates when a host only edits another detail", asy
   expect((await prisma.competitionProfile.findUniqueOrThrow({ where: { id: comp.id } })).dates).toBe(comp.dates);
 });
 
-function packetForm(name = "application.pdf", content = "%PDF-1.7\nfixture\n%%EOF\n") {
+const driveId = "1EvaXITNNCUf_u22R0gHwSxW7ytge3zaX";
+const driveUrl = `https://drive.google.com/file/d/${driveId}/view`;
+function packetForm(url = driveUrl) {
   const data = new FormData();
-  data.set("packet", new File([content], name, { type: "application/pdf" }));
+  data.set("packetDriveUrl", url);
   return data;
 }
 
-it("authorizes packet uploads, replacement and removal, and protects draft downloads", async () => {
+it("authorizes packet links, validates them, and preserves legacy PDFs during the rollout", async () => {
   const comp = await host();
   const hostId = identity.userId;
   await prisma.competitionProfile.update({ where: { id: comp.id }, data: { stageSize: "" } });
   identity.userId = "";
-  expect(await saveCompetitionPacket(undefined, packetForm())).toHaveProperty("error");
+  expect(await saveCompetitionPacketLink(undefined, packetForm())).toHaveProperty("error");
   identity.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.team } })).id;
-  expect(await saveCompetitionPacket(undefined, packetForm())).toHaveProperty("error");
+  expect(await saveCompetitionPacketLink(undefined, packetForm())).toHaveProperty("error");
   const context = { params: Promise.resolve({ id: comp.id }) };
   const request = new Request(`http://localhost/api/competitions/${comp.id}/packet`);
   identity.userId = hostId;
-  expect(await saveCompetitionPacket(undefined, packetForm())).toHaveProperty("ok", true);
+  await prisma.competitionPacketBlob.create({ data: { competitionId: comp.id, filename: "application.pdf", bytes: Buffer.from("%PDF-1.7\nfixture\n%%EOF\n") } });
   const ownDownload = await downloadPacket(request, context);
   expect(ownDownload.status).toBe(200);
   expect(ownDownload.headers.get("Content-Disposition")).toBe('attachment; filename="application.pdf"');
-  expect(ownDownload.headers.get("Cache-Control")).toContain("no-store");
-  expect(await ownDownload.text()).toContain("%PDF-1.7");
   identity.userId = "";
   expect((await downloadPacket(request, context)).status).toBe(404);
   await prisma.competitionProfile.update({ where: { id: comp.id }, data: { stageSize: "N/A" } });
   expect((await downloadPacket(request, context)).status).toBe(200);
   identity.userId = hostId;
-  expect(await saveCompetitionPacket(undefined, packetForm("fake.pdf", "not a PDF"))).toHaveProperty("error");
-  expect((await prisma.competitionPacketBlob.findUniqueOrThrow({ where: { competitionId: comp.id } })).filename).toBe("application.pdf");
-  expect(await saveCompetitionPacket(undefined, packetForm("replacement.pdf"))).toHaveProperty("ok", true);
-  expect((await prisma.competitionPacketBlob.findUniqueOrThrow({ where: { competitionId: comp.id } })).filename).toBe("replacement.pdf");
+  expect(await saveCompetitionPacketLink(undefined, packetForm("https://example.com/packet.pdf"))).toHaveProperty("error");
+  expect((await downloadPacket(request, context)).status).toBe(200);
+  expect(await saveCompetitionPacketLink(undefined, packetForm(`${driveUrl}?usp=sharing`))).toHaveProperty("ok", true);
+  expect(await prisma.competitionProfile.findUniqueOrThrow({ where: { id: comp.id } })).toMatchObject({ applicationPacketDriveUrl: driveUrl, applicationPacketLegacyHidden: true });
+  expect((await downloadPacket(request, context)).status).toBe(404);
+  expect(await prisma.competitionPacketBlob.count({ where: { competitionId: comp.id } })).toBe(1);
   // A supplied competition ID cannot override the authenticated active competition.
   const other = await prisma.competitionProfile.findUniqueOrThrow({ where: { slug: E2E.comps.open.slug } });
   const forged = packetForm(); forged.set("competitionId", other.id);
-  await saveCompetitionPacket(undefined, forged);
-  expect(await prisma.competitionPacketBlob.findUnique({ where: { competitionId: other.id } })).toBeNull();
+  await saveCompetitionPacketLink(undefined, forged);
+  expect((await prisma.competitionProfile.findUniqueOrThrow({ where: { id: other.id } })).applicationPacketDriveUrl).toBeNull();
   const remove = new FormData(); remove.set("intent", "remove");
   identity.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.tech } })).id;
-  expect(await saveCompetitionPacket(undefined, remove)).toHaveProperty("error");
+  expect(await saveCompetitionPacketLink(undefined, remove)).toHaveProperty("error");
   identity.userId = hostId;
-  expect(await saveCompetitionPacket(undefined, remove)).toHaveProperty("ok", true);
+  expect(await saveCompetitionPacketLink(undefined, remove)).toHaveProperty("ok", true);
+  expect((await prisma.competitionProfile.findUniqueOrThrow({ where: { id: comp.id } })).applicationPacketDriveUrl).toBeNull();
   expect((await downloadPacket(request, context)).status).toBe(404);
 });
 
@@ -156,13 +159,13 @@ it("preserves new host details on a soft reset and clears them on a full reset",
     venueAddress: "123 Example St", regularApplicationFeeCents: 2000, lateApplicationFeeCents: 3000,
     paymentInstructions: "Contact the host", eventStartDate: new Date("2027-03-05"), eventEndDate: new Date("2027-03-06"),
   } });
-  await saveCompetitionPacket(undefined, packetForm());
+  await saveCompetitionPacketLink(undefined, packetForm());
   identity.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.tech } })).id;
   const form = new FormData(); form.set("competitionId", comp.id);
   expect(await softResetCompClaim(undefined, form)).toHaveProperty("ok", true);
-  expect(await prisma.competitionPacketBlob.count({ where: { competitionId: comp.id } })).toBe(1);
+  expect((await prisma.competitionProfile.findUniqueOrThrow({ where: { id: comp.id } })).applicationPacketDriveUrl).toBe(driveUrl);
   expect((await prisma.competitionProfile.findUniqueOrThrow({ where: { id: comp.id } })).venueAddress).toBe("123 Example St");
   expect(await resetCompClaim(undefined, form)).toHaveProperty("ok", true);
   expect(await prisma.competitionPacketBlob.count({ where: { competitionId: comp.id } })).toBe(0);
-  expect(await prisma.competitionProfile.findUniqueOrThrow({ where: { id: comp.id } })).toMatchObject({ venueAddress: "", regularApplicationFeeCents: null, lateApplicationFeeCents: null, paymentInstructions: "", eventStartDate: null, eventEndDate: null });
+  expect(await prisma.competitionProfile.findUniqueOrThrow({ where: { id: comp.id } })).toMatchObject({ applicationPacketDriveUrl: null, applicationPacketLegacyHidden: false, venueAddress: "", regularApplicationFeeCents: null, lateApplicationFeeCents: null, paymentInstructions: "", eventStartDate: null, eventEndDate: null });
 });

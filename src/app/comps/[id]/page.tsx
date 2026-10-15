@@ -88,11 +88,17 @@ export default async function CompPublicPage({
         <p className="whitespace-pre-wrap break-words">{comp.paymentInstructions || "The host has not provided payment instructions yet. Contact the competition before sending payment."}</p>
         <p className="text-sm text-muted">These are the host’s application fees. Payments are handled outside OneLegends. Any separate circuit fees are listed on the <Link className="text-accent underline" href="/payments">circuit payments page</Link>.</p>
       </section>
-      {comp.applicationPacket ? (
+      {comp.applicationPacketDriveUrl || (comp.applicationPacket && !comp.applicationPacketLegacyHidden) ? (
         <section className="space-y-3 rounded-xl border border-line bg-card p-6">
           <h2 className="font-heading text-2xl">Application packet</h2>
-          <a className="btn btn-ghost" href={`/api/competitions/${comp.id}/packet`}>Download application packet (PDF)</a>
-          <p className="break-words text-sm text-muted">{comp.applicationPacket.filename}</p>
+          {comp.applicationPacketDriveUrl ? (
+            <a className="btn btn-ghost" href={comp.applicationPacketDriveUrl} target="_blank" rel="noopener noreferrer">Open application packet on Google Drive</a>
+          ) : (
+            <>
+              <a className="btn btn-ghost" href={`/api/competitions/${comp.id}/packet`}>Download application packet (PDF)</a>
+              <p className="break-words text-sm text-muted">{comp.applicationPacket?.filename}</p>
+            </>
+          )}
         </section>
       ) : null}
       {applyBlocked ? (

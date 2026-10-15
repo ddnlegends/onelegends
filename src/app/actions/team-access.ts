@@ -1336,6 +1336,8 @@ export async function resetCompClaim(
         regularApplicationFeeCents: null,
         lateApplicationFeeCents: null,
         paymentInstructions: "",
+        applicationPacketDriveUrl: null,
+        applicationPacketLegacyHidden: false,
         stageSize: "",
         productionNotes: "",
         lighting: "",
