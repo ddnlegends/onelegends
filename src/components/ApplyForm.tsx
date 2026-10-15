@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { applyToCompetitions } from "@/app/actions/team";
 import { CompetitionTypeBadge } from "@/components/CompetitionTypeBadge";
+import { LocalDateTime } from "@/components/LocalDateTime";
 import { formatApplicationFee } from "@/lib/competition-details";
 
 type Comp = {
@@ -33,11 +34,11 @@ function CompetitionSummary({ comp }: { comp: Comp }) {
           <dl className="space-y-2">
             <div className="rounded-lg border border-info-line bg-info-soft px-3 py-2">
               <dt className="text-xs font-semibold uppercase tracking-wide">Regular</dt>
-              <dd className="mt-1 font-medium">{comp.earlyDeadline || "Not set"}</dd>
+              <dd className="mt-1 font-medium">{comp.earlyDeadline ? <LocalDateTime date={comp.earlyDeadline} /> : "Not set"}</dd>
             </div>
             <div className="rounded-lg border border-warning-line bg-warning-soft px-3 py-2">
               <dt className="text-xs font-semibold uppercase tracking-wide">Late · final cutoff</dt>
-              <dd className="mt-1 font-medium">{comp.lateDeadline || "No automatic close"}</dd>
+              <dd className="mt-1 font-medium">{comp.lateDeadline ? <LocalDateTime date={comp.lateDeadline} /> : "No automatic close"}</dd>
             </div>
           </dl>
         </section>
@@ -148,8 +149,8 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
                     <li key={comp.id} className="leading-relaxed">
                       {comp.name} <CompetitionTypeBadge isPartner={comp.isPartner} />
                       {comp.dates ? ` — ${comp.dates}` : ""}
-                      {comp.earlyDeadline ? ` · Regular deadline ${comp.earlyDeadline}` : ""}
-                      {comp.lateDeadline ? ` · Late deadline ${comp.lateDeadline}` : ""}
+                      {comp.earlyDeadline ? <> · Regular deadline <LocalDateTime date={comp.earlyDeadline} /></> : null}
+                      {comp.lateDeadline ? <> · Late deadline <LocalDateTime date={comp.lateDeadline} /></> : null}
                     </li>
                   ))}
                 </ul>

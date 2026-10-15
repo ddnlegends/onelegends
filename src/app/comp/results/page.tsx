@@ -3,7 +3,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { rankTeams } from "@/lib/results";
-import { formatDateTime } from "@/lib/utils";
+import { LocalDateTime } from "@/components/LocalDateTime";
 import { getActiveCompetitionId } from "@/lib/team-access";
 import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 import { CompDecisionBoard } from "@/components/CompDecisionBoard";
@@ -75,7 +75,7 @@ export default async function CompResultsPage() {
         {submitted.length} of {competition.judgeAssignments.length} active packets
         submitted
         {released && competition.resultsReleasedAt
-          ? ` · Unlocked ${formatDateTime(competition.resultsReleasedAt)}`
+          ? <> · Unlocked <LocalDateTime date={competition.resultsReleasedAt} /></>
           : " · Rankings and scores are still hidden"}
         . {pendingInvites + pendingRequests
           ? `${pendingInvites + pendingRequests} pending invitations or requests also need to be resolved.`

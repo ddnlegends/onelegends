@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPendingInvites } from "@/lib/invites";
-import { formatDate, formatDateTime, statusLabel } from "@/lib/utils";
+import { formatDate, statusLabel } from "@/lib/utils";
 import { isCompetitionOpen, isJudgingOpen } from "@/lib/judging";
 import { teamProfileGaps, TEAM_APPLY_OPS_BLOCKED_MESSAGE } from "@/lib/team-profile";
 import { competitionProfileGaps, isCompetitionVisibleToTeams } from "@/lib/competition-profile";
@@ -337,10 +337,10 @@ export default async function DashboardPage() {
                     regularApplicationFeeCents: c.regularApplicationFeeCents,
                     lateApplicationFeeCents: c.lateApplicationFeeCents,
                     earlyDeadline: c.earlyApplicationDeadline
-                      ? formatDateTime(c.earlyApplicationDeadline)
+                      ? c.earlyApplicationDeadline.toISOString()
                       : undefined,
                     lateDeadline: c.applicationDeadline
-                      ? formatDateTime(c.applicationDeadline)
+                      ? c.applicationDeadline.toISOString()
                       : undefined,
                     acceptingApps: isCompetitionOpen(c),
                     alreadyApplied: applied.has(c.id),

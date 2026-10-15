@@ -6,10 +6,11 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { isCompetitionOpen } from "@/lib/judging";
 import { isCompetitionVisibleToTeams } from "@/lib/competition-profile";
-import { formatDateTime } from "@/lib/utils";
+import { LocalDateTime } from "@/components/LocalDateTime";
 import { getActiveTeamId, userHasTeamAccess } from "@/lib/team-access";
 import { TEAM_APPLY_OPS_BLOCKED_MESSAGE } from "@/lib/team-profile";
 import { formatApplicationFee } from "@/lib/competition-details";
+import type { ReactNode } from "react";
 
 export default async function CompPublicPage({
   params,
@@ -35,7 +36,7 @@ export default async function CompPublicPage({
   if (!comp || !isCompetitionVisibleToTeams(comp)) notFound();
 
   const open = isCompetitionOpen(comp);
-  const fields = [
+  const fields: Array<[string, ReactNode]> = [
     ["Dates", comp.dates],
     ["Location", comp.location],
     ["Venue", comp.venue],
@@ -48,13 +49,13 @@ export default async function CompPublicPage({
     [
       "Regular application deadline",
       comp.earlyApplicationDeadline
-        ? formatDateTime(comp.earlyApplicationDeadline)
+        ? <LocalDateTime date={comp.earlyApplicationDeadline} />
         : "Not set",
     ],
     [
       "Late application deadline",
       comp.applicationDeadline
-        ? formatDateTime(comp.applicationDeadline)
+        ? <LocalDateTime date={comp.applicationDeadline} />
         : "No automatic close",
     ],
   ];

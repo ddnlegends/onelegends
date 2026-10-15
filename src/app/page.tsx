@@ -8,7 +8,7 @@ import { Lattice } from "@/components/Lattice";
 import { PublicHowItWorks } from "@/components/PublicHowItWorks";
 import { isCompetitionOpen } from "@/lib/judging";
 import { isCompetitionVisibleToTeams } from "@/lib/competition-profile";
-import { formatDateTime } from "@/lib/utils";
+import { LocalDateTime } from "@/components/LocalDateTime";
 
 export default async function HomePage() {
   const session = await auth();
@@ -121,12 +121,12 @@ export default async function HomePage() {
                   <td className="px-4 py-3 text-muted">{comp.stageSize || "TBA"}</td>
                   <td className="px-4 py-3 text-muted">
                     {comp.earlyApplicationDeadline
-                      ? formatDateTime(comp.earlyApplicationDeadline)
+                      ? <LocalDateTime date={comp.earlyApplicationDeadline} />
                       : "—"}
                   </td>
                   <td className="px-4 py-3 text-muted">
                     {comp.applicationDeadline
-                      ? formatDateTime(comp.applicationDeadline)
+                      ? <LocalDateTime date={comp.applicationDeadline} />
                       : "—"}
                   </td>
                   <td className="px-4 py-3">

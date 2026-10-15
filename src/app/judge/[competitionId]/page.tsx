@@ -13,7 +13,7 @@ import {
   rubricTotal,
   scoreComment,
 } from "@/lib/judging";
-import { formatDateTime } from "@/lib/utils";
+import { LocalDateTime } from "@/components/LocalDateTime";
 import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 
 export default async function JudgePacketPage({
@@ -70,10 +70,10 @@ export default async function JudgePacketPage({
         </p>
         {fresh.decidedAt ? (
           <p className="mt-1 text-sm text-muted">
-            Permission accepted {formatDateTime(fresh.decidedAt)}
+            Permission accepted <LocalDateTime date={fresh.decidedAt} />
             {fresh.submittedAt
-              ? ` · Submitted ${formatDateTime(fresh.submittedAt)}`
-              : ""}
+              ? <> · Submitted <LocalDateTime date={fresh.submittedAt} /></>
+              : null}
           </p>
         ) : null}
       </div>

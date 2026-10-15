@@ -12,9 +12,10 @@ import { CompStatusPill } from "@/components/CompStatusPill";
 import { CompetitionTypeBadge } from "@/components/CompetitionTypeBadge";
 import { ExpandableRow } from "@/components/ExpandableRow";
 import { Chip, InfoGrid, PanelSection } from "@/components/OpsListParts";
+import { LocalDateTime } from "@/components/LocalDateTime";
 import { prisma } from "@/lib/prisma";
 import { competitionStatus } from "@/lib/judging";
-import { formatDate, formatDateTime, statusLabel } from "@/lib/utils";
+import { formatDate, statusLabel } from "@/lib/utils";
 import { formatApplicationFee } from "@/lib/competition-details";
 
 const JUDGE_STATUS: Record<string, string> = {
@@ -207,13 +208,13 @@ export default async function OpsCompetitionsPage() {
                       {
                         label: "Regular application deadline",
                         value: competition.earlyApplicationDeadline
-                          ? formatDateTime(competition.earlyApplicationDeadline)
+                          ? <LocalDateTime date={competition.earlyApplicationDeadline} />
                           : "Not set",
                       },
                       {
                         label: "Late application deadline",
                         value: competition.applicationDeadline
-                          ? formatDateTime(competition.applicationDeadline)
+                          ? <LocalDateTime date={competition.applicationDeadline} />
                           : "No automatic close",
                       },
                       {
@@ -230,7 +231,7 @@ export default async function OpsCompetitionsPage() {
                       {
                         label: "Results released",
                         value: competition.resultsReleasedAt
-                          ? formatDateTime(competition.resultsReleasedAt)
+                          ? <LocalDateTime date={competition.resultsReleasedAt} />
                           : "Not yet",
                       },
                       {
@@ -353,7 +354,7 @@ export default async function OpsCompetitionsPage() {
                           <span className="text-muted">
                             {JUDGE_STATUS[assignment.status] ?? assignment.status}
                             {assignment.submittedAt
-                              ? ` · packet submitted ${formatDateTime(assignment.submittedAt)}`
+                              ? <> · packet submitted <LocalDateTime date={assignment.submittedAt} /></>
                               : assignment.status === "APPROVED"
                                 ? " · packet not submitted"
                                 : ""}

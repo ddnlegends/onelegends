@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { JudgeDecisionButtons } from "@/components/JudgeDecisionButtons";
 import { RemoveJudgeForm } from "@/components/JudgePanelControls";
-import { formatDateTime } from "@/lib/utils";
+import { LocalDateTime } from "@/components/LocalDateTime";
 import { getActiveCompetitionId, isPlatformAdmin } from "@/lib/team-access";
 import { InviteJudgeForm, CancelJudgeInviteForm } from "@/components/AccountForms";
 import { isScoreComplete } from "@/lib/judging";
@@ -87,7 +87,7 @@ export default async function CompJudgesPage() {
                     {row.judge.user.email}
                     {row.judge.phone ? ` · ${row.judge.phone}` : ""}
                     {" · "}
-                    Requested {formatDateTime(row.requestedAt)}
+                    Requested <LocalDateTime date={row.requestedAt} />
                   </p>
                 </div>
                 {!released ? <JudgeDecisionButtons assignmentId={row.id} /> : null}
@@ -113,11 +113,11 @@ export default async function CompJudgesPage() {
                     <p className="text-sm text-muted">
                       {row.judge.user.email}
                       {row.judge.phone ? ` · ${row.judge.phone}` : ""}
-                      {row.decidedAt ? ` · Approved ${formatDateTime(row.decidedAt)}` : ""}
+                      {row.decidedAt ? <> · Approved <LocalDateTime date={row.decidedAt} /></> : null}
                     </p>
                     <p className="mt-1 text-sm">
                       {row.submittedAt
-                        ? `Submitted ${formatDateTime(row.submittedAt)}`
+                        ? <>Submitted <LocalDateTime date={row.submittedAt} /></>
                         : total ? `In progress · ${scored} / ${total} teams scored` : "Approved · packet not opened yet"}
                     </p>
                   </div>
@@ -150,7 +150,7 @@ export default async function CompJudgesPage() {
             {removed.map((row) => (
               <li key={row.id} className="px-4 py-3">
                 {row.judge.name} · {row.judge.user.email}
-                <span className="text-muted"> · {row.removedAt ? formatDateTime(row.removedAt) : "Removed"} by {row.removedByEmail || "admin"} · {row.removalReason}</span>
+                <span className="text-muted"> · {row.removedAt ? <LocalDateTime date={row.removedAt} /> : "Removed"} by {row.removedByEmail || "admin"} · {row.removalReason}</span>
               </li>
             ))}
           </ul>

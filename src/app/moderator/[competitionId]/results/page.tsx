@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hasModeratorAccess } from "@/lib/moderator";
 import { rankTeams } from "@/lib/results";
-import { formatDateTime } from "@/lib/utils";
+import { LocalDateTime } from "@/components/LocalDateTime";
 import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 import { moderatorResultsReady } from "@/lib/judge-panel-completion";
 
@@ -87,7 +87,7 @@ export default async function ModeratorResultsPage({
         <p className="mt-2 text-muted">
           Read-only results
           {competition.resultsReleasedAt
-            ? ` · Released ${formatDateTime(competition.resultsReleasedAt)}`
+            ? <> · Released <LocalDateTime date={competition.resultsReleasedAt} /></>
             : " · Every active judge submitted a complete packet"}.
           {" "}Ranked by average z-score, then average total.
         </p>

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { formatDateTime } from "@/lib/utils";
+import { LocalDateTime } from "@/components/LocalDateTime";
 import { isCompetitionOpen, isJudgingOpen } from "@/lib/judging";
 
 export default async function JudgeDashboardPage() {
@@ -53,7 +53,7 @@ export default async function JudgeDashboardPage() {
                   <p className="font-medium">{row.competition.name}</p>
                   <p className="text-sm text-muted">
                     Permission accepted{" "}
-                    {row.decidedAt ? formatDateTime(row.decidedAt) : "—"}
+                    {row.decidedAt ? <LocalDateTime date={row.decidedAt} /> : "—"}
                     {isCompetitionOpen(row.competition)
                       ? " · Waiting for applications to close"
                       : isJudgingOpen(row.competition)
@@ -100,7 +100,7 @@ export default async function JudgeDashboardPage() {
                 <div>
                   <p className="font-medium">{row.competition.name}</p>
                   <p className="text-sm text-muted">
-                    Completed {row.submittedAt ? formatDateTime(row.submittedAt) : "—"}
+                    Completed {row.submittedAt ? <LocalDateTime date={row.submittedAt} /> : "—"}
                   </p>
                 </div>
                 <Link

@@ -4,7 +4,7 @@ import { FeedbackStatusForm } from "@/components/FeedbackStatusForm";
 import { requirePlatformAdminPage } from "@/lib/page-guards";
 import { prisma } from "@/lib/prisma";
 import { FEEDBACK_CATEGORIES, FEEDBACK_STATUSES, feedbackStatusSchema } from "@/lib/feedback";
-import { formatDateTime } from "@/lib/utils";
+import { LocalDateTime } from "@/components/LocalDateTime";
 
 export const metadata = { title: "Feedback inbox · OneLegends", robots: { index: false, follow: false } };
 const PAGE_SIZE = 25;
@@ -49,7 +49,7 @@ export default async function FeedbackInbox({ searchParams }: { searchParams: Pr
                 <h2 className="font-semibold">{FEEDBACK_CATEGORIES[item.category]} · {item.submitterName || item.submitterEmail}</h2>
                 <a className="break-all text-sm text-accent underline" href={`mailto:${encodeURIComponent(item.submitterEmail)}`}>{item.submitterEmail}</a>
               </div>
-              <p className="text-xs text-muted"><time dateTime={item.createdAt.toISOString()}>{formatDateTime(item.createdAt)}</time> · {FEEDBACK_STATUSES[item.status]}</p>
+              <p className="text-xs text-muted"><LocalDateTime date={item.createdAt} /> · {FEEDBACK_STATUSES[item.status]}</p>
             </div>
             <p className="whitespace-pre-wrap break-words">{item.message}</p>
             <details className="rounded-lg bg-blush p-3 text-sm">
@@ -63,7 +63,7 @@ export default async function FeedbackInbox({ searchParams }: { searchParams: Pr
               </dl>
             </details>
             <FeedbackStatusForm id={item.id} status={item.status} />
-            {item.statusUpdatedByEmail ? <p className="break-words text-xs text-muted">Last updated by {item.statusUpdatedByEmail} · {formatDateTime(item.updatedAt)}</p> : null}
+            {item.statusUpdatedByEmail ? <p className="break-words text-xs text-muted">Last updated by {item.statusUpdatedByEmail} · <LocalDateTime date={item.updatedAt} /></p> : null}
           </article>
         ))}
         {pages > 1 ? <nav aria-label="Feedback pages" className="flex gap-4">

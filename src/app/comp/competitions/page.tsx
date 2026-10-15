@@ -6,7 +6,7 @@ import { getApprovedCompMemberships, isPlatformAdmin } from "@/lib/team-access";
 import { isCompetitionVisibleToTeams } from "@/lib/competition-profile";
 import { isCompetitionOpen } from "@/lib/judging";
 import { formatApplicationFee } from "@/lib/competition-details";
-import { formatDateTime } from "@/lib/utils";
+import { LocalDateTime } from "@/components/LocalDateTime";
 
 export default async function AllCompetitionsPage() {
   const session = await auth();
@@ -64,8 +64,8 @@ export default async function AllCompetitionsPage() {
                     <p className="text-sm text-muted">{[competition.dates, competition.location, competition.venue].filter(Boolean).join(" · ")}</p>
                   </div>
                   <dl className="grid gap-3 text-sm sm:grid-cols-2">
-                    <div><dt className="font-semibold">Regular deadline</dt><dd>{competition.earlyApplicationDeadline ? formatDateTime(competition.earlyApplicationDeadline) : "Not set"}</dd></div>
-                    <div><dt className="font-semibold">Late deadline</dt><dd>{competition.applicationDeadline ? formatDateTime(competition.applicationDeadline) : "No automatic close"}</dd></div>
+                    <div><dt className="font-semibold">Regular deadline</dt><dd>{competition.earlyApplicationDeadline ? <LocalDateTime date={competition.earlyApplicationDeadline} /> : "Not set"}</dd></div>
+                    <div><dt className="font-semibold">Late deadline</dt><dd>{competition.applicationDeadline ? <LocalDateTime date={competition.applicationDeadline} /> : "No automatic close"}</dd></div>
                     <div><dt className="font-semibold">Regular fee</dt><dd>{formatApplicationFee(competition.regularApplicationFeeCents)} per team</dd></div>
                     <div><dt className="font-semibold">Late fee</dt><dd>{formatApplicationFee(competition.lateApplicationFeeCents)} per team</dd></div>
                   </dl>
@@ -91,8 +91,8 @@ export default async function AllCompetitionsPage() {
                     <li key={competition.id} className="leading-relaxed">
                       <Link className="font-medium text-accent underline" href={`/comps/${competition.id}`}>{competition.name}</Link>
                       {competition.dates ? ` — ${competition.dates}` : ""}
-                      {competition.earlyApplicationDeadline ? ` · Regular deadline ${formatDateTime(competition.earlyApplicationDeadline)}` : ""}
-                      {competition.applicationDeadline ? ` · Late deadline ${formatDateTime(competition.applicationDeadline)}` : ""}
+                      {competition.earlyApplicationDeadline ? <> · Regular deadline <LocalDateTime date={competition.earlyApplicationDeadline} /></> : null}
+                      {competition.applicationDeadline ? <> · Late deadline <LocalDateTime date={competition.applicationDeadline} /></> : null}
                       {` · Regular fee ${formatApplicationFee(competition.regularApplicationFeeCents)}`}
                       {` · Late fee ${formatApplicationFee(competition.lateApplicationFeeCents)}`}
                     </li>

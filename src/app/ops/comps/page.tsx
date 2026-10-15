@@ -6,12 +6,13 @@ import { AutoRefresh } from "@/components/AutoRefresh";
 import { CompStatusPill } from "@/components/CompStatusPill";
 import { CompetitionTypeBadge } from "@/components/CompetitionTypeBadge";
 import { LiveProgress } from "@/components/LiveProgress";
+import { LocalDateTime } from "@/components/LocalDateTime";
 import {
   COMP_STATUS_LABEL,
   competitionStatus,
   type CompStatus,
 } from "@/lib/judging";
-import { formatDate, formatDateTime } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import { isPlatformAdmin } from "@/lib/team-access";
 
 const STATUS_ORDER: CompStatus[] = [
@@ -179,21 +180,19 @@ export default async function CompDashboardPage() {
                       />
                     ) : comp.status === "COMPLETE" && comp.resultsReleasedAt ? (
                       <p className="text-sm text-success">
-                        Results released {formatDateTime(comp.resultsReleasedAt)}
+                        Results released <LocalDateTime date={comp.resultsReleasedAt} />
                       </p>
                     ) : (
                       <p className="text-sm text-muted">
                         {comp.status === "UNCLAIMED"
                           ? "Waiting for a competition admin to claim it."
                           : comp.status === "APPS_OPEN"
-                            ? [
-                                comp.earlyApplicationDeadline
-                                  ? `Regular deadline ${formatDateTime(comp.earlyApplicationDeadline)}`
-                                  : null,
-                                comp.applicationDeadline
-                                  ? `Late deadline ${formatDateTime(comp.applicationDeadline)}`
-                                  : null,
-                              ].filter(Boolean).join(" · ") || "Teams can still apply."
+                            ? <>
+                                {comp.earlyApplicationDeadline ? <>Regular deadline <LocalDateTime date={comp.earlyApplicationDeadline} /></> : null}
+                                {comp.earlyApplicationDeadline && comp.applicationDeadline ? " · " : null}
+                                {comp.applicationDeadline ? <>Late deadline <LocalDateTime date={comp.applicationDeadline} /></> : null}
+                                {!comp.earlyApplicationDeadline && !comp.applicationDeadline ? "Teams can still apply." : null}
+                              </>
                             : comp.isPartner && comp._count.moderatorAccess === 0
                               ? "No moderator assigned yet. Grant access before viewing."
                               : "Open judging when viewing starts."}

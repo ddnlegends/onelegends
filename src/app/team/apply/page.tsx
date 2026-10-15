@@ -7,7 +7,6 @@ import { isCompetitionOpen } from "@/lib/judging";
 import { isCompetitionVisibleToTeams } from "@/lib/competition-profile";
 import { teamProfileGaps, TEAM_APPLY_OPS_BLOCKED_MESSAGE } from "@/lib/team-profile";
 import { getActiveTeamId } from "@/lib/team-access";
-import { formatDateTime } from "@/lib/utils";
 
 export default async function TeamApplyPage() {
   const session = await auth();
@@ -70,10 +69,10 @@ export default async function TeamApplyPage() {
             regularApplicationFeeCents: c.regularApplicationFeeCents,
             lateApplicationFeeCents: c.lateApplicationFeeCents,
             earlyDeadline: c.earlyApplicationDeadline
-              ? formatDateTime(c.earlyApplicationDeadline)
+              ? c.earlyApplicationDeadline.toISOString()
               : undefined,
             lateDeadline: c.applicationDeadline
-              ? formatDateTime(c.applicationDeadline)
+              ? c.applicationDeadline.toISOString()
               : undefined,
             acceptingApps: isCompetitionOpen(c),
             alreadyApplied: applied.has(c.id),

@@ -21,7 +21,7 @@ import {
   scoreComment,
 } from "@/lib/judging";
 import { rankTeams } from "@/lib/results";
-import { formatDateTime } from "@/lib/utils";
+import { LocalDateTime } from "@/components/LocalDateTime";
 import { isPlatformAdmin } from "@/lib/team-access";
 import { judgePanelCompletion } from "@/lib/judge-panel-completion";
 import { isViewingEligibleApplication } from "@/lib/payment-eligibility";
@@ -158,7 +158,7 @@ export default async function CompDashboardDetailPage({
               </p>
               {competition.liveUpdatedAt && live ? (
                 <p className="mt-1 text-xs text-muted">
-                  Switched {formatDateTime(competition.liveUpdatedAt)}
+                  Switched <LocalDateTime date={competition.liveUpdatedAt} />
                 </p>
               ) : null}
             </div>
@@ -276,7 +276,7 @@ export default async function CompDashboardDetailPage({
             <h2 className="font-heading text-2xl">Final summary</h2>
             {competition.resultsReleasedAt ? (
               <p className="text-sm text-muted">
-                Released {formatDateTime(competition.resultsReleasedAt)}
+                Released <LocalDateTime date={competition.resultsReleasedAt} />
               </p>
             ) : null}
           </div>
