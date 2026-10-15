@@ -46,7 +46,7 @@ export default async function CompPublicPage({
     ["Regular application fee (USD per team)", formatApplicationFee(comp.regularApplicationFeeCents)],
     ["Late application fee (USD per team)", formatApplicationFee(comp.lateApplicationFeeCents)],
     [
-      "Early application deadline",
+      "Regular application deadline",
       comp.earlyApplicationDeadline
         ? formatDateTime(comp.earlyApplicationDeadline)
         : "Not set",

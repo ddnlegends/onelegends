@@ -28,6 +28,10 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
   );
   const open = competitions.filter((c) => c.acceptingApps);
   const closed = competitions.filter((c) => !c.acceptingApps);
+  const types = [
+    { isPartner: true, label: "Partner Competitions" },
+    { isPartner: false, label: "Non-partner Competitions" },
+  ];
 
   return (
     <form action={formAction} className="space-y-6">
@@ -51,46 +55,54 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
           No competitions are accepting applications right now.
         </p>
       ) : (
-        <ul className="divide-y divide-line rounded-xl border border-line bg-card">
-        {open.map((comp) => (
-          <li key={comp.id} className="flex items-start gap-3 px-4 py-3">
-            <input
-              type="checkbox"
-              name="competitionId"
-              value={comp.id}
-              id={`comp-${comp.id}`}
-              defaultChecked={comp.alreadyApplied}
-              disabled={comp.alreadyApplied}
-              className="mt-1"
-            />
-            <label htmlFor={`comp-${comp.id}`} className="flex-1 cursor-pointer">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <span className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium">{comp.name}</span>
-                  <CompetitionTypeBadge isPartner={comp.isPartner} />
-                </span>
-                <Link
-                  href={`/comps/${comp.id}`}
-                  className="text-xs text-muted underline"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Details &amp; payment
-                </Link>
-              </div>
-              <p className="text-sm text-muted">
-                {[comp.dates, comp.location, comp.venue].filter(Boolean).join(" · ") ||
-                  "Details TBA"}
-                {comp.earlyDeadline ? ` · Early deadline ${comp.earlyDeadline}` : ""}
-                {comp.lateDeadline ? ` · Late deadline ${comp.lateDeadline}` : ""}
-              </p>
-              <p className="mt-1 text-sm text-muted">Host application fees: regular {formatApplicationFee(comp.regularApplicationFeeCents)} · late {formatApplicationFee(comp.lateApplicationFeeCents)} (USD per team)</p>
-              {comp.alreadyApplied ? (
-                <p className="mt-1 text-xs font-medium text-accent">Already applied</p>
-              ) : null}
-            </label>
-          </li>
-        ))}
-        </ul>
+        types.map(({ isPartner, label }) => {
+          const group = open.filter((comp) => comp.isPartner === isPartner);
+          if (!group.length) return null;
+          return (
+            <section key={label} className="space-y-2" aria-label={label}>
+              <h2 className="font-heading text-xl">{label}</h2>
+              <ul className="divide-y divide-line rounded-xl border border-line bg-card">
+                {group.map((comp) => (
+                  <li key={comp.id} className="flex items-start gap-3 px-4 py-3">
+                    <input
+                      type="checkbox"
+                      name="competitionId"
+                      value={comp.id}
+                      id={`comp-${comp.id}`}
+                      defaultChecked={comp.alreadyApplied}
+                      disabled={comp.alreadyApplied}
+                      className="mt-1"
+                    />
+                    <label htmlFor={`comp-${comp.id}`} className="flex-1 cursor-pointer">
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <span className="flex flex-wrap items-center gap-2">
+                          <span className="font-medium">{comp.name}</span>
+                          <CompetitionTypeBadge isPartner={comp.isPartner} />
+                        </span>
+                        <Link
+                          href={`/comps/${comp.id}`}
+                          className="text-xs text-muted underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Details &amp; payment
+                        </Link>
+                      </div>
+                      <p className="text-sm text-muted">
+                        {[comp.dates, comp.location, comp.venue].filter(Boolean).join(" · ") || "Details TBA"}
+                        {comp.earlyDeadline ? ` · Regular deadline ${comp.earlyDeadline}` : ""}
+                        {comp.lateDeadline ? ` · Late deadline ${comp.lateDeadline}` : ""}
+                      </p>
+                      <p className="mt-1 text-sm text-muted">Host application fees: regular {formatApplicationFee(comp.regularApplicationFeeCents)} · late {formatApplicationFee(comp.lateApplicationFeeCents)} (USD per team)</p>
+                      {comp.alreadyApplied ? (
+                        <p className="mt-1 text-xs font-medium text-accent">Already applied</p>
+                      ) : null}
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          );
+        })
       )}
 
       {closed.length ? (
@@ -98,17 +110,25 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
           <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted">
             Not accepting apps
           </h3>
-          <ul className="text-sm text-muted">
-            {closed.map((comp) => (
-              <li key={comp.id}>
-                {comp.name}
-                {" "}<CompetitionTypeBadge isPartner={comp.isPartner} />
-                {comp.dates ? ` — ${comp.dates}` : ""}
-                {comp.earlyDeadline ? ` · Early deadline ${comp.earlyDeadline}` : ""}
-                {comp.lateDeadline ? ` · Late deadline ${comp.lateDeadline}` : ""}
-              </li>
-            ))}
-          </ul>
+          {types.map(({ isPartner, label }) => {
+            const group = closed.filter((comp) => comp.isPartner === isPartner);
+            if (!group.length) return null;
+            return (
+              <section key={label} className="mt-3 space-y-1" aria-label={`${label} not accepting applications`}>
+                <h4 className="font-medium">{label}</h4>
+                <ul className="text-sm text-muted">
+                  {group.map((comp) => (
+                    <li key={comp.id}>
+                      {comp.name} <CompetitionTypeBadge isPartner={comp.isPartner} />
+                      {comp.dates ? ` — ${comp.dates}` : ""}
+                      {comp.earlyDeadline ? ` · Regular deadline ${comp.earlyDeadline}` : ""}
+                      {comp.lateDeadline ? ` · Late deadline ${comp.lateDeadline}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            );
+          })}
         </div>
       ) : null}
 

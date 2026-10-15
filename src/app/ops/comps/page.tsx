@@ -188,7 +188,7 @@ export default async function CompDashboardPage() {
                           : comp.status === "APPS_OPEN"
                             ? [
                                 comp.earlyApplicationDeadline
-                                  ? `Early deadline ${formatDateTime(comp.earlyApplicationDeadline)}`
+                                  ? `Regular deadline ${formatDateTime(comp.earlyApplicationDeadline)}`
                                   : null,
                                 comp.applicationDeadline
                                   ? `Late deadline ${formatDateTime(comp.applicationDeadline)}`

@@ -205,7 +205,7 @@ export default async function OpsCompetitionsPage() {
                     items={[
                       { label: "Accepting applications", value: competition.acceptingApps ? "Yes" : "No" },
                       {
-                        label: "Early application deadline",
+                        label: "Regular application deadline",
                         value: competition.earlyApplicationDeadline
                           ? formatDateTime(competition.earlyApplicationDeadline)
                           : "Not set",

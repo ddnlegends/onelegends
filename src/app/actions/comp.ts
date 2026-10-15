@@ -96,7 +96,7 @@ export async function saveCompProfile(
   const earlyRaw = parsed.data.earlyApplicationDeadline;
   const earlyApplicationDeadline = earlyRaw ? new Date(earlyRaw) : null;
   if (earlyRaw && Number.isNaN(earlyApplicationDeadline?.getTime())) {
-    return { error: "Enter a valid early application deadline." };
+    return { error: "Enter a valid regular application deadline." };
   }
   const lateRaw = parsed.data.applicationDeadline;
   const applicationDeadline = lateRaw ? new Date(lateRaw) : null;
@@ -104,7 +104,7 @@ export async function saveCompProfile(
     return { error: "Enter a valid late application deadline." };
   }
   if (earlyApplicationDeadline && applicationDeadline && earlyApplicationDeadline >= applicationDeadline) {
-    return { error: "The early deadline must be before the late deadline." };
+    return { error: "The regular deadline must be before the late deadline." };
   }
 
   const missingDetails = competitionProfileGaps({ ...parsed.data, dates });

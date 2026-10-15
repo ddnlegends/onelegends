@@ -46,7 +46,7 @@ export function isCompetitionOpen(
 ): boolean {
   if (comp.resultsReleasedAt) return false;
   if (!comp.acceptingApps) return false;
-  // The early deadline is informational; only the late deadline closes applications.
+  // The regular deadline is informational; only the late deadline closes applications.
   if (comp.applicationDeadline && now > comp.applicationDeadline) return false;
   return true;
 }

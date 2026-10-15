@@ -82,7 +82,7 @@ export default async function HomePage() {
           </h2>
           <p className="mt-2 max-w-xl text-muted">
             Competitions appear here after their host completes every required detail. Event
-            date, city, venue, stage, and early and late deadlines — then apply from
+            date, city, venue, stage, and regular and late deadlines — then apply from
             your team profile.
           </p>
         </div>
@@ -96,7 +96,7 @@ export default async function HomePage() {
                 <th className="px-4 py-3 font-medium">Location</th>
                 <th className="px-4 py-3 font-medium">Venue</th>
                 <th className="px-4 py-3 font-medium">Stage</th>
-                <th className="px-4 py-3 font-medium">Early deadline</th>
+                <th className="px-4 py-3 font-medium">Regular deadline</th>
                 <th className="px-4 py-3 font-medium">Late deadline</th>
                 <th className="px-4 py-3 font-medium">Apps</th>
               </tr>

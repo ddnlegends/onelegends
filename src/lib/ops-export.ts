@@ -140,7 +140,7 @@ async function competitionsTable(competitionId?: string): Promise<ExportCell[][]
       "Payment instructions",
       "Application packet link or legacy filename",
       "Accepting applications",
-      "Early application deadline",
+      "Regular application deadline",
       "Late application deadline",
       "Applications",
       "Judging open",

@@ -10,7 +10,7 @@ test("host details and Drive packet link survive saving and appear to teams", as
   await page.getByLabel("Regular application fee (USD per team)", { exact: true }).fill("35.29");
   await page.getByLabel("Late application fee (USD per team)", { exact: true }).fill("50");
   await page.getByLabel("Venue address", { exact: true }).fill("123 Example Street\nAtlanta, GA 30301");
-  await page.getByLabel("Payment instructions", { exact: true }).fill("Pay https://example.com/payment. Include your team name. Regular fee through the early deadline; late fee after.");
+  await page.getByLabel("Payment instructions", { exact: true }).fill("Pay https://example.com/payment. Include your team name. Regular fee through the regular deadline; late fee after.");
   await page.getByLabel("AV guidelines *", { exact: true }).fill("Submit a 1080p MP4 with stereo audio.");
   await page.getByLabel("Competition bio *", { exact: true }).fill("A weekend celebrating dance.\nMeet teams from across the circuit.");
   await page.getByRole("button", { name: "Save Details", exact: true }).click();

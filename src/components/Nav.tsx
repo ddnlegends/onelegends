@@ -40,6 +40,11 @@ export async function Nav() {
               Comp Details
             </NavLink>
           ) : null}
+          {compAccess && !ops ? (
+            <NavLink href="/comp/competitions" match="prefix">
+              All Competitions
+            </NavLink>
+          ) : null}
           {ops ? (
             <NavLink href="/ops/comps" match="prefix">
               Comp Dashboard

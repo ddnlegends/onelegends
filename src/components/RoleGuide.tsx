@@ -44,7 +44,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Apply with checkboxes",
-        body: "Select every open competition you want and submit once. Check its early and late deadlines; the late deadline closes applications. Pay the $25 OneLegends registration fee outside the app; you can apply while it is pending, but tech admins must verify it before your AV enters viewing. A later payment to a competition is due only if that host Accepts you after judging.",
+        body: "Select every open competition you want and submit once. Check its regular and late deadlines; the late deadline closes applications. Pay the $25 OneLegends registration fee outside the app; you can apply while it is pending, but tech admins must verify it before your AV enters viewing. A later payment to a competition is due only if that host Accepts you after judging.",
       },
     ],
     cta: { href: "/register", label: "Create an account" },
@@ -132,7 +132,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Set Comp Details",
-        body: "Save event details, production notes, and early and late application deadlines. The early deadline is informational; the late deadline closes applications. Check the labeled timezone. The competition name stays tied to the official listing. Finish edits before switching competitions or tabs.",
+        body: "Save event details, production notes, and regular and late application deadlines. The regular deadline is informational; the late deadline closes applications. Check the labeled timezone. The competition name stays tied to the official listing. Finish edits before switching competitions or tabs.",
       },
       {
         title: "Invite judges and check applicants",

@@ -36,7 +36,7 @@ test("a complete team applies to an open competition only", async ({ page }) => 
   await expect(page.getByText("Already applied")).toBeVisible();
 });
 
-test("competition admin sets ordered early and late deadlines", async ({ page, browser }) => {
+test("competition admin sets ordered regular and late deadlines", async ({ page, browser }) => {
   const original = await db.competitionProfile.findUniqueOrThrow({
     where: { slug: E2E.comps.showcase.slug },
     select: { id: true, earlyApplicationDeadline: true, applicationDeadline: true },
@@ -45,10 +45,10 @@ test("competition admin sets ordered early and late deadlines", async ({ page, b
   try {
     await login(page, "comp");
     await page.goto("/comp/profile");
-    await page.getByLabel("Early application deadline").fill("2027-01-20T12:00");
+    await page.getByLabel("Regular application deadline").fill("2027-01-20T12:00");
     await page.getByLabel("Late application deadline").fill("2027-01-10T12:00");
     await page.getByRole("button", { name: "Save Details" }).click();
-    await expect(page.locator(".notice-error")).toContainText("early deadline must be before the late deadline");
+    await expect(page.locator(".notice-error")).toContainText("regular deadline must be before the late deadline");
 
     await page.getByLabel("Late application deadline").fill("2027-01-30T12:00");
     await page.getByRole("button", { name: "Save Details" }).click();
@@ -62,7 +62,7 @@ test("competition admin sets ordered early and late deadlines", async ({ page, b
     // The save confirmation also refreshes the host page. Check the public
     // listing as a visitor so that refresh cannot cancel WebKit's navigation.
     await visitor.goto(`/comps/${original.id}`);
-    await expect(visitor.getByText("Early application deadline")).toBeVisible();
+    await expect(visitor.getByText("Regular application deadline")).toBeVisible();
     await expect(visitor.getByText("Late application deadline")).toBeVisible();
   } finally {
     await visitor.close();

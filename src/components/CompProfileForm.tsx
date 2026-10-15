@@ -132,8 +132,8 @@ export function CompProfileForm({ profile }: { profile: Profile }) {
         <DeadlineField
           iso={profile.earlyApplicationDeadline}
           name="earlyApplicationDeadline"
-          label="Early application deadline"
-          help="Shown to teams as the early deadline. Applications stay open after this time. Leave blank for N/A or TBD."
+          label="Regular application deadline"
+          help="Shown to teams as the regular deadline. Applications stay open after this time until the late deadline. Leave blank for N/A or TBD."
         />
         <DeadlineField
           iso={profile.applicationDeadline}
