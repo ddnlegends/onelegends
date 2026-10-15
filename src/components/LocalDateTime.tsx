@@ -18,7 +18,7 @@ export function LocalDateTime({ date }: { date: Date | string }) {
             year: "numeric",
             hour: "numeric",
             minute: "2-digit",
-            timeZoneName: "short",
+            timeZoneName: "longGeneric",
           })
         : "Loading local time…"}
     </time>

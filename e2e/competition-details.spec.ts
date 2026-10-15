@@ -38,7 +38,7 @@ test("host details and Drive packet link survive saving and appear to teams", as
         year: "numeric",
         hour: "numeric",
         minute: "2-digit",
-        timeZoneName: "short",
+        timeZoneName: "longGeneric",
       });
     }, deadlineIso!);
     await expect(deadlineTime).toHaveText(localDeadline);
