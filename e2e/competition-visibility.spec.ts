@@ -30,7 +30,7 @@ test("competition stays hidden until its host fills every required detail", asyn
     await publicPage.goto("/");
     await expect(publicPage.getByText(E2E.comps.showcase.name)).toBeVisible();
     await page.reload();
-    await expect(page.getByLabel(new RegExp(E2E.comps.showcase.name))).toBeVisible();
+    await expect(page.getByRole("checkbox", { name: E2E.comps.showcase.name })).toBeVisible();
   } finally {
     await publicPage.close();
   }

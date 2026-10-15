@@ -28,6 +28,18 @@ test("host details and Drive packet link survive saving and appear to teams", as
   const visitor = await browser.newPage({ timezoneId: "America/Los_Angeles" });
   try {
     await visitor.goto(`/comps/${competition.id}`);
+    const deadline = competition.applicationDeadline!;
+    const localDeadline = await visitor.evaluate((iso) => {
+      return new Date(iso).toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        timeZoneName: "short",
+      });
+    }, deadline.toISOString());
+    await expect(visitor.locator(`time[datetime="${deadline.toISOString()}"]`)).toHaveText(localDeadline);
     await expect(visitor.getByText(/Mar.*5.*7.*2027/)).toBeVisible();
     await expect(visitor.getByText("$35.29", { exact: true })).toBeVisible();
     await expect(visitor.getByText("$50.00", { exact: true })).toBeVisible();

@@ -26,9 +26,9 @@ test("a complete team applies to an open competition only", async ({ page }) => 
 
   const closed = page.getByRole("heading", { name: "Not accepting apps" }).locator("..");
   await expect(closed.getByText(E2E.comps.closed.name)).toBeVisible();
-  await expect(page.getByLabel(new RegExp(E2E.comps.closed.name))).toHaveCount(0);
+  await expect(page.getByRole("checkbox", { name: E2E.comps.closed.name })).toHaveCount(0);
 
-  await page.getByLabel(new RegExp(E2E.comps.open.name)).check();
+  await page.getByRole("checkbox", { name: E2E.comps.open.name }).check();
   await page.getByRole("button", { name: "Apply to selected comps" }).click();
   await expect(page.locator(".notice-ok")).toBeVisible();
 
