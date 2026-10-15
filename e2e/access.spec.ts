@@ -2,7 +2,7 @@ import { test } from "./helpers";
 import { expect } from "@playwright/test";
 import { ALL_CLAIM_CODES, db, E2E, login, SEALED_NAMES } from "./helpers";
 
-const OPS_PAGES = ["/ops/teams", "/ops/competitions", "/ops/export", "/ops/comps"];
+const OPS_PAGES = ["/ops/teams", "/ops/competitions", "/ops/export", "/ops/comps", "/ops/feedback"];
 
 for (const path of OPS_PAGES) {
   test(`logged-out visitors get nothing from ${path}`, async ({ page, request }) => {

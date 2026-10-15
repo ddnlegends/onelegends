@@ -9,10 +9,12 @@ export function AuthForm({
   mode,
   googleEnabled,
   testLoginEnabled = false,
+  returnTo = "/dashboard",
 }: {
   mode: "login" | "register";
   googleEnabled: boolean;
   testLoginEnabled?: boolean;
+  returnTo?: string;
 }) {
   const [state, testLoginAction, pending] = useActionState(loginAction, undefined);
   const [testEmail, setTestEmail] = useState("");
@@ -28,6 +30,7 @@ export function AuthForm({
       {googleEnabled ? (
         <form action={googleSignInAction}>
           <input type="hidden" name="intent" value={mode} />
+          <input type="hidden" name="returnTo" value={returnTo} />
           <button className="btn btn-primary w-full" type="submit">
             Continue with Google
           </button>
@@ -54,6 +57,7 @@ export function AuthForm({
             Existing test account login
           </summary>
           <form action={testLoginAction} className="mt-4 space-y-4">
+            <input type="hidden" name="returnTo" value={returnTo} />
             <p className="text-xs text-muted">
               Choose a test role, then enter that account&apos;s password.
             </p>

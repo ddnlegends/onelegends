@@ -2,9 +2,11 @@ import { testPasswordLoginEnabled } from "@/lib/test-environment";
 import { AuthForm } from "@/components/AuthForm";
 import { PageShell } from "@/components/PageShell";
 import { googleAuthEnabled } from "@/lib/ops-admin";
+import { signInRedirectPath } from "@/lib/roles";
 
-export default function LoginPage() {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string | string[] }> }) {
   const googleEnabled = googleAuthEnabled();
+  const returnTo = signInRedirectPath((await searchParams).next);
   return (
     <PageShell>
       <div className="space-y-6">
@@ -15,7 +17,7 @@ export default function LoginPage() {
             Create an account first.
           </p>
         </div>
-        <AuthForm mode="login" googleEnabled={googleEnabled} testLoginEnabled={testPasswordLoginEnabled()} />
+        <AuthForm mode="login" googleEnabled={googleEnabled} testLoginEnabled={testPasswordLoginEnabled()} returnTo={returnTo} />
       </div>
     </PageShell>
   );

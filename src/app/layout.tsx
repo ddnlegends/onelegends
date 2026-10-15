@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
 import { Nav } from "@/components/Nav";
+import { FeedbackLink } from "@/components/FeedbackLink";
 import { ThemeSelect } from "@/components/ThemeSelect";
 import { NavigationPulse } from "@/components/NavigationPulse";
 import { PendingInviteGate } from "@/components/PendingInviteGate";
@@ -53,7 +54,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </Suspense>
         <main className="flex-1">{children}</main>
         <footer className="border-t border-line bg-blush">
-          <div className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-6 text-xs tracking-wide text-muted sm:flex-row sm:items-center sm:justify-between">
+          <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-6 text-xs tracking-wide text-muted sm:flex-row sm:items-center sm:justify-between">
             <p>
               <span className="font-semibold text-ink">OneLegends</span>
               {" · "}
@@ -67,6 +68,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 Legends Dance Championship
               </a>{". #journeytothecrown."}
             </p>
+            <FeedbackLink />
           </div>
         </footer>
         <Analytics />
