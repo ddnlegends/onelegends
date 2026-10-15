@@ -35,6 +35,7 @@ import {
 } from "@/lib/team-access";
 
 function revalidateAccessPaths() {
+  revalidatePath("/");
   revalidatePath("/dashboard");
   revalidatePath("/claim");
   revalidatePath("/profile");
@@ -56,6 +57,7 @@ function revalidateAccessPaths() {
   revalidatePath("/moderator", "layout");
   revalidatePath("/judge");
   revalidatePath("/teams");
+  revalidatePath("/comps", "layout");
 }
 
 async function primaryEmailForTeam(teamId: string): Promise<string | null> {
@@ -278,7 +280,7 @@ export async function claimCompAction(
     await prisma.$transaction(async (tx) => {
       const claimed = await tx.competitionProfile.updateMany({
         where: { id: listing.id, userId: null, claimedAt: null, claimCode: code },
-        data: { userId: user.id, claimedAt: new Date() },
+        data: { userId: user.id, claimedAt: new Date(), acceptingApps: false },
       });
       if (claimed.count !== 1) throw new Error("CLAIM_TAKEN");
       await tx.competitionMembership.upsert({
@@ -1043,7 +1045,7 @@ export async function createCompetition(
       registrationFeeCents: competitionRegistrationFeeCents(parsed.data.type === "partner"),
       slug,
       claimCode,
-      description: `${parsed.data.name}. Claim this listing with the official claim code after you log in.`,
+      acceptingApps: false,
     },
   });
 

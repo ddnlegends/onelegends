@@ -31,6 +31,15 @@ export const E2E = {
 } as const;
 
 const DRIVE_FILE = "https://drive.google.com/file/d/1E2EfixtureVideoIdAAAAAAAAAAAAA/view";
+const completeCompetitionDetails = {
+  dates: "Fixture dates",
+  location: "Test City",
+  venue: "Test Hall",
+  stageSize: "40 x 32 feet",
+  lighting: "Standard stage lighting",
+  productionNotes: "Standard production setup",
+  description: "Fixture competition details",
+};
 
 function completeTeam(team: { slug: string; name: string; claimCode: string }) {
   return {
@@ -97,18 +106,17 @@ export async function seedE2E() {
     await prisma.competitionProfile.create({
       data: {
         ...E2E.comps.open,
+        ...completeCompetitionDetails,
         claimedAt: new Date(),
         registrationPaidAt: new Date(),
         acceptingApps: true,
         applicationDeadline: nextMonth,
-        dates: "Fixture dates",
-        location: "Test City",
-        venue: "Test Hall",
       },
     });
     await prisma.competitionProfile.create({
       data: {
         ...E2E.comps.closed,
+        ...completeCompetitionDetails,
         claimedAt: new Date(),
         registrationPaidAt: new Date(),
         acceptingApps: false,
@@ -118,6 +126,7 @@ export async function seedE2E() {
     const showcase = await prisma.competitionProfile.create({
       data: {
         ...E2E.comps.showcase,
+        ...completeCompetitionDetails,
         claimedAt: new Date(),
         registrationPaidAt: new Date(),
         userId: compAdmin.id,

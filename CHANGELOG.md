@@ -4,6 +4,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Keep competitions hidden from public and team application views until claimed and all required host details are filled; show hosts missing details on Home and Comp Details, accept N/A/TBD text, and require an explicit switch to open applications after claiming.
 - Add a confirmed Mark All Paid action to circuit ops Fees for unpaid team and competition OneLegends registration fees; leave host payments unchanged.
 - Show team and competition tutorial videos directly below the signed-in How it works title, above the text walkthrough tabs.
 - Remove the Sober Monitor field from team roster editing, roster views, and exports. Keep the existing database column so previously stored values are not deleted. Add separate Team and Competition video walkthroughs for approved accounts on the signed-in How it works page.

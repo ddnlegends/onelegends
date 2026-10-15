@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { isCompetitionOpen } from "@/lib/judging";
+import { competitionProfileGaps } from "@/lib/competition-profile";
 import { visibleApplicationWhere } from "@/lib/payment-eligibility";
 import {
   getActiveCompetitionId,
@@ -54,6 +55,7 @@ export default async function CompDashboardPage() {
     },
   });
   if (!competition) return null;
+  const missingDetails = competitionProfileGaps(competition);
 
   const apps = competition.applications;
   const teamCount = apps.length;
@@ -101,7 +103,9 @@ export default async function CompDashboardPage() {
         <div>
           <h1 className="font-heading text-4xl">{competition.name}</h1>
           <p className="mt-2 text-muted">
-            {isCompetitionOpen(competition)
+            {missingDetails.length
+              ? "Hidden from teams until Comp Details is complete."
+              : isCompetitionOpen(competition)
               ? "Accepting Applications."
               : "Applications Closed."}{" "}
             {competition.dates}{" "}
@@ -130,6 +134,15 @@ export default async function CompDashboardPage() {
       </div>
 
       <CompSwitcher competitions={switcher} activeId={competitionId} />
+
+      {missingDetails.length ? (
+        <div className="rounded-xl border border-warning-line bg-warning-soft p-5 text-sm">
+          <p className="font-semibold">Your competition is locked and hidden from teams.</p>
+          <p className="mt-2">Fill every Comp Details text field to make it visible. Write N/A or TBD if a detail does not apply or is not known yet. Deadline dates can be left blank for N/A or TBD.</p>
+          <p className="mt-2">Still needed: {missingDetails.join(", ")}.</p>
+          {!ops ? <Link href="/comp/profile" className="btn btn-primary mt-4">Complete Comp Details</Link> : null}
+        </div>
+      ) : null}
 
       <div className="rounded-xl border border-line bg-blush p-5">
         <p className="text-sm text-ink/80">

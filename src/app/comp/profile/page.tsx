@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { CompProfileForm } from "@/components/CompProfileForm";
 import { getActiveCompetitionId, isPlatformAdmin } from "@/lib/team-access";
+import { competitionProfileGaps } from "@/lib/competition-profile";
 
 export default async function CompProfilePage() {
   const session = await auth();
@@ -14,18 +15,24 @@ export default async function CompProfilePage() {
     where: { id: competitionId },
   });
   if (!competition) return null;
+  const gaps = competitionProfileGaps(competition);
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-heading text-4xl">Competition Details</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          Dates, venue, stage size, lighting, and production notes show on the
-          public listing. Set early and late application deadlines. The late
-          deadline closes applications. Toggle “accepting applications” when
-          you are ready.
+          Complete every required text detail before this competition appears to teams. Write N/A or TBD when a detail does not apply or is not known yet. Deadline dates are optional; leave them blank for N/A or TBD. Turn on Accepting Applications when you are ready for teams to apply.
         </p>
       </div>
+      {gaps.length ? (
+        <div className="rounded-xl border border-warning-line bg-warning-soft p-5 text-sm">
+          <p className="font-semibold">Locked: this competition is hidden from teams.</p>
+          <p className="mt-2">Still needed: {gaps.join(", ")}.</p>
+        </div>
+      ) : (
+        <p className="notice notice-ok">All required details are filled. Your listing is visible to teams.</p>
+      )}
       <CompProfileForm
         profile={{
           name: competition.name,

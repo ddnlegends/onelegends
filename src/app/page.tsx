@@ -7,14 +7,16 @@ import { CompetitionTypeBadge } from "@/components/CompetitionTypeBadge";
 import { Lattice } from "@/components/Lattice";
 import { PublicHowItWorks } from "@/components/PublicHowItWorks";
 import { isCompetitionOpen } from "@/lib/judging";
+import { isCompetitionVisibleToTeams } from "@/lib/competition-profile";
 import { formatDateTime } from "@/lib/utils";
 
 export default async function HomePage() {
   const session = await auth();
   if (session?.user) redirect("/dashboard");
-  const competitions = await prisma.competitionProfile.findMany({
+  const listings = await prisma.competitionProfile.findMany({
     orderBy: [{ eventDate: "desc" }, { name: "asc" }],
   });
+  const competitions = listings.filter(isCompetitionVisibleToTeams);
 
   return (
     <div>
@@ -79,7 +81,7 @@ export default async function HomePage() {
             Competitions
           </h2>
           <p className="mt-2 max-w-xl text-muted">
-            The full season list from each competition’s live details. Event
+            Competitions appear here after their host completes every required detail. Event
             date, city, venue, stage, and early and late deadlines — then apply from
             your team profile.
           </p>

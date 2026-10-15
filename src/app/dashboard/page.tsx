@@ -6,6 +6,7 @@ import { getPendingInvites } from "@/lib/invites";
 import { formatDate, formatDateTime, statusLabel } from "@/lib/utils";
 import { isCompetitionOpen, isJudgingOpen } from "@/lib/judging";
 import { teamProfileGaps, TEAM_APPLY_OPS_BLOCKED_MESSAGE } from "@/lib/team-profile";
+import { competitionProfileGaps, isCompetitionVisibleToTeams } from "@/lib/competition-profile";
 import {
   getActiveCompetitionId,
   getActiveTeamId,
@@ -121,6 +122,8 @@ export default async function DashboardPage() {
         orderBy: [{ eventDate: "desc" }, { name: "asc" }],
       })
     : [];
+  const availableComps = claimedComps.filter(isCompetitionVisibleToTeams);
+  const competitionGaps = competition ? competitionProfileGaps(competition) : [];
 
   const gaps = team ? teamProfileGaps(team) : [];
   const applied = new Set(team?.applications.map((a) => a.competitionId) ?? []);
@@ -318,13 +321,13 @@ export default async function DashboardPage() {
           ) : (
             <div className="space-y-3">
               <h3 className="font-heading text-xl">Apply to competitions</h3>
-              {claimedComps.length === 0 ? (
+              {availableComps.length === 0 ? (
                 <p className="text-sm text-muted">
                   No comps available to apply.
                 </p>
               ) : (
                 <ApplyForm
-                  competitions={claimedComps.map((c) => ({
+                  competitions={availableComps.map((c) => ({
                     id: c.id,
                     name: c.name,
                     isPartner: c.isPartner,
@@ -373,11 +376,21 @@ export default async function DashboardPage() {
 
       {competition ? (
         <section className="space-y-4">
+          {competitionGaps.length ? (
+            <div className="rounded-xl border border-warning-line bg-warning-soft p-5 text-sm">
+              <p className="font-semibold">Your competition is hidden from teams until Comp Details is complete.</p>
+              <p className="mt-2">Fill every text field. Write N/A or TBD when a detail does not apply or is not known yet. Deadline dates can be left blank for N/A or TBD.</p>
+              <p className="mt-2">Still needed: {competitionGaps.join(", ")}.</p>
+              <Link href="/comp/profile" className="btn btn-primary mt-4">Complete Comp Details</Link>
+            </div>
+          ) : null}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="font-heading text-2xl">{competition.name}</h2>
               <p className="mt-1 text-sm text-muted">
-                {isCompetitionOpen(competition)
+                {competitionGaps.length
+                  ? "Hidden from teams until Comp Details is complete."
+                  : isCompetitionOpen(competition)
                   ? "Accepting applications."
                   : "Applications closed."}{" "}
                 Applied Teams shows names, application dates, and dancer counts.

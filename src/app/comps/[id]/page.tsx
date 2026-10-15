@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { isCompetitionOpen } from "@/lib/judging";
+import { isCompetitionVisibleToTeams } from "@/lib/competition-profile";
 import { formatDateTime } from "@/lib/utils";
 import { getActiveTeamId, userHasTeamAccess } from "@/lib/team-access";
 import { TEAM_APPLY_OPS_BLOCKED_MESSAGE } from "@/lib/team-profile";
@@ -30,7 +31,7 @@ export default async function CompPublicPage({
     }
   }
   const comp = await prisma.competitionProfile.findUnique({ where: { id } });
-  if (!comp) notFound();
+  if (!comp || !isCompetitionVisibleToTeams(comp)) notFound();
 
   const open = isCompetitionOpen(comp);
   const fields = [

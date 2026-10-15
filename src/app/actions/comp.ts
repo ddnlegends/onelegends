@@ -14,6 +14,8 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
 import { isPlatformAdmin, requireActiveCompetition } from "@/lib/team-access";
 import { visibleApplicationWhere } from "@/lib/payment-eligibility";
+import { competitionProfileGaps } from "@/lib/competition-profile";
+import { isCompetitionOpen } from "@/lib/judging";
 
 const profileSchema = z.object({
   dates: z.string(),
@@ -29,9 +31,9 @@ const profileSchema = z.object({
 });
 
 export async function saveCompProfile(
-  _prev: { error?: string; ok?: boolean } | undefined,
+  _prev: { error?: string; ok?: boolean; message?: string } | undefined,
   formData: FormData,
-): Promise<{ error?: string; ok?: boolean }> {
+): Promise<{ error?: string; ok?: boolean; message?: string }> {
   const user = await requireUser();
   if (!user) return { error: "You must be signed in." };
   if (await isPlatformAdmin(user.id)) {
@@ -71,7 +73,8 @@ export async function saveCompProfile(
     return { error: "The early deadline must be before the late deadline." };
   }
 
-  const acceptingApps = parsed.data.acceptingApps === "on";
+  const missingDetails = competitionProfileGaps(parsed.data);
+  const acceptingApps = parsed.data.acceptingApps === "on" && missingDetails.length === 0;
   if (acceptingApps && competition.resultsReleasedAt) {
     return { error: "Applications cannot reopen after results are released." };
   }
@@ -125,7 +128,14 @@ export async function saveCompProfile(
   revalidatePath("/dashboard");
   revalidatePath("/team/apply");
   revalidatePath("/comps", "layout");
-  return { ok: true };
+  return {
+    ok: true,
+    message: missingDetails.length
+      ? `Saved as a draft. Your competition is hidden from teams until you fill: ${missingDetails.join(", ")}.`
+      : isCompetitionOpen({ acceptingApps, applicationDeadline, resultsReleasedAt: competition.resultsReleasedAt })
+        ? "Competition details saved. Your listing is visible and applications are open."
+        : "Competition details saved. Your listing is visible, but applications are closed.",
+  };
 }
 
 export async function setApplicationStatus(

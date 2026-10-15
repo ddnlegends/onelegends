@@ -13,6 +13,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
 import { isCompetitionOpen } from "@/lib/judging";
+import { isCompetitionVisibleToTeams } from "@/lib/competition-profile";
 import { parseDriveUrl } from "@/lib/drive";
 import {
   teamProfileGaps,
@@ -248,7 +249,7 @@ export async function applyToCompetitions(
   const comps = await prisma.competitionProfile.findMany({
     where: { id: { in: selected }, claimedAt: { not: null } },
   });
-  const open = comps.filter((c) => isCompetitionOpen(c));
+  const open = comps.filter((c) => isCompetitionVisibleToTeams(c) && isCompetitionOpen(c));
 
   if (open.length === 0) {
     return { error: "None of those competitions are accepting applications." };

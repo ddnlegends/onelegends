@@ -2,6 +2,8 @@
 
 import { useActionState, useState, useSyncExternalStore } from "react";
 import { saveCompProfile } from "@/app/actions/comp";
+import { SaveNotice } from "@/components/SaveNotice";
+import { competitionProfileGaps } from "@/lib/competition-profile";
 
 type Profile = {
   name: string;
@@ -71,17 +73,22 @@ function DeadlineField({
 
 export function CompProfileForm({ profile }: { profile: Profile }) {
   const [state, formAction, pending] = useActionState(saveCompProfile, undefined);
+  const complete = competitionProfileGaps(profile).length === 0;
 
   return (
     <form action={formAction} className="space-y-4 rounded-xl border border-line bg-card p-6">
+      <p className="text-sm text-muted">
+        Every text detail marked * is required before teams can see this competition. Write N/A or TBD if a detail is not applicable or not known yet. You can save an incomplete draft.
+      </p>
       <label className="flex items-center gap-2 text-sm">
         <input
           type="checkbox"
           name="acceptingApps"
-          defaultChecked={profile.acceptingApps}
+          defaultChecked={profile.acceptingApps && complete}
         />
         Accepting Applications
       </label>
+      <p className="text-xs text-muted">Applications can open only after every required detail is filled. Leave this off until you are ready for teams to apply.</p>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="field sm:col-span-2">
           <label htmlFor="name">Competition name</label>
@@ -92,34 +99,34 @@ export function CompProfileForm({ profile }: { profile: Profile }) {
           </p>
         </div>
         <div className="field">
-          <label htmlFor="dates">Event dates</label>
+          <label htmlFor="dates">Event dates *</label>
           <input id="dates" name="dates" defaultValue={profile.dates} />
           <p className="text-xs text-muted">
             Shown as Event on Home and the public listing.
           </p>
         </div>
         <div className="field">
-          <label htmlFor="location">Location (city)</label>
+          <label htmlFor="location">Location (city) *</label>
           <input id="location" name="location" defaultValue={profile.location} />
         </div>
         <DeadlineField
           iso={profile.earlyApplicationDeadline}
           name="earlyApplicationDeadline"
           label="Early application deadline"
-          help="Shown to teams as the early deadline. Applications stay open after this time."
+          help="Shown to teams as the early deadline. Applications stay open after this time. Leave blank for N/A or TBD."
         />
         <DeadlineField
           iso={profile.applicationDeadline}
           name="applicationDeadline"
           label="Late application deadline"
-          help="Shown as the final deadline. After this time, applications close even if Accepting Applications is checked. Clear it for no automatic close."
+          help="Shown as the final deadline. After this time, applications close even if Accepting Applications is checked. Leave blank for N/A or TBD; there will be no automatic close."
         />
         <div className="field">
-          <label htmlFor="venue">Venue</label>
+          <label htmlFor="venue">Venue *</label>
           <input id="venue" name="venue" defaultValue={profile.venue} />
         </div>
         <div className="field">
-          <label htmlFor="stageSize">Stage size / dimensions</label>
+          <label htmlFor="stageSize">Stage size / dimensions *</label>
           <input
             id="stageSize"
             name="stageSize"
@@ -128,11 +135,11 @@ export function CompProfileForm({ profile }: { profile: Profile }) {
           />
         </div>
         <div className="field sm:col-span-2">
-          <label htmlFor="lighting">Lighting</label>
+          <label htmlFor="lighting">Lighting *</label>
           <textarea id="lighting" name="lighting" defaultValue={profile.lighting} />
         </div>
         <div className="field sm:col-span-2">
-          <label htmlFor="productionNotes">Production notes</label>
+          <label htmlFor="productionNotes">Production notes *</label>
           <textarea
             id="productionNotes"
             name="productionNotes"
@@ -140,7 +147,7 @@ export function CompProfileForm({ profile }: { profile: Profile }) {
           />
         </div>
         <div className="field sm:col-span-2">
-          <label htmlFor="description">Comp details</label>
+          <label htmlFor="description">Comp details *</label>
           <textarea
             id="description"
             name="description"
@@ -148,8 +155,7 @@ export function CompProfileForm({ profile }: { profile: Profile }) {
           />
         </div>
       </div>
-      {state?.error ? <p className="notice notice-error">{state.error}</p> : null}
-      {state?.ok ? <p className="notice notice-ok">Competition details saved.</p> : null}
+      <SaveNotice state={state} scroll={false} />
       <button className="btn btn-primary" disabled={pending} type="submit">
         {pending ? "Saving…" : "Save Details"}
       </button>

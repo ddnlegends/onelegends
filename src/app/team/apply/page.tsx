@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { ApplyForm } from "@/components/ApplyForm";
 import { isCompetitionOpen } from "@/lib/judging";
+import { isCompetitionVisibleToTeams } from "@/lib/competition-profile";
 import { teamProfileGaps, TEAM_APPLY_OPS_BLOCKED_MESSAGE } from "@/lib/team-profile";
 import { getActiveTeamId } from "@/lib/team-access";
 import { formatDateTime } from "@/lib/utils";
@@ -21,10 +22,11 @@ export default async function TeamApplyPage() {
   if (!team) redirect("/team");
 
   const gaps = teamProfileGaps(team);
-  const competitions = await prisma.competitionProfile.findMany({
+  const listings = await prisma.competitionProfile.findMany({
     where: { claimedAt: { not: null } },
     orderBy: [{ eventDate: "desc" }, { name: "asc" }],
   });
+  const competitions = listings.filter(isCompetitionVisibleToTeams);
   const applied = new Set(team.applications.map((a) => a.competitionId));
 
   return (
