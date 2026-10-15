@@ -196,7 +196,7 @@ export default async function OpsCompetitionsPage() {
                       { label: "Payment instructions", value: competition.paymentInstructions, wide: true },
                     ]}
                   />
-                  {competition.applicationPacketDriveUrl ? <a className="text-sm text-accent underline" href={competition.applicationPacketDriveUrl} target="_blank" rel="noopener noreferrer">Open application packet on Google Drive</a> : competition.applicationPacket && !competition.applicationPacketLegacyHidden ? <a className="text-sm text-accent underline" href={`/api/competitions/${competition.id}/packet`}>Download application packet (PDF)</a> : null}
+                  {competition.applicationPacketDriveUrl ? <a className="text-sm text-accent underline" href={competition.applicationPacketDriveUrl} target="_blank" rel="noopener noreferrer">Open application packet on Google Drive</a> : competition.applicationPacket && !competition.applicationPacketLegacyHidden ? <a className="text-sm text-accent underline" href={`/api/competitions/${competition.id}/packet`}>Download application packet (PDF)</a> : <p className="text-sm text-muted">No packet linked.</p>}
                 </PanelSection>
 
                 <PanelSection title="Production">
