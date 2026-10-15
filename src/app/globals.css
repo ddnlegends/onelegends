@@ -170,6 +170,40 @@ select {
   resize: vertical;
 }
 
+.packet-file-input {
+  width: 100%;
+  min-width: 0;
+  color: var(--ink);
+  font-size: 0.875rem;
+}
+
+.packet-file-input::file-selector-button {
+  margin-right: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+  background: var(--card);
+  padding: 0.6rem 1.05rem;
+  color: var(--ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.packet-file-input:not(:disabled)::file-selector-button:hover {
+  border-color: var(--accent);
+  background: var(--blush);
+}
+
+.packet-file-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 0.4rem;
+}
+
+.packet-file-input:disabled::file-selector-button {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .field input:not([type="file"]):focus,
 .field textarea:focus,
 .field select:focus {

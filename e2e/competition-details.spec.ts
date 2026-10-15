@@ -21,8 +21,11 @@ test("host details and PDF packet survive saving and appear to teams", async ({ 
   await expect(page.getByLabel("Regular application fee (USD per team)", { exact: true })).toHaveValue("35.29");
 
   const packet = Buffer.from("%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [] /Count 0 >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n");
-  await page.getByLabel("Application packet PDF", { exact: true }).setInputFiles({ name: "application-packet.pdf", mimeType: "application/pdf", buffer: packet });
-  await page.getByRole("button", { name: "Upload packet", exact: true }).click();
+  const chooserPromise = page.waitForEvent("filechooser");
+  await page.getByLabel("Application packet PDF", { exact: true }).click();
+  const chooser = await chooserPromise;
+  await chooser.setFiles({ name: "application-packet.pdf", mimeType: "application/pdf", buffer: packet });
+  await page.getByRole("button", { name: "Save packet", exact: true }).click();
   await expect(page.getByText("Application packet saved.", { exact: true })).toBeVisible();
 
   const visitor = await browser.newPage({ timezoneId: "America/Los_Angeles" });
@@ -42,7 +45,7 @@ test("host details and PDF packet survive saving and appear to teams", async ({ 
     await expect(visitor.getByRole("link", { name: "Download application packet (PDF)" })).toBeVisible();
 
     await page.getByLabel("Application packet PDF", { exact: true }).setInputFiles({ name: "invalid.pdf", mimeType: "application/pdf", buffer: Buffer.from("not a PDF") });
-    await page.getByRole("button", { name: "Replace packet", exact: true }).click();
+    await page.getByRole("button", { name: "Save packet", exact: true }).click();
     await expect(page.getByText(/does not appear to be a PDF/)).toBeVisible();
     expect(await (await visitor.request.get(`/api/competitions/${competition.id}/packet`)).body()).toEqual(packet);
     await page.getByRole("button", { name: "Remove packet", exact: true }).click();

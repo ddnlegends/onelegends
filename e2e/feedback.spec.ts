@@ -21,7 +21,7 @@ test("footer feedback records the user and page, and admins can follow up", asyn
   await expect(page.getByLabel("Your message")).toHaveValue("");
 
   const admin = await pageAs(browser, "tech");
-  await admin.getByRole("navigation").getByRole("link", { name: "Feedback inbox" }).click();
+  await admin.getByRole("main").getByRole("link", { name: /Feedback inbox/ }).click();
   const card = admin.getByRole("article").filter({ hasText: message });
   await expect(card).toBeVisible();
   await expect(card.getByRole("link", { name: E2E.emails.team })).toBeVisible();

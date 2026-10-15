@@ -10,7 +10,7 @@ Use **Theme** in the header to choose **System**, **Light**, or **Dark**. System
 
 Choose **Feedback** in the footer on any page to send feedback, a question, a comment, or a concern. Sign in first; the form shows the name and email attached to the message. Circuit tech admins receive the account's role and approved team/competition/judge/moderator access, the page pathname, and the submission time. Query strings and URL fragments are not collected. After sending, keep the confirmation reference if you need to follow up.
 
-Tech admins can open **Feedback inbox** from their navigation or dashboard, review contact and account details, filter messages by status, and mark a message **New**, **In progress**, or **Resolved**. Follow up with the user's email as needed; saving a status does not send an email. Messages and account details are not visible to other teams, competitions, judges, or moderators. Each account can submit five messages per 15 minutes. Retrying the same form does not create a duplicate.
+Tech admins can open **Feedback inbox** from their dashboard, review contact and account details, filter messages by status, and mark a message **New**, **In progress**, or **Resolved**. Follow up with the user's email as needed; saving a status does not send an email. Messages and account details are not visible to other teams, competitions, judges, or moderators. Each account can submit five messages per 15 minutes. Retrying the same form does not create a duplicate.
 
 Contact details are saved as a snapshot so a message remains actionable if its sender's account is later changed or deleted. Handle feedback as private circuit support information.
 
