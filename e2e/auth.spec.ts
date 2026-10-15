@@ -1,12 +1,39 @@
 import { test } from "./helpers";
 import { expect } from "@playwright/test";
-import { E2E, login, password } from "./helpers";
+import { db, E2E, login, password } from "./helpers";
 
 test("a test account signs in with its password", async ({ page }) => {
   await login(page, "team");
   await expect(
     page.getByRole("navigation").getByRole("link", { name: "Team Profile" }),
   ).toBeVisible();
+});
+
+test("a team and competition admin can reach both roles from a compact navigation", async ({ page }) => {
+  const [user, team] = await Promise.all([
+    db.user.findUniqueOrThrow({ where: { email: E2E.emails.comp } }),
+    db.teamProfile.findUniqueOrThrow({ where: { slug: E2E.teams.mine.slug } }),
+  ]);
+  await db.teamMembership.create({ data: { userId: user.id, teamId: team.id, status: "APPROVED", isAdmin: true, decidedAt: new Date() } });
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await login(page, "comp");
+
+  const nav = page.getByRole("navigation");
+  const menu = nav.locator("summary").filter({ hasText: "Team & Comp" });
+  await expect(menu).toBeVisible();
+  const dashboard = await nav.getByRole("link", { name: "Dashboard" }).boundingBox();
+  const signOut = await nav.getByRole("button", { name: "Sign Out" }).boundingBox();
+  expect(dashboard).not.toBeNull();
+  expect(signOut).not.toBeNull();
+  expect(Math.abs(dashboard!.y - signOut!.y)).toBeLessThan(12);
+
+  await menu.click();
+  for (const name of ["Team Profile", "Comp Details", "All Competitions", "Code Claim"]) {
+    await expect(nav.getByRole("link", { name })).toBeVisible();
+  }
+  await nav.getByRole("link", { name: "All Competitions" }).click();
+  await expect(page).toHaveURL(/\/comp\/competitions$/);
+  await expect(nav.getByRole("link", { name: "All Competitions" })).toBeHidden();
 });
 
 for (const [label, role] of [

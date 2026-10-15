@@ -4,6 +4,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Group team and competition links into one navigation menu for accounts that manage both, keeping the header on one line at desktop widths.
 - Show claimed, complete competitions that are not accepting applications in a separate Partner/Non-partner section of the host All Competitions view.
 - Keep closed competitions in a compact text list on team Apply, with clearer spacing between listings.
 - Organize team competition choices into cards with separate, color-coded Regular and Late deadline and fee details.

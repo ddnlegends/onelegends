@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { BrandMark } from "@/components/BrandMark";
 import { NavLink } from "@/components/NavLink";
 import { SignOutButton } from "@/components/SignOutButton";
+import { DualRoleNavMenu } from "@/components/DualRoleNavMenu";
 import { getNavAccess } from "@/lib/team-access";
 
 export async function Nav() {
@@ -13,6 +14,7 @@ export async function Nav() {
   const teamAccess = access?.teamAccess ?? false;
   const compAccess = access?.compAccess ?? false;
   const judgeAccess = access?.judgeAccess ?? false;
+  const dualRole = teamAccess && compAccess && !ops;
   const homeHref = session ? "/dashboard" : "/";
 
   return (
@@ -30,21 +32,22 @@ export async function Nav() {
           {session ? <NavLink href="/profile">Profile</NavLink> : null}
           <NavLink href="/guide">How it works</NavLink>
           <NavLink href="/payments">Payments</NavLink>
-          {teamAccess ? (
+          {teamAccess && !dualRole ? (
             <NavLink href="/team/profile" match="prefix">
               Team Profile
             </NavLink>
           ) : null}
-          {compAccess && !ops ? (
+          {compAccess && !ops && !dualRole ? (
             <NavLink href="/comp/profile" match="prefix">
               Comp Details
             </NavLink>
           ) : null}
-          {compAccess && !ops ? (
+          {compAccess && !ops && !dualRole ? (
             <NavLink href="/comp/competitions" match="prefix">
               All Competitions
             </NavLink>
           ) : null}
+          {dualRole ? <DualRoleNavMenu /> : null}
           {ops ? (
             <NavLink href="/ops/comps" match="prefix">
               Comp Dashboard
@@ -66,7 +69,7 @@ export async function Nav() {
               Judging
             </NavLink>
           ) : null}
-          {session && !ops ? (
+          {session && !ops && !dualRole ? (
             <NavLink href="/claim">Code Claim</NavLink>
           ) : null}
           {session ? (
