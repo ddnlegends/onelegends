@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PageShell } from "@/components/PageShell";
-import { RegistrationPaymentForm } from "@/components/PaymentForms";
+import { MarkAllRegistrationPaidForm, RegistrationPaymentForm } from "@/components/PaymentForms";
 import { requirePlatformAdminPage } from "@/lib/page-guards";
 import { dollars } from "@/lib/payment-eligibility";
 import { prisma } from "@/lib/prisma";
@@ -28,12 +28,17 @@ export default async function OpsPaymentsPage() {
       orderBy: { createdAt: "desc" },
     }),
   ]);
+  const unpaidTeams = teams.filter((team) => !team.registrationPaidAt).length;
+  const unpaidCompetitions = competitions.filter((competition) => !competition.registrationPaidAt).length;
   return (
     <PageShell>
       <div className="space-y-8">
-        <div>
-          <h1 className="font-heading text-4xl">Payment tracking</h1>
-          <p className="mt-2 text-muted">Verify external OneLegends registration payments here. Competition hosts record their own payments after final acceptance.</p>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="font-heading text-4xl">Payment tracking</h1>
+            <p className="mt-2 text-muted">Verify external OneLegends registration payments here. Competition hosts record their own payments after final acceptance.</p>
+          </div>
+          <MarkAllRegistrationPaidForm unpaidTeams={unpaidTeams} unpaidCompetitions={unpaidCompetitions} />
         </div>
         <section className="space-y-3">
           <h2 className="font-heading text-2xl">Teams · OneLegends fee</h2>

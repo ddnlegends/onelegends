@@ -10,6 +10,7 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 import { E2E, seedE2E } from "../prisma/e2e-seed";
 import {
+  markAllRegistrationPaid,
   removeUnpaidApplication,
   setCompPaymentReceived,
   setRegistrationPaid,
@@ -30,6 +31,34 @@ beforeEach(async () => {
 
 afterAll(async () => {
   await prisma.$disconnect();
+});
+
+it("lets only a tech admin mark every unpaid registration fee paid without changing host payments or existing receipts", async () => {
+  const admin = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.tech } });
+  const outsider = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.team } });
+  const unpaidTeam = await prisma.teamProfile.findUniqueOrThrow({ where: { slug: E2E.teams.alpha.slug } });
+  const alreadyPaidTeam = await prisma.teamProfile.findUniqueOrThrow({ where: { slug: E2E.teams.beta.slug } });
+  const unpaidCompetition = await prisma.competitionProfile.findUniqueOrThrow({ where: { slug: E2E.comps.showcase.slug } });
+  const application = await prisma.application.findFirstOrThrow({ select: { id: true, compPaymentReceivedAt: true } });
+
+  await prisma.$transaction([
+    prisma.teamProfile.update({ where: { id: unpaidTeam.id }, data: { registrationPaidAt: null, registrationPaidByEmail: null } }),
+    prisma.competitionProfile.update({ where: { id: unpaidCompetition.id }, data: { registrationPaidAt: null, registrationPaidByEmail: null } }),
+  ]);
+
+  identity.user = { id: outsider.id, email: outsider.email };
+  expect(await markAllRegistrationPaid(undefined, new FormData())).toHaveProperty("error");
+  expect(await prisma.teamProfile.findUniqueOrThrow({ where: { id: unpaidTeam.id } })).toMatchObject({ registrationPaidAt: null });
+
+  identity.user = { id: admin.id, email: admin.email };
+  expect(await markAllRegistrationPaid(undefined, new FormData())).toMatchObject({ ok: true });
+  expect(await prisma.teamProfile.count({ where: { registrationPaidAt: null } })).toBe(0);
+  expect(await prisma.competitionProfile.count({ where: { registrationPaidAt: null } })).toBe(0);
+  expect(await prisma.teamProfile.findUniqueOrThrow({ where: { id: unpaidTeam.id } })).toMatchObject({ registrationPaidByEmail: admin.email });
+  expect(await prisma.competitionProfile.findUniqueOrThrow({ where: { id: unpaidCompetition.id } })).toMatchObject({ registrationPaidByEmail: admin.email });
+  expect(await prisma.teamProfile.findUniqueOrThrow({ where: { id: alreadyPaidTeam.id } })).toMatchObject({ registrationPaidAt: alreadyPaidTeam.registrationPaidAt });
+  expect(await prisma.application.findUniqueOrThrow({ where: { id: application.id } })).toMatchObject({ compPaymentReceivedAt: application.compPaymentReceivedAt });
+  expect(await markAllRegistrationPaid(undefined, new FormData())).toMatchObject({ ok: true, message: "All OneLegends registration fees are already marked paid." });
 });
 
 it("requires both OneLegends fees and freezes the first cleared viewing roster", async () => {

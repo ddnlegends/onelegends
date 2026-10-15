@@ -1,11 +1,38 @@
 "use client";
 
 import { useActionState } from "react";
+import { SaveNotice } from "@/components/SaveNotice";
 import {
+  markAllRegistrationPaid,
   removeUnpaidApplication,
   setCompPaymentReceived,
   setRegistrationPaid,
 } from "@/app/actions/payments";
+
+export function MarkAllRegistrationPaidForm({ unpaidTeams, unpaidCompetitions }: { unpaidTeams: number; unpaidCompetitions: number }) {
+  const [state, action, pending] = useActionState(markAllRegistrationPaid, undefined);
+  const unpaidCount = unpaidTeams + unpaidCompetitions;
+
+  return (
+    <form
+      action={action}
+      className="flex flex-col items-start gap-2"
+      onSubmit={(event) => {
+        if (!window.confirm(`Mark all ${unpaidCount} unpaid OneLegends registration fees paid? Confirm that you have received every payment.`)) {
+          event.preventDefault();
+        }
+      }}
+    >
+      <button className="btn btn-primary" disabled={pending || unpaidCount === 0} type="submit">
+        {pending ? "Marking paid…" : "Mark All Paid"}
+      </button>
+      <span className="text-xs text-muted">
+        {unpaidCount} unpaid · {unpaidTeams} teams, {unpaidCompetitions} competitions
+      </span>
+      <SaveNotice state={state} scroll={false} />
+    </form>
+  );
+}
 
 export function RegistrationPaymentForm({ kind, id, paid }: { kind: "team" | "competition"; id: string; paid: boolean }) {
   const [state, action, pending] = useActionState(setRegistrationPaid, undefined);

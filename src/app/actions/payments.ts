@@ -9,6 +9,7 @@ type ActionState = { ok?: boolean; error?: string; message?: string };
 
 function refreshPaymentViews() {
   revalidatePath("/payments");
+  revalidatePath("/ops/payments");
   revalidatePath("/dashboard");
   revalidatePath("/team");
   revalidatePath("/comp");
@@ -19,6 +20,44 @@ function refreshPaymentViews() {
   revalidatePath("/ops/comps", "layout");
   revalidatePath("/moderator", "layout");
   revalidatePath("/judge");
+}
+
+/** Circuit ops verifies every unpaid OneLegends registration fee in one batch. */
+export async function markAllRegistrationPaid(_prev: ActionState | undefined, _formData: FormData): Promise<ActionState> {
+  void _prev;
+  void _formData;
+  const user = await requireUser();
+  if (!user || !(await isPlatformAdmin(user.id))) return { error: "Only tech admins can verify OneLegends payments." };
+
+  const counts = await prisma.$transaction(async (tx) => {
+    const competitions = await tx.competitionProfile.findMany({
+      select: { id: true },
+      orderBy: { id: "asc" },
+    });
+    for (const competition of competitions) {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${competition.id}))`;
+    }
+
+    const paidAt = new Date();
+    const teams = await tx.teamProfile.updateMany({
+      where: { registrationPaidAt: null },
+      data: { registrationPaidAt: paidAt, registrationPaidByEmail: user.email },
+    });
+    const competitionFees = await tx.competitionProfile.updateMany({
+      where: { registrationPaidAt: null },
+      data: { registrationPaidAt: paidAt, registrationPaidByEmail: user.email },
+    });
+    return { teams: teams.count, competitions: competitionFees.count };
+  }, { timeout: 15_000 });
+
+  refreshPaymentViews();
+  const total = counts.teams + counts.competitions;
+  return {
+    ok: true,
+    message: total
+      ? `Marked ${counts.teams} team${counts.teams === 1 ? "" : "s"} and ${counts.competitions} competition${counts.competitions === 1 ? "" : "s"} paid.`
+      : "All OneLegends registration fees are already marked paid.",
+  };
 }
 
 /** Circuit ops records external OneLegends registration payments. */

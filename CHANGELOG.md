@@ -4,6 +4,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Add a confirmed Mark All Paid action to circuit ops Fees for unpaid team and competition OneLegends registration fees; leave host payments unchanged.
 - Show team and competition tutorial videos directly below the signed-in How it works title, above the text walkthrough tabs.
 - Remove the Sober Monitor field from team roster editing, roster views, and exports. Keep the existing database column so previously stored values are not deleted. Add separate Team and Competition video walkthroughs for approved accounts on the signed-in How it works page.
 - Replace per-row decision and payment autosaves with a competition-admin batch save board, and show accepted, waitlisted, declined, and host-payment counts in the tech-admin competition view.
