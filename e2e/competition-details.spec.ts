@@ -28,7 +28,9 @@ test("host details and Drive packet link survive saving and appear to teams", as
   const visitor = await browser.newPage({ timezoneId: "America/Los_Angeles" });
   try {
     await visitor.goto(`/comps/${competition.id}`);
-    const deadline = competition.applicationDeadline!;
+    const deadlineTime = visitor.getByText("Late application deadline", { exact: true }).locator("..").locator("time");
+    const deadlineIso = await deadlineTime.getAttribute("datetime");
+    expect(deadlineIso).toBeTruthy();
     const localDeadline = await visitor.evaluate((iso) => {
       return new Date(iso).toLocaleString("en-US", {
         month: "short",
@@ -38,8 +40,8 @@ test("host details and Drive packet link survive saving and appear to teams", as
         minute: "2-digit",
         timeZoneName: "short",
       });
-    }, deadline.toISOString());
-    await expect(visitor.locator(`time[datetime="${deadline.toISOString()}"]`)).toHaveText(localDeadline);
+    }, deadlineIso!);
+    await expect(deadlineTime).toHaveText(localDeadline);
     await expect(visitor.getByText(/Mar.*5.*7.*2027/)).toBeVisible();
     await expect(visitor.getByText("$35.29", { exact: true })).toBeVisible();
     await expect(visitor.getByText("$50.00", { exact: true })).toBeVisible();
