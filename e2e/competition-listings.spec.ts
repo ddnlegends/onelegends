@@ -1,7 +1,7 @@
 import { expect } from "@playwright/test";
 import { db, E2E, login, pageAs, test } from "./helpers";
 
-test("competition hosts and teams see active listings grouped by type", async ({ page, browser }) => {
+test("competition hosts and teams see visible listings grouped by type and application status", async ({ page, browser }) => {
   const nonPartner = await db.competitionProfile.create({
     data: {
       slug: "e2e-non-partner-open",
@@ -32,7 +32,7 @@ test("competition hosts and teams see active listings grouped by type", async ({
     await expect(nonPartnerSection.getByRole("link", { name: nonPartner.name })).toBeVisible();
     await expect(nonPartnerSection).toContainText("$35.00");
     await expect(nonPartnerSection).toContainText("$50.00");
-    await expect(page.getByText(E2E.comps.closed.name)).toHaveCount(0);
+    await expect(page.getByRole("region", { name: "Partner Competitions not accepting applications" })).toContainText(E2E.comps.closed.name);
 
     const teamPage = await pageAs(browser, "team");
     await teamPage.goto("/team/apply");

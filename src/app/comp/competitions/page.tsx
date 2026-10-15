@@ -38,23 +38,24 @@ export default async function AllCompetitionsPage() {
     },
     orderBy: { name: "asc" },
   });
-  const active = listings.filter((competition) =>
-    isCompetitionVisibleToTeams(competition) && isCompetitionOpen(competition),
-  );
+  const visible = listings.filter(isCompetitionVisibleToTeams);
+  const open = visible.filter((competition) => isCompetitionOpen(competition));
+  const closed = visible.filter((competition) => !isCompetitionOpen(competition));
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-heading text-4xl">All Competitions</h1>
-        <p className="mt-2 text-muted">Competitions currently accepting applications. Compare host fees and deadlines; times appear in your time zone.</p>
+        <p className="mt-2 text-muted">Compare visible competitions, host fees, and deadlines. Times appear in your time zone.</p>
       </div>
-      {active.length === 0 ? <p className="text-muted">No competitions are accepting applications right now.</p> : null}
+      <h2 className="font-heading text-2xl">Accepting Applications</h2>
+      {open.length === 0 ? <p className="text-muted">No competitions are accepting applications right now.</p> : null}
       {([true, false] as const).map((partner) => {
-        const group = active.filter((competition) => competition.isPartner === partner);
+        const group = open.filter((competition) => competition.isPartner === partner);
         if (!group.length) return null;
         return (
           <section key={String(partner)} className="space-y-3" aria-label={partner ? "Partner Competitions" : "Non-partner Competitions"}>
-            <h2 className="font-heading text-2xl">{partner ? "Partner Competitions" : "Non-partner Competitions"}</h2>
+            <h3 className="font-heading text-xl">{partner ? "Partner Competitions" : "Non-partner Competitions"}</h3>
             <div className="grid gap-4 md:grid-cols-2">
               {group.map((competition) => (
                 <article key={competition.id} className="space-y-3 rounded-xl border border-line bg-card p-5">
@@ -75,6 +76,33 @@ export default async function AllCompetitionsPage() {
           </section>
         );
       })}
+      {closed.length ? (
+        <section className="space-y-4" aria-label="Not accepting apps">
+          <h2 className="font-heading text-2xl">Not accepting apps</h2>
+          {([true, false] as const).map((partner) => {
+            const group = closed.filter((competition) => competition.isPartner === partner);
+            if (!group.length) return null;
+            const label = partner ? "Partner Competitions" : "Non-partner Competitions";
+            return (
+              <section key={label} aria-label={`${label} not accepting applications`}>
+                <h3 className="font-semibold">{label}</h3>
+                <ul className="mt-3 space-y-5 text-sm text-muted">
+                  {group.map((competition) => (
+                    <li key={competition.id} className="leading-relaxed">
+                      <Link className="font-medium text-accent underline" href={`/comps/${competition.id}`}>{competition.name}</Link>
+                      {competition.dates ? ` — ${competition.dates}` : ""}
+                      {competition.earlyApplicationDeadline ? ` · Regular deadline ${formatDateTime(competition.earlyApplicationDeadline)}` : ""}
+                      {competition.applicationDeadline ? ` · Late deadline ${formatDateTime(competition.applicationDeadline)}` : ""}
+                      {` · Regular fee ${formatApplicationFee(competition.regularApplicationFeeCents)}`}
+                      {` · Late fee ${formatApplicationFee(competition.lateApplicationFeeCents)}`}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            );
+          })}
+        </section>
+      ) : null}
     </div>
   );
 }

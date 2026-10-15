@@ -4,6 +4,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Show claimed, complete competitions that are not accepting applications in a separate Partner/Non-partner section of the host All Competitions view.
 - Keep closed competitions in a compact text list on team Apply, with clearer spacing between listings.
 - Organize team competition choices into cards with separate, color-coded Regular and Late deadline and fee details.
 - Give competition hosts a read-only All Competitions page for active Partner and Non-partner listings, deadlines, and fees; group team Apply listings by the same types.
