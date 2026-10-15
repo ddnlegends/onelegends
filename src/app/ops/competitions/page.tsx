@@ -83,8 +83,16 @@ export default async function OpsCompetitionsPage() {
       {competitions.length === 0 ? (
         <p className="text-muted">No competitions yet. Create one from Circuit ops.</p>
       ) : (
-        <div className="space-y-3">
-          {competitions.map((competition) => {
+        <div className="space-y-8">
+          {([true, false] as const).map((isPartner) => {
+            const group = competitions.filter((competition) => competition.isPartner === isPartner);
+            const label = isPartner ? "Partner Competitions" : "Non-partner Competitions";
+            return (
+              <section key={label} aria-label={label} className="space-y-3">
+                <h2 className="font-heading text-2xl">{label} ({group.length})</h2>
+                {group.length === 0 ? <p className="text-sm text-muted">No competitions in this group yet.</p> : null}
+                <div className="space-y-3">
+          {group.map((competition) => {
             const status = competitionStatus(competition);
             const approved = competition.memberships.filter((m) => m.status === "APPROVED");
             const pending = competition.memberships.filter((m) => m.status === "PENDING");
@@ -403,6 +411,10 @@ export default async function OpsCompetitionsPage() {
                   )}
                 </PanelSection>
               </ExpandableRow>
+            );
+          })}
+                </div>
+              </section>
             );
           })}
         </div>
