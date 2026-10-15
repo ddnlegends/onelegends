@@ -16,7 +16,7 @@ describe("competition listing readiness", () => {
     expect(competitionProfileGaps(details)).toEqual([]);
     expect(isCompetitionVisibleToTeams({ ...details, claimedAt: null })).toBe(false);
     expect(isCompetitionVisibleToTeams({ ...details, claimedAt: new Date() })).toBe(true);
-    expect(competitionProfileGaps({ ...details, lighting: "   " })).toEqual(["Lighting"]);
+    expect(competitionProfileGaps({ ...details, lighting: "   " })).toEqual(["AV guidelines"]);
     expect(isCompetitionVisibleToTeams({ ...details, lighting: "   ", claimedAt: new Date() })).toBe(false);
   });
 });

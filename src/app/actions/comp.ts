@@ -16,11 +16,17 @@ import { isPlatformAdmin, requireActiveCompetition } from "@/lib/team-access";
 import { visibleApplicationWhere } from "@/lib/payment-eligibility";
 import { competitionProfileGaps } from "@/lib/competition-profile";
 import { isCompetitionOpen } from "@/lib/judging";
+import { formatEventDateRange, parseApplicationFee, parseEventDate } from "@/lib/competition-details";
 
 const profileSchema = z.object({
-  dates: z.string(),
+  eventStartDate: z.string(),
+  eventEndDate: z.string(),
   location: z.string(),
   venue: z.string(),
+  venueAddress: z.string().max(1000, "Venue address must be 1,000 characters or fewer."),
+  regularApplicationFee: z.string(),
+  lateApplicationFee: z.string(),
+  paymentInstructions: z.string().max(5000, "Payment instructions must be 5,000 characters or fewer."),
   stageSize: z.string(),
   productionNotes: z.string(),
   lighting: z.string(),
@@ -43,9 +49,14 @@ export async function saveCompProfile(
   if (!competition) return { error: "You don’t have access to a competition." };
 
   const parsed = profileSchema.safeParse({
-    dates: String(formData.get("dates") ?? "").trim(),
+    eventStartDate: String(formData.get("eventStartDate") ?? "").trim(),
+    eventEndDate: String(formData.get("eventEndDate") ?? "").trim(),
     location: String(formData.get("location") ?? "").trim(),
     venue: String(formData.get("venue") ?? "").trim(),
+    venueAddress: String(formData.get("venueAddress") ?? "").trim(),
+    regularApplicationFee: String(formData.get("regularApplicationFee") ?? "").trim(),
+    lateApplicationFee: String(formData.get("lateApplicationFee") ?? "").trim(),
+    paymentInstructions: String(formData.get("paymentInstructions") ?? "").trim(),
     stageSize: String(formData.get("stageSize") ?? "").trim(),
     productionNotes: String(formData.get("productionNotes") ?? "").trim(),
     lighting: String(formData.get("lighting") ?? "").trim(),
@@ -57,6 +68,29 @@ export async function saveCompProfile(
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid profile." };
+  }
+
+  let dates = competition.dates;
+  let eventStartDate = competition.eventStartDate;
+  let eventEndDate = competition.eventEndDate;
+  if (formData.get("eventDatesTbd") === "on") {
+    dates = "TBD";
+    eventStartDate = null;
+    eventEndDate = null;
+  } else if (parsed.data.eventStartDate || parsed.data.eventEndDate) {
+    eventStartDate = parseEventDate(parsed.data.eventStartDate);
+    eventEndDate = parseEventDate(parsed.data.eventEndDate || parsed.data.eventStartDate);
+    if (!eventStartDate || !eventEndDate) return { error: "Choose valid event start and end dates." };
+    if (eventEndDate < eventStartDate) return { error: "The event end date must be on or after the start date." };
+    dates = formatEventDateRange(eventStartDate, eventEndDate);
+  } else if (competition.eventStartDate) {
+    return { error: "Choose event dates or select Dates to be announced." };
+  }
+
+  const regularApplicationFeeCents = parseApplicationFee(parsed.data.regularApplicationFee);
+  const lateApplicationFeeCents = parseApplicationFee(parsed.data.lateApplicationFee);
+  if (regularApplicationFeeCents === "invalid" || lateApplicationFeeCents === "invalid") {
+    return { error: "Application fees must be between $0 and $99,999.99, with at most two decimal places." };
   }
 
   const earlyRaw = parsed.data.earlyApplicationDeadline;
@@ -73,7 +107,7 @@ export async function saveCompProfile(
     return { error: "The early deadline must be before the late deadline." };
   }
 
-  const missingDetails = competitionProfileGaps(parsed.data);
+  const missingDetails = competitionProfileGaps({ ...parsed.data, dates });
   const acceptingApps = parsed.data.acceptingApps === "on" && missingDetails.length === 0;
   if (acceptingApps && competition.resultsReleasedAt) {
     return { error: "Applications cannot reopen after results are released." };
@@ -98,9 +132,15 @@ export async function saveCompProfile(
   await prisma.competitionProfile.update({
     where: { id: competition.id },
     data: {
-      dates: parsed.data.dates,
+      dates,
+      eventStartDate,
+      eventEndDate,
       location: parsed.data.location,
       venue: parsed.data.venue,
+      venueAddress: parsed.data.venueAddress,
+      regularApplicationFeeCents,
+      lateApplicationFeeCents,
+      paymentInstructions: parsed.data.paymentInstructions,
       stageSize: parsed.data.stageSize,
       productionNotes: parsed.data.productionNotes,
       lighting: parsed.data.lighting,

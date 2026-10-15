@@ -1315,6 +1315,7 @@ export async function resetCompClaim(
     }
     if (plan.clearMemberships) await tx.competitionMembership.deleteMany({ where: { competitionId } });
     if (plan.clearCompInvites) await tx.compInvite.deleteMany({ where: { competitionId } });
+    await tx.competitionPacketBlob.deleteMany({ where: { competitionId } });
     await tx.competitionProfile.update({
       where: { id: competitionId },
       data: {
@@ -1327,8 +1328,14 @@ export async function resetCompClaim(
         resultsReleasedAt: null,
         resultsFinalizedByEmail: null,
         dates: "",
+        eventStartDate: null,
+        eventEndDate: null,
         location: "",
         venue: "",
+        venueAddress: "",
+        regularApplicationFeeCents: null,
+        lateApplicationFeeCents: null,
+        paymentInstructions: "",
         stageSize: "",
         productionNotes: "",
         lighting: "",

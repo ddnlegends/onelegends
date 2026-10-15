@@ -9,6 +9,7 @@ import { isCompetitionVisibleToTeams } from "@/lib/competition-profile";
 import { formatDateTime } from "@/lib/utils";
 import { getActiveTeamId, userHasTeamAccess } from "@/lib/team-access";
 import { TEAM_APPLY_OPS_BLOCKED_MESSAGE } from "@/lib/team-profile";
+import { formatApplicationFee } from "@/lib/competition-details";
 
 export default async function CompPublicPage({
   params,
@@ -30,7 +31,7 @@ export default async function CompPublicPage({
       applyBlocked = Boolean(active?.applyBlocked);
     }
   }
-  const comp = await prisma.competitionProfile.findUnique({ where: { id } });
+  const comp = await prisma.competitionProfile.findUnique({ where: { id }, include: { applicationPacket: { select: { filename: true } } } });
   if (!comp || !isCompetitionVisibleToTeams(comp)) notFound();
 
   const open = isCompetitionOpen(comp);
@@ -38,9 +39,12 @@ export default async function CompPublicPage({
     ["Dates", comp.dates],
     ["Location", comp.location],
     ["Venue", comp.venue],
+    ["Venue address", comp.venueAddress],
     ["Stage", comp.stageSize],
-    ["Lighting", comp.lighting],
+    ["AV guidelines", comp.lighting],
     ["Production", comp.productionNotes],
+    ["Regular application fee (USD per team)", formatApplicationFee(comp.regularApplicationFeeCents)],
+    ["Late application fee (USD per team)", formatApplicationFee(comp.lateApplicationFeeCents)],
     [
       "Early application deadline",
       comp.earlyApplicationDeadline
@@ -70,7 +74,7 @@ export default async function CompPublicPage({
           )}
         </p>
       </div>
-      {comp.description ? <p className="max-w-2xl text-muted">{comp.description}</p> : null}
+      {comp.description ? <section className="max-w-2xl"><h2 className="font-heading text-2xl">About the competition</h2><p className="mt-2 whitespace-pre-wrap text-muted">{comp.description}</p></section> : null}
       <dl className="grid gap-4 rounded-xl border border-line bg-card p-6 sm:grid-cols-2">
         {fields.map(([label, value]) => (
           <div key={label}>
@@ -79,6 +83,18 @@ export default async function CompPublicPage({
           </div>
         ))}
       </dl>
+      <section className="space-y-3 rounded-xl border border-line bg-card p-6">
+        <h2 className="font-heading text-2xl">Payment instructions</h2>
+        <p className="whitespace-pre-wrap break-words">{comp.paymentInstructions || "The host has not provided payment instructions yet. Contact the competition before sending payment."}</p>
+        <p className="text-sm text-muted">These are the host’s application fees. Payments are handled outside OneLegends. Any separate circuit fees are listed on the <Link className="text-accent underline" href="/payments">circuit payments page</Link>.</p>
+      </section>
+      {comp.applicationPacket ? (
+        <section className="space-y-3 rounded-xl border border-line bg-card p-6">
+          <h2 className="font-heading text-2xl">Application packet</h2>
+          <a className="btn btn-ghost" href={`/api/competitions/${comp.id}/packet`}>Download application packet (PDF)</a>
+          <p className="break-words text-sm text-muted">{comp.applicationPacket.filename}</p>
+        </section>
+      ) : null}
       {applyBlocked ? (
         <p className="notice notice-error">{TEAM_APPLY_OPS_BLOCKED_MESSAGE}</p>
       ) : canApply && open ? (

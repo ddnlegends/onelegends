@@ -15,6 +15,7 @@ import { Chip, InfoGrid, PanelSection } from "@/components/OpsListParts";
 import { prisma } from "@/lib/prisma";
 import { competitionStatus } from "@/lib/judging";
 import { formatDate, formatDateTime, statusLabel } from "@/lib/utils";
+import { formatApplicationFee } from "@/lib/competition-details";
 
 const JUDGE_STATUS: Record<string, string> = {
   APPROVED: "Approved",
@@ -27,6 +28,7 @@ export default async function OpsCompetitionsPage() {
   const competitions = await prisma.competitionProfile.findMany({
     orderBy: { name: "asc" },
     include: {
+      applicationPacket: { select: { filename: true } },
       memberships: {
         include: { user: { select: { email: true, name: true } } },
         orderBy: { createdAt: "asc" },
@@ -178,16 +180,21 @@ export default async function OpsCompetitionsPage() {
                       { label: "Event date", value: competition.eventDate ? formatDate(competition.eventDate) : "" },
                       { label: "Location (city)", value: competition.location },
                       { label: "Venue", value: competition.venue },
-                      { label: "Comp details", value: competition.description, wide: true },
+                      { label: "Venue address", value: competition.venueAddress },
+                      { label: "Competition bio", value: competition.description, wide: true },
+                      { label: "Regular application fee (USD)", value: formatApplicationFee(competition.regularApplicationFeeCents) },
+                      { label: "Late application fee (USD)", value: formatApplicationFee(competition.lateApplicationFeeCents) },
+                      { label: "Payment instructions", value: competition.paymentInstructions, wide: true },
                     ]}
                   />
+                  {competition.applicationPacket ? <a className="text-sm text-accent underline" href={`/api/competitions/${competition.id}/packet`}>Download application packet (PDF)</a> : null}
                 </PanelSection>
 
                 <PanelSection title="Production">
                   <InfoGrid
                     items={[
                       { label: "Stage size / dimensions", value: competition.stageSize },
-                      { label: "Lighting", value: competition.lighting },
+                      { label: "AV guidelines", value: competition.lighting },
                       { label: "Production notes", value: competition.productionNotes, wide: true },
                     ]}
                   />

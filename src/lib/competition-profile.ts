@@ -4,9 +4,9 @@ export const COMPETITION_REQUIRED_FIELDS = [
   { key: "location", label: "Location (city)" },
   { key: "venue", label: "Venue" },
   { key: "stageSize", label: "Stage size / dimensions" },
-  { key: "lighting", label: "Lighting" },
+  { key: "lighting", label: "AV guidelines" },
   { key: "productionNotes", label: "Production notes" },
-  { key: "description", label: "Comp details" },
+  { key: "description", label: "Competition bio" },
 ] as const;
 
 export type CompetitionDetails = Record<(typeof COMPETITION_REQUIRED_FIELDS)[number]["key"], string>;

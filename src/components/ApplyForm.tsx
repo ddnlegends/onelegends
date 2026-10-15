@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { applyToCompetitions } from "@/app/actions/team";
 import { CompetitionTypeBadge } from "@/components/CompetitionTypeBadge";
+import { formatApplicationFee } from "@/lib/competition-details";
 
 type Comp = {
   id: string;
@@ -12,6 +13,8 @@ type Comp = {
   dates: string;
   location: string;
   venue: string;
+  regularApplicationFeeCents: number | null;
+  lateApplicationFeeCents: number | null;
   earlyDeadline?: string;
   lateDeadline?: string;
   acceptingApps: boolean;
@@ -40,7 +43,7 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
         <Link href="/payments" className="text-accent underline">
           payment instructions
         </Link>{" "}
-        before sending money.
+        before sending money. Review each competition’s details for its separate application fees, payment instructions, and application packet.
       </p>
 
       {open.length === 0 ? (
@@ -71,7 +74,7 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
                   className="text-xs text-muted underline"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  Details
+                  Details &amp; payment
                 </Link>
               </div>
               <p className="text-sm text-muted">
@@ -80,6 +83,7 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
                 {comp.earlyDeadline ? ` · Early deadline ${comp.earlyDeadline}` : ""}
                 {comp.lateDeadline ? ` · Late deadline ${comp.lateDeadline}` : ""}
               </p>
+              <p className="mt-1 text-sm text-muted">Host application fees: regular {formatApplicationFee(comp.regularApplicationFeeCents)} · late {formatApplicationFee(comp.lateApplicationFeeCents)} (USD per team)</p>
               {comp.alreadyApplied ? (
                 <p className="mt-1 text-xs font-medium text-accent">Already applied</p>
               ) : null}

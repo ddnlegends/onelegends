@@ -7,6 +7,7 @@
  * `EXPORT_DATASETS` and `BUILDERS`; the page and route pick it up.
  */
 import ExcelJS from "exceljs";
+import { formatApplicationFee } from "@/lib/competition-details";
 import { prisma } from "@/lib/prisma";
 import {
   COMP_STATUS_LABEL,
@@ -112,6 +113,7 @@ async function competitionsTable(competitionId?: string): Promise<ExportCell[][]
     orderBy: { name: "asc" },
     include: {
       _count: { select: { applications: true } },
+      applicationPacket: { select: { filename: true } },
       judgeAssignments: {
         where: { status: "APPROVED" },
         select: { submittedAt: true },
@@ -128,10 +130,15 @@ async function competitionsTable(competitionId?: string): Promise<ExportCell[][]
       "Event date",
       "Location",
       "Venue",
+      "Venue address",
       "Stage size",
-      "Lighting",
+      "AV guidelines",
       "Production notes",
-      "Description",
+      "Competition bio",
+      "Regular application fee (USD)",
+      "Late application fee (USD)",
+      "Payment instructions",
+      "Application packet filename",
       "Accepting applications",
       "Early application deadline",
       "Late application deadline",
@@ -151,10 +158,15 @@ async function competitionsTable(competitionId?: string): Promise<ExportCell[][]
       stamp(comp.eventDate),
       comp.location,
       comp.venue,
+      comp.venueAddress,
       comp.stageSize,
       comp.lighting,
       comp.productionNotes,
       comp.description,
+      formatApplicationFee(comp.regularApplicationFeeCents),
+      formatApplicationFee(comp.lateApplicationFeeCents),
+      comp.paymentInstructions,
+      comp.applicationPacket?.filename ?? "",
       yesNo(comp.acceptingApps),
       stamp(comp.earlyApplicationDeadline),
       stamp(comp.applicationDeadline),
