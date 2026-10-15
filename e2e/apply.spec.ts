@@ -36,11 +36,12 @@ test("a complete team applies to an open competition only", async ({ page }) => 
   await expect(page.getByText("Already applied")).toBeVisible();
 });
 
-test("competition admin sets ordered early and late deadlines", async ({ page }) => {
+test("competition admin sets ordered early and late deadlines", async ({ page, browser }) => {
   const original = await db.competitionProfile.findUniqueOrThrow({
     where: { slug: E2E.comps.showcase.slug },
     select: { id: true, earlyApplicationDeadline: true, applicationDeadline: true },
   });
+  const visitor = await browser.newPage();
   try {
     await login(page, "comp");
     await page.goto("/comp/profile");
@@ -58,10 +59,13 @@ test("competition admin sets ordered early and late deadlines", async ({ page })
     expect(updated.applicationDeadline).not.toBeNull();
     expect(updated.earlyApplicationDeadline!.getTime()).toBeLessThan(updated.applicationDeadline!.getTime());
 
-    await page.goto(`/comps/${original.id}`);
-    await expect(page.getByText("Early application deadline")).toBeVisible();
-    await expect(page.getByText("Late application deadline")).toBeVisible();
+    // The save confirmation also refreshes the host page. Check the public
+    // listing as a visitor so that refresh cannot cancel WebKit's navigation.
+    await visitor.goto(`/comps/${original.id}`);
+    await expect(visitor.getByText("Early application deadline")).toBeVisible();
+    await expect(visitor.getByText("Late application deadline")).toBeVisible();
   } finally {
+    await visitor.close();
     await db.competitionProfile.update({
       where: { id: original.id },
       data: {

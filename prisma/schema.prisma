@@ -51,6 +51,43 @@ model User {
   memberships            TeamMembership[]
   competitionMemberships CompetitionMembership[]
   moderatorAccess        ModeratorAccess[]
+  feedback               Feedback[]
+}
+
+enum FeedbackCategory {
+  FEEDBACK
+  QUESTION
+  COMMENT
+  CONCERN
+}
+
+enum FeedbackStatus {
+  NEW
+  IN_PROGRESS
+  RESOLVED
+}
+
+model Feedback {
+  id                   String           @id @default(cuid())
+  userId               String?
+  user                 User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  submissionKey        String           @db.Uuid
+  submitterName        String
+  submitterEmail       String
+  accountRole          Role
+  accountContext       String
+  category             FeedbackCategory
+  message              String           @db.VarChar(5000)
+  pagePath             String           @default("") @db.VarChar(500)
+  status               FeedbackStatus   @default(NEW)
+  statusUpdatedByEmail String?
+  createdAt            DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime         @updatedAt @db.Timestamptz(3)
+
+  @@unique([userId, submissionKey])
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@index([createdAt])
 }
 
 model PlatformAdminInvite {

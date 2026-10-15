@@ -7,6 +7,7 @@ import { SEASON_COMPS } from "./season-comps";
 const prisma = new PrismaClient();
 
 async function wipeAppData() {
+  await prisma.feedback.deleteMany();
   await prisma.judgeScore.deleteMany();
   await prisma.judgeViewingSlot.deleteMany();
   await prisma.judgeAssignment.deleteMany();

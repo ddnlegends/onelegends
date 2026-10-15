@@ -56,6 +56,7 @@ export async function Nav() {
               Fees
             </NavLink>
           ) : null}
+          {ops ? <NavLink href="/ops/feedback" match="prefix">Feedback inbox</NavLink> : null}
           {judgeAccess ? (
             <NavLink href="/judge" match="prefix">
               Judging
