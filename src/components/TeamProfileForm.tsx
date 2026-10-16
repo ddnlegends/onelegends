@@ -230,10 +230,11 @@ export function TeamProfileForm({ profile }: { profile: Profile }) {
             defaultValue={profile.avDriveUrl}
             placeholder="https://drive.google.com/file/d/..."
           />
+          <p className="rounded-lg border border-warning-line bg-warning-soft px-3 py-2 text-sm">
+            <strong>Sharing note:</strong> In Google Drive, set Share → General access to <strong>Anyone with the link</strong> and the role to <strong>Viewer</strong>. Test the link in a private window so judges can open it without requesting access.
+          </p>
           <p className="text-xs text-muted">
-            Use a Google Drive <strong>file</strong> link (anyone with the link
-            can view) so judges can watch in-app. Folder links cannot play inline
-            without showing file names.
+            Use a Google Drive <strong>file</strong> link so judges can watch in-app. Folder links cannot play inline without showing file names.
           </p>
         </div>
         <div className="field sm:col-span-2">
