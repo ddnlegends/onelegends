@@ -664,7 +664,7 @@ export async function buildExportTables(
 }
 
 /** Each table becomes one worksheet; Excel caps tab names at 31 characters. */
-export async function toXlsx(tables: ExportTable[]): Promise<ArrayBuffer> {
+export async function toXlsx<T extends Pick<ExportTable, "title" | "rows">>(tables: T[]): Promise<ArrayBuffer> {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "OneLegends";
   workbook.created = new Date();

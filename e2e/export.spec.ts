@@ -1,7 +1,7 @@
 import { test } from "./helpers";
 import { expect } from "@playwright/test";
 import ExcelJS from "exceljs";
-import { competitionId, db, E2E, login, SEALED_NAMES } from "./helpers";
+import { competitionId, db, E2E, login, pageAs, SEALED_NAMES } from "./helpers";
 
 const CSV = "/api/ops/export?dataset=teams&format=csv";
 const XLSX = "/api/ops/export?dataset=teams&dataset=competitions&format=xlsx";
@@ -95,4 +95,60 @@ test("CSV and XLSX keep judging names sealed until results release", async ({ pa
     // Ops knows applicants, but must not get their anonymous viewing order.
     expect((await lineup.text()).includes("Sealed until release")).toBe(!released);
   }
+});
+
+test("competition director downloads ranked profiles, rosters, and scores only after finalization", async ({ browser, request }) => {
+  const path = "/api/comp/applicants/export";
+  const id = await competitionId(E2E.comps.showcase.slug);
+  expect((await request.get(path)).status()).toBe(401);
+
+  const director = await pageAs(browser, "comp");
+  await director.goto("/comp/applicants");
+  await expect(director.getByRole("link", { name: "Download final team workbook" })).toHaveCount(0);
+  expect((await director.request.get(path)).status()).toBe(403);
+
+  const team = await pageAs(browser, "team");
+  expect((await team.request.get(path)).status()).toBe(403);
+
+  // A release timestamp alone must not expose names while score packets are incomplete.
+  await db.competitionProfile.update({ where: { id }, data: { resultsReleasedAt: new Date() } });
+  expect((await director.request.get(path)).status()).toBe(403);
+  await db.competitionProfile.update({ where: { id }, data: { resultsReleasedAt: null } });
+
+  const tech = await pageAs(browser, "tech");
+  await tech.goto(`/ops/comps/${id}`);
+  await tech.getByRole("button", { name: "Open judging" }).click();
+  await expect(tech.getByText(/Judging is open\. The moderator can start/)).toBeVisible();
+  const assignment = await db.judgeAssignment.findFirstOrThrow({
+    where: { competitionId: id },
+    include: { slots: true },
+  });
+  expect(assignment.slots).toHaveLength(2);
+  for (const slot of assignment.slots) {
+    await db.judgeScore.create({
+      data: { assignmentId: assignment.id, slotId: slot.id, choreography: 8, formations: 7, technique: 6, syncCleanliness: 5, overallImpression: 4 },
+    });
+  }
+  await db.judgeAssignment.update({ where: { id: assignment.id }, data: { submittedAt: new Date() } });
+  await tech.reload();
+  await tech.getByRole("button", { name: "Validate Comp Results", exact: true }).click();
+  await tech.getByRole("button", { name: "Yes, validate comp results" }).click();
+  await expect(tech.getByText("Results finalized.")).toBeVisible();
+
+  await director.goto("/comp/applicants");
+  await expect(director.getByRole("link", { name: "Download final team workbook" })).toBeVisible();
+  const response = await director.request.get(path);
+  expect(response.status()).toBe(200);
+  expect(response.headers()["cache-control"]).toContain("no-store");
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(new Uint8Array(await response.body()).buffer);
+  expect(workbook.worksheets).toHaveLength(4);
+  expect(workbook.worksheets[0].name).toBe("Rankings");
+  expect(workbook.worksheets.at(-1)?.name).toBe("Judge Scores");
+  const contents = JSON.stringify(workbook.worksheets.map((sheet) => sheet.getSheetValues()));
+  for (const name of SEALED_NAMES) expect(contents).toContain(name);
+  expect(contents).toContain("Dancer One");
+  expect(contents).toContain("drive.google.com");
+  expect(contents).toContain("E2E Judge");
+  expect(contents).not.toContain(E2E.teams.alpha.claimCode);
 });

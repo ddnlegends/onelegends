@@ -47,9 +47,16 @@ export default async function CompApplicantsPage() {
   }));
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-heading text-4xl">Applied teams</h1>
-        <p className="mt-2 text-muted">{competition.name} · Track competition payments for teams accepted after judging. Full rosters and results unlock after judging.</p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-heading text-4xl">Applied teams</h1>
+          <p className="mt-2 text-muted">{competition.name} · Track competition payments for teams accepted after judging. Full rosters and results unlock after judging.</p>
+        </div>
+        {released ? (
+          <a href="/api/comp/applicants/export" className="btn btn-primary">
+            Download final team workbook
+          </a>
+        ) : null}
       </div>
       {!released ? (
         <p className="rounded-xl border border-line bg-blush p-5 text-sm">Tech admins verify OneLegends registration payments before AV viewing. Competition payments are tracked after final acceptance. Viewing order, AV links, scores, and full team details remain hidden until results release.</p>
