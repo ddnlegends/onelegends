@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { formatDate, statusLabel } from "@/lib/utils";
+import { teamVisibleApplicationStatus } from "@/lib/application-decisions";
 import { teamProfileGaps, TEAM_APPLY_OPS_BLOCKED_MESSAGE } from "@/lib/team-profile";
 import {
   getActiveTeamId,
@@ -149,7 +150,7 @@ export default async function TeamDashboardPage() {
                     {app.competition.dates ? ` · ${app.competition.dates}` : ""}
                   </p>
                 </div>
-                <span className="text-sm">{statusLabel(app.status)}</span>
+                <span className="text-sm">{statusLabel(teamVisibleApplicationStatus(app.status, app.competition.decisionsSubmittedAt))}</span>
               </li>
             ))}
           </ul>

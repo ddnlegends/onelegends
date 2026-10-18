@@ -6,7 +6,6 @@ import { rankTeams } from "@/lib/results";
 import { LocalDateTime } from "@/components/LocalDateTime";
 import { getActiveCompetitionId } from "@/lib/team-access";
 import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
-import { CompDecisionBoard } from "@/components/CompDecisionBoard";
 import { moderatorResultsReady } from "@/lib/judge-panel-completion";
 
 export default async function CompResultsPage() {
@@ -50,16 +49,6 @@ export default async function CompResultsPage() {
   const ranked = released && panelReady
     ? rankTeams(competition.applications, submitted)
     : [];
-  const paymentByApplication = new Map(
-    competition.applications.map((application) => [application.id, application.compPaymentReceivedAt]),
-  );
-  const decisionRows = ranked.map((row, index) => ({
-    applicationId: row.applicationId,
-    teamName: row.name,
-    rank: index + 1,
-    status: row.status,
-    paymentReceived: Boolean(paymentByApplication.get(row.applicationId)),
-  }));
 
   return (
     <div className="space-y-8">
@@ -95,7 +84,7 @@ export default async function CompResultsPage() {
       ) : (
         <div className="space-y-6">
           <Link href="/comp/applicants" className="btn btn-primary inline-flex">View applied teams and full rosters</Link>
-          <CompDecisionBoard rows={decisionRows} />
+          <p className="text-sm text-muted">Set and submit every team outcome on Applied Teams.</p>
           <div className="overflow-x-auto rounded-xl border border-line bg-card">
             <table className="w-full min-w-[48rem] text-left text-sm">
               <thead className="border-b border-line bg-blush text-xs uppercase tracking-wide text-muted">

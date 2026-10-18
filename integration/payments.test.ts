@@ -150,7 +150,7 @@ it("lets only the host record payment after a final Accepted decision", async ()
     }),
     prisma.competitionProfile.update({
       where: { id: application.competitionId },
-      data: { resultsReleasedAt: new Date() },
+      data: { resultsReleasedAt: new Date(), decisionsSubmittedAt: new Date() },
     }),
   ]);
 

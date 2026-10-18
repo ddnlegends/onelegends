@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPendingInvites } from "@/lib/invites";
 import { formatDate, statusLabel } from "@/lib/utils";
+import { teamVisibleApplicationStatus } from "@/lib/application-decisions";
 import { isCompetitionOpen, isJudgingOpen } from "@/lib/judging";
 import { teamProfileGaps, TEAM_APPLY_OPS_BLOCKED_MESSAGE } from "@/lib/team-profile";
 import { competitionProfileGaps, isCompetitionVisibleToTeams } from "@/lib/competition-profile";
@@ -367,7 +368,7 @@ export default async function DashboardPage() {
                         Applied {formatDate(app.createdAt)}
                       </p>
                     </div>
-                    <span className="text-sm">{statusLabel(app.status)}</span>
+                    <span className="text-sm">{statusLabel(teamVisibleApplicationStatus(app.status, app.competition.decisionsSubmittedAt))}</span>
                   </li>
                 ))}
               </ul>

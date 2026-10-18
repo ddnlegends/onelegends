@@ -178,41 +178,9 @@ export async function saveCompProfile(
   };
 }
 
-export async function setApplicationStatus(
-  applicationId: string,
-  status: ApplicationStatus,
-): Promise<{ error?: string }> {
-  const user = await requireUser();
-  if (!user) return { error: "Unauthorized." };
-
-  const competition = await requireActiveCompetition(user.id);
-  if (!competition) return { error: "Competition profile missing." };
-  if (!competition.resultsReleasedAt) {
-    return { error: "Application decisions unlock after results are released." };
-  }
-
-  const app = await prisma.application.findFirst({
-    where: { id: applicationId, competitionId: competition.id, ...visibleApplicationWhere },
-  });
-  if (!app) return { error: "Application not found." };
-
-  await prisma.application.update({
-    where: { id: applicationId },
-    data: { status },
-  });
-
-  revalidatePath("/comp");
-  revalidatePath("/comp/results");
-  revalidatePath("/comp/applicants");
-  revalidatePath("/ops/payments");
-  revalidatePath(`/comp/applicants/${app.teamId}`);
-  return {};
-}
-
 type ApplicantDecision = {
   applicationId: string;
   status: ApplicationStatus;
-  paymentReceived: boolean;
 };
 
 export async function saveCompApplicantDecisions(
@@ -226,6 +194,10 @@ export async function saveCompApplicantDecisions(
   if (!competition) return { error: "Competition profile missing." };
   if (!competition.resultsReleasedAt) {
     return { error: "Decisions unlock after results are released." };
+  }
+  const final = formData.get("intent") === "final";
+  if (final && formData.get("acknowledgeFinal") !== "on") {
+    return { error: "Confirm that all team outcomes are final before submitting." };
   }
 
   let decisions: ApplicantDecision[];
@@ -242,7 +214,6 @@ export async function saveCompApplicantDecisions(
       return {
         applicationId: row.applicationId,
         status: row.status as ApplicationStatus,
-        paymentReceived: row.paymentReceived === true,
       };
     });
   } catch {
@@ -252,39 +223,51 @@ export async function saveCompApplicantDecisions(
   if (!decisions.length || new Set(decisions.map((decision) => decision.applicationId)).size !== decisions.length) {
     return { error: "Include each application exactly once." };
   }
-  if (decisions.some((decision) => decision.paymentReceived && decision.status !== "ACCEPTED")) {
-    return { error: "Only accepted teams can have a recorded host payment." };
+  if (final && decisions.some((decision) => decision.status === "PENDING")) {
+    return { error: "Choose an outcome for every team before submitting final decisions." };
   }
 
-  const applications = await prisma.application.findMany({
-    where: {
-      competitionId: competition.id,
-      id: { in: decisions.map((decision) => decision.applicationId) },
-      ...visibleApplicationWhere,
-    },
-    select: { id: true },
-  });
-  if (applications.length !== decisions.length) return { error: "One or more applications were not found." };
-
-  await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${competition.id}))`;
+    const current = await tx.competitionProfile.findUnique({
+      where: { id: competition.id },
+      select: { resultsReleasedAt: true, decisionsSubmittedAt: true },
+    });
+    if (!current?.resultsReleasedAt) return { error: "Results must be released first." };
+    if (current.decisionsSubmittedAt) return { error: "Final decisions have already been submitted." };
+    const applications = await tx.application.findMany({
+      where: { competitionId: competition.id, ...visibleApplicationWhere },
+      select: { id: true },
+    });
+    const submittedIds = new Set(decisions.map((decision) => decision.applicationId));
+    if (applications.length !== decisions.length || applications.some((app) => !submittedIds.has(app.id))) {
+      return { error: "The applicant list changed. Refresh and review every team before saving." };
+    }
     for (const decision of decisions) {
       await tx.application.update({
         where: { id: decision.applicationId },
-        data: {
-          status: decision.status,
-          compPaymentReceivedAt: decision.paymentReceived ? new Date() : null,
-          compPaymentRecordedByEmail: decision.paymentReceived ? user.email : null,
-        },
+        data: { status: decision.status },
       });
     }
+    if (final) {
+      await tx.competitionProfile.update({
+        where: { id: competition.id },
+        data: { decisionsSubmittedAt: new Date() },
+      });
+    }
+    return { ok: true };
   });
+  if (result.error) return result;
 
   revalidatePath("/comp");
   revalidatePath("/comp/results");
   revalidatePath("/comp/applicants");
+  revalidatePath("/team", "layout");
+  revalidatePath("/dashboard");
   revalidatePath("/ops/comps", "layout");
   revalidatePath("/ops/competitions", "layout");
   revalidatePath("/ops/payments");
-  return { ok: true, message: `${decisions.length} team decisions saved.` };
+  return { ok: true, message: final
+    ? `${decisions.length} final team decisions submitted. Teams can now see their outcomes.`
+    : `${decisions.length} draft decisions saved. Teams still see Pending.` };
 }

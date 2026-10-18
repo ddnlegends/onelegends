@@ -151,11 +151,11 @@ export async function setCompPaymentReceived(_prev: ActionState | undefined, for
   const received = String(formData.get("received") ?? "") === "1";
   const app = await prisma.application.findUnique({
     where: { id: applicationId },
-    select: { id: true, competitionId: true, status: true, removedAt: true, team: { select: { applyBlocked: true } }, competition: { select: { resultsReleasedAt: true } } },
+    select: { id: true, competitionId: true, status: true, removedAt: true, team: { select: { applyBlocked: true } }, competition: { select: { decisionsSubmittedAt: true } } },
   });
   if (!app || app.removedAt || app.team.applyBlocked) return { error: "Application not found." };
   if (!(await isCompAdmin(user.id, app.competitionId))) return { error: "Only this competition's admins can track its payments." };
-  if (!app.competition.resultsReleasedAt || app.status !== "ACCEPTED") {
+  if (!app.competition.decisionsSubmittedAt || app.status !== "ACCEPTED") {
     return { error: "Payment can be recorded after the final Accepted decision." };
   }
   await prisma.application.update({

@@ -17,6 +17,7 @@ export default async function CompApplicantsPage() {
     select: {
       name: true,
       resultsReleasedAt: true,
+      decisionsSubmittedAt: true,
       applications: {
         where: visibleApplicationWhere,
         orderBy: { createdAt: "asc" },
@@ -61,7 +62,7 @@ export default async function CompApplicantsPage() {
       {!released ? (
         <p className="rounded-xl border border-line bg-blush p-5 text-sm">Tech admins verify OneLegends registration payments before AV viewing. Competition payments are tracked after final acceptance. Viewing order, AV links, scores, and full team details remain hidden until results release.</p>
       ) : null}
-      {released ? <CompDecisionBoard rows={decisionRows} /> : null}
+      {released ? <CompDecisionBoard key={`${competition.decisionsSubmittedAt?.toISOString() ?? "draft"}-${decisionRows.map((row) => row.status).join("-")}`} rows={decisionRows} finalized={Boolean(competition.decisionsSubmittedAt)} /> : null}
       {competition.applications.length ? (
         <ul className="divide-y divide-line rounded-xl border border-line bg-card">
           {competition.applications.map((application) => (

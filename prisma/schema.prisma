@@ -194,6 +194,7 @@ model CompetitionProfile {
   requiredJudgeCount       Int       @default(3)
   resultsReleasedAt        DateTime?
   resultsFinalizedByEmail  String?
+  decisionsSubmittedAt     DateTime?
   dates                    String    @default("")
   eventStartDate           DateTime? @db.Date
   eventEndDate             DateTime? @db.Date

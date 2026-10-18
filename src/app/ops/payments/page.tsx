@@ -14,7 +14,7 @@ export default async function OpsPaymentsPage() {
     prisma.application.findMany({
       where: {
         OR: [
-          { status: "ACCEPTED", competition: { resultsReleasedAt: { not: null } } },
+          { status: "ACCEPTED", competition: { decisionsSubmittedAt: { not: null } } },
           { compPaymentReceivedAt: { not: null } },
         ],
       },
