@@ -6,6 +6,7 @@ import { getApprovedCompMemberships, isPlatformAdmin } from "@/lib/team-access";
 import { isCompetitionVisibleToTeams } from "@/lib/competition-profile";
 import { isCompetitionOpen } from "@/lib/judging";
 import { formatApplicationFee } from "@/lib/competition-details";
+import { ApplicationPeriodSummary } from "@/components/ApplicationPeriodSummary";
 import { LocalDateTime } from "@/components/LocalDateTime";
 
 export default async function AllCompetitionsPage() {
@@ -30,9 +31,12 @@ export default async function AllCompetitionsPage() {
       productionNotes: true,
       description: true,
       acceptingApps: true,
+      earlyTierDeadline: true,
       earlyApplicationDeadline: true,
       applicationDeadline: true,
+      applicationClosesAt: true,
       resultsReleasedAt: true,
+      earlyApplicationFeeCents: true,
       regularApplicationFeeCents: true,
       lateApplicationFeeCents: true,
     },
@@ -63,12 +67,15 @@ export default async function AllCompetitionsPage() {
                     <h3 className="font-heading text-xl"><Link className="text-accent underline" href={`/comps/${competition.id}`}>{competition.name}</Link></h3>
                     <p className="text-sm text-muted">{[competition.dates, competition.location, competition.venue].filter(Boolean).join(" · ")}</p>
                   </div>
-                  <dl className="grid gap-3 text-sm sm:grid-cols-2">
-                    <div><dt className="font-semibold">Regular deadline</dt><dd>{competition.earlyApplicationDeadline ? <LocalDateTime date={competition.earlyApplicationDeadline} /> : "Not set"}</dd></div>
-                    <div><dt className="font-semibold">Late deadline</dt><dd>{competition.applicationDeadline ? <LocalDateTime date={competition.applicationDeadline} /> : "No automatic close"}</dd></div>
-                    <div><dt className="font-semibold">Regular fee</dt><dd>{formatApplicationFee(competition.regularApplicationFeeCents)} per team</dd></div>
-                    <div><dt className="font-semibold">Late fee</dt><dd>{formatApplicationFee(competition.lateApplicationFeeCents)} per team</dd></div>
-                  </dl>
+                  <ApplicationPeriodSummary schedule={{
+                    earlyDeadline: competition.earlyTierDeadline,
+                    regularDeadline: competition.earlyApplicationDeadline,
+                    lateDeadline: competition.applicationDeadline,
+                    finalCutoff: competition.applicationClosesAt,
+                    earlyFeeCents: competition.earlyApplicationFeeCents,
+                    regularFeeCents: competition.regularApplicationFeeCents,
+                    lateFeeCents: competition.lateApplicationFeeCents,
+                  }} />
                   <Link className="text-sm text-accent underline" href={`/comps/${competition.id}`}>View details</Link>
                 </article>
               ))}
@@ -91,8 +98,10 @@ export default async function AllCompetitionsPage() {
                     <li key={competition.id} className="leading-relaxed">
                       <Link className="font-medium text-accent underline" href={`/comps/${competition.id}`}>{competition.name}</Link>
                       {competition.dates ? ` — ${competition.dates}` : ""}
+                      {competition.earlyTierDeadline ? <> · Early deadline <LocalDateTime date={competition.earlyTierDeadline} /></> : null}
                       {competition.earlyApplicationDeadline ? <> · Regular deadline <LocalDateTime date={competition.earlyApplicationDeadline} /></> : null}
                       {competition.applicationDeadline ? <> · Late deadline <LocalDateTime date={competition.applicationDeadline} /></> : null}
+                      {competition.earlyTierDeadline || competition.earlyApplicationFeeCents !== null ? ` · Early fee ${formatApplicationFee(competition.earlyApplicationFeeCents)}` : null}
                       {` · Regular fee ${formatApplicationFee(competition.regularApplicationFeeCents)}`}
                       {` · Late fee ${formatApplicationFee(competition.lateApplicationFeeCents)}`}
                     </li>

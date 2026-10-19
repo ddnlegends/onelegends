@@ -87,6 +87,7 @@ export const getModeratorCompetitions = cache(async (userId: string) => {
       name: true,
       acceptingApps: true,
       applicationDeadline: true,
+      applicationClosesAt: true,
       claimedAt: true,
       userId: true,
       judgingOpen: true,

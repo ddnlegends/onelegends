@@ -22,6 +22,7 @@ import { rankTeams } from "@/lib/results";
 import { avDancerNames, statusLabel } from "@/lib/utils";
 import { moderatorResultsReady } from "@/lib/judge-panel-completion";
 import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
+import { applicationPhaseLabel } from "@/lib/application-schedule";
 
 export const EXPORT_DATASETS = [
   {
@@ -148,6 +149,9 @@ async function competitionsTable(competitionId?: string): Promise<ExportCell[][]
       "Active judges",
       "Results released",
       "Created",
+      "Early application fee (USD)",
+      "Early application deadline",
+      "Final application cutoff",
     ],
     ...competitions.map((comp) => [
       comp.name,
@@ -176,6 +180,9 @@ async function competitionsTable(competitionId?: string): Promise<ExportCell[][]
       comp.judgeAssignments.length,
       stamp(comp.resultsReleasedAt),
       stamp(comp.createdAt),
+      formatApplicationFee(comp.earlyApplicationFeeCents),
+      stamp(comp.earlyTierDeadline),
+      stamp(comp.applicationClosesAt ?? comp.applicationDeadline),
     ]),
   ];
 }
@@ -202,6 +209,8 @@ async function lineupsTable(competitionId?: string): Promise<ExportCell[][]> {
       "Roster size",
       "AV dancers",
       "AV link",
+      "Applied phase",
+      "Expected host fee (USD)",
     ],
     ...applications.map((app) => [
       app.competition.name,
@@ -213,6 +222,8 @@ async function lineupsTable(competitionId?: string): Promise<ExportCell[][]> {
       app.team.rosterSize ?? app.team.dancers.length,
       avDancerNames(app.team.dancers),
       app.team.avDriveUrl,
+      applicationPhaseLabel(app.appliedPhase),
+      formatApplicationFee(app.expectedFeeCents),
     ]),
   ];
 }

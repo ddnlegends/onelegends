@@ -36,41 +36,48 @@ test("a complete team applies to an open competition only", async ({ page }) => 
   await expect(page.getByText("Already applied")).toBeVisible();
 });
 
-test("competition admin sets ordered regular and late deadlines", async ({ page, browser }) => {
+test("competition admin sets ordered early, regular, and late deadlines", async ({ page, browser }) => {
   const original = await db.competitionProfile.findUniqueOrThrow({
     where: { slug: E2E.comps.showcase.slug },
-    select: { id: true, earlyApplicationDeadline: true, applicationDeadline: true },
+    select: { id: true, earlyTierDeadline: true, earlyApplicationDeadline: true, applicationDeadline: true, applicationClosesAt: true },
   });
   const visitor = await browser.newPage();
   try {
     await login(page, "comp");
     await page.goto("/comp/profile");
+    await page.getByLabel("Early application deadline").fill("2027-01-15T12:00");
     await page.getByLabel("Regular application deadline").fill("2027-01-20T12:00");
     await page.getByLabel("Late application deadline").fill("2027-01-10T12:00");
     await page.getByRole("button", { name: "Save Details" }).click();
-    await expect(page.locator(".notice-error")).toContainText("regular deadline must be before the late deadline");
+    await expect(page.locator(".notice-error")).toContainText("Deadlines must run in order");
 
     await page.getByLabel("Late application deadline").fill("2027-01-30T12:00");
     await page.getByRole("button", { name: "Save Details" }).click();
     await expect(page.locator(".notice-ok")).toContainText("Competition details saved");
 
     const updated = await db.competitionProfile.findUniqueOrThrow({ where: { id: original.id } });
+    expect(updated.earlyTierDeadline).not.toBeNull();
     expect(updated.earlyApplicationDeadline).not.toBeNull();
     expect(updated.applicationDeadline).not.toBeNull();
+    expect(updated.earlyTierDeadline!.getTime()).toBeLessThan(updated.earlyApplicationDeadline!.getTime());
     expect(updated.earlyApplicationDeadline!.getTime()).toBeLessThan(updated.applicationDeadline!.getTime());
+    expect(updated.applicationClosesAt).toEqual(updated.applicationDeadline);
 
     // The save confirmation also refreshes the host page. Check the public
     // listing as a visitor so that refresh cannot cancel WebKit's navigation.
     await visitor.goto(`/comps/${original.id}`);
-    await expect(visitor.getByText("Regular application deadline")).toBeVisible();
-    await expect(visitor.getByText("Late application deadline")).toBeVisible();
+    await expect(visitor.getByRole("heading", { name: "Early" })).toBeVisible();
+    await expect(visitor.getByRole("heading", { name: "Regular" })).toBeVisible();
+    await expect(visitor.getByRole("heading", { name: "Late · final cutoff" })).toBeVisible();
   } finally {
     await visitor.close();
     await db.competitionProfile.update({
       where: { id: original.id },
       data: {
+        earlyTierDeadline: original.earlyTierDeadline,
         earlyApplicationDeadline: original.earlyApplicationDeadline,
         applicationDeadline: original.applicationDeadline,
+        applicationClosesAt: original.applicationClosesAt,
       },
     });
   }

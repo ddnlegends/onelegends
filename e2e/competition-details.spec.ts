@@ -28,7 +28,7 @@ test("host details and Drive packet link survive saving and appear to teams", as
   const visitor = await browser.newPage({ timezoneId: "America/Los_Angeles" });
   try {
     await visitor.goto(`/comps/${competition.id}`);
-    const deadlineTime = visitor.getByText("Late application deadline", { exact: true }).locator("..").locator("time");
+    const deadlineTime = visitor.getByRole("heading", { name: "Late · final cutoff" }).locator("..").locator("time");
     const deadlineIso = await deadlineTime.getAttribute("datetime");
     expect(deadlineIso).toBeTruthy();
     const localDeadline = await visitor.evaluate((iso) => {

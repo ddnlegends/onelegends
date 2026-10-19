@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { getPendingInvites } from "@/lib/invites";
 import { formatDate, statusLabel } from "@/lib/utils";
 import { teamVisibleApplicationStatus } from "@/lib/application-decisions";
+import { applicationPhaseLabel } from "@/lib/application-schedule";
+import { formatApplicationFee } from "@/lib/competition-details";
 import { isCompetitionOpen, isJudgingOpen } from "@/lib/judging";
 import { teamProfileGaps, TEAM_APPLY_OPS_BLOCKED_MESSAGE } from "@/lib/team-profile";
 import { competitionProfileGaps, isCompetitionVisibleToTeams } from "@/lib/competition-profile";
@@ -106,6 +108,7 @@ export default async function DashboardPage() {
                     name: true,
                     acceptingApps: true,
                     applicationDeadline: true,
+                    applicationClosesAt: true,
                     judgingOpen: true,
                   },
                 },
@@ -335,14 +338,17 @@ export default async function DashboardPage() {
                     dates: c.dates,
                     location: c.location,
                     venue: c.venue,
+                    earlyApplicationFeeCents: c.earlyApplicationFeeCents,
                     regularApplicationFeeCents: c.regularApplicationFeeCents,
                     lateApplicationFeeCents: c.lateApplicationFeeCents,
+                    earlyTierDeadline: c.earlyTierDeadline?.toISOString(),
                     earlyDeadline: c.earlyApplicationDeadline
                       ? c.earlyApplicationDeadline.toISOString()
                       : undefined,
                     lateDeadline: c.applicationDeadline
                       ? c.applicationDeadline.toISOString()
                       : undefined,
+                    finalCutoff: c.applicationClosesAt?.toISOString(),
                     acceptingApps: isCompetitionOpen(c),
                     alreadyApplied: applied.has(c.id),
                   }))}
@@ -367,6 +373,7 @@ export default async function DashboardPage() {
                       <p className="text-sm text-muted">
                         Applied {formatDate(app.createdAt)}
                       </p>
+                      <p className="text-xs text-muted">{app.appliedPhase ? `${applicationPhaseLabel(app.appliedPhase)} phase · Expected host fee: ${formatApplicationFee(app.expectedFeeCents)}` : "Phase and expected host fee were not recorded for this earlier application."}</p>
                     </div>
                     <span className="text-sm">{statusLabel(teamVisibleApplicationStatus(app.status, app.competition.decisionsSubmittedAt))}</span>
                   </li>

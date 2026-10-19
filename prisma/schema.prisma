@@ -21,6 +21,12 @@ enum ApplicationStatus {
   DECLINED
 }
 
+enum ApplicationPhase {
+  EARLY
+  REGULAR
+  LATE
+}
+
 enum JudgeRequestStatus {
   PENDING
   APPROVED
@@ -188,8 +194,10 @@ model CompetitionProfile {
   registrationPaidAt       DateTime?
   registrationPaidByEmail  String?
   acceptingApps            Boolean   @default(true)
+  earlyTierDeadline        DateTime?
   earlyApplicationDeadline DateTime?
   applicationDeadline      DateTime?
+  applicationClosesAt      DateTime?
   // Legacy threshold kept for historical data; finalization uses the active approved panel.
   requiredJudgeCount       Int       @default(3)
   resultsReleasedAt        DateTime?
@@ -201,6 +209,7 @@ model CompetitionProfile {
   location                 String    @default("")
   venue                    String    @default("")
   venueAddress             String    @default("")
+  earlyApplicationFeeCents   Int?
   regularApplicationFeeCents Int?
   lateApplicationFeeCents    Int?
   paymentInstructions      String    @default("")
@@ -306,6 +315,8 @@ model Application {
   teamId                     String
   competitionId              String
   status                     ApplicationStatus @default(PENDING)
+  appliedPhase               ApplicationPhase?
+  expectedFeeCents           Int?
   viewingPosition            Int?
   removedAt                  DateTime?
   removedByEmail             String?

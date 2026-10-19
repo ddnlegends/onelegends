@@ -191,6 +191,7 @@ export default async function OpsCompetitionsPage() {
                       { label: "Venue", value: competition.venue },
                       { label: "Venue address", value: competition.venueAddress },
                       { label: "Competition bio", value: competition.description, wide: true },
+                      { label: "Early application fee (USD)", value: formatApplicationFee(competition.earlyApplicationFeeCents) },
                       { label: "Regular application fee (USD)", value: formatApplicationFee(competition.regularApplicationFeeCents) },
                       { label: "Late application fee (USD)", value: formatApplicationFee(competition.lateApplicationFeeCents) },
                       { label: "Payment instructions", value: competition.paymentInstructions, wide: true },
@@ -214,6 +215,12 @@ export default async function OpsCompetitionsPage() {
                     items={[
                       { label: "Accepting applications", value: competition.acceptingApps ? "Yes" : "No" },
                       {
+                        label: "Early application deadline",
+                        value: competition.earlyTierDeadline
+                          ? <LocalDateTime date={competition.earlyTierDeadline} />
+                          : "Not set",
+                      },
+                      {
                         label: "Regular application deadline",
                         value: competition.earlyApplicationDeadline
                           ? <LocalDateTime date={competition.earlyApplicationDeadline} />
@@ -223,6 +230,12 @@ export default async function OpsCompetitionsPage() {
                         label: "Late application deadline",
                         value: competition.applicationDeadline
                           ? <LocalDateTime date={competition.applicationDeadline} />
+                          : "Not set",
+                      },
+                      {
+                        label: "Final application cutoff",
+                        value: competition.applicationClosesAt ?? competition.applicationDeadline
+                          ? <LocalDateTime date={(competition.applicationClosesAt ?? competition.applicationDeadline)!} />
                           : "No automatic close",
                       },
                       {

@@ -44,6 +44,7 @@ export default async function CompProfilePage() {
           location: competition.location,
           venue: competition.venue,
           venueAddress: competition.venueAddress,
+          earlyApplicationFee: competition.earlyApplicationFeeCents === null ? "" : (competition.earlyApplicationFeeCents / 100).toFixed(2),
           regularApplicationFee: competition.regularApplicationFeeCents === null ? "" : (competition.regularApplicationFeeCents / 100).toFixed(2),
           lateApplicationFee: competition.lateApplicationFeeCents === null ? "" : (competition.lateApplicationFeeCents / 100).toFixed(2),
           paymentInstructions: competition.paymentInstructions,
@@ -52,6 +53,7 @@ export default async function CompProfilePage() {
           lighting: competition.lighting,
           description: competition.description,
           acceptingApps: competition.acceptingApps,
+          earlyTierDeadline: competition.earlyTierDeadline?.toISOString() ?? "",
           earlyApplicationDeadline: competition.earlyApplicationDeadline?.toISOString() ?? "",
           applicationDeadline: competition.applicationDeadline?.toISOString() ?? "",
         }}

@@ -13,6 +13,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
 import { isCompetitionOpen } from "@/lib/judging";
+import { applicationPhaseAt, expectedApplicationFee } from "@/lib/application-schedule";
 import { isCompetitionVisibleToTeams } from "@/lib/competition-profile";
 import { parseDriveUrl } from "@/lib/drive";
 import {
@@ -249,7 +250,8 @@ export async function applyToCompetitions(
   const comps = await prisma.competitionProfile.findMany({
     where: { id: { in: selected }, claimedAt: { not: null } },
   });
-  const open = comps.filter((c) => isCompetitionVisibleToTeams(c) && isCompetitionOpen(c));
+  const appliedAt = new Date();
+  const open = comps.filter((c) => isCompetitionVisibleToTeams(c) && isCompetitionOpen(c, appliedAt));
 
   if (open.length === 0) {
     return { error: "None of those competitions are accepting applications." };
@@ -267,6 +269,9 @@ export async function applyToCompetitions(
       data: toCreate.map((c) => ({
         teamId: team.id,
         competitionId: c.id,
+        createdAt: appliedAt,
+        appliedPhase: applicationPhaseAt(c, appliedAt),
+        expectedFeeCents: expectedApplicationFee(c, applicationPhaseAt(c, appliedAt)),
       })),
     });
   }

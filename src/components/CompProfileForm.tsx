@@ -13,6 +13,7 @@ type Profile = {
   location: string;
   venue: string;
   venueAddress: string;
+  earlyApplicationFee: string;
   regularApplicationFee: string;
   lateApplicationFee: string;
   paymentInstructions: string;
@@ -21,6 +22,7 @@ type Profile = {
   lighting: string;
   description: string;
   acceptingApps: boolean;
+  earlyTierDeadline: string;
   earlyApplicationDeadline: string;
   applicationDeadline: string;
 };
@@ -129,27 +131,30 @@ export function CompProfileForm({ profile }: { profile: Profile }) {
           <label htmlFor="location">Location (city) *</label>
           <input id="location" name="location" defaultValue={profile.location} />
         </div>
-        <DeadlineField
-          iso={profile.earlyApplicationDeadline}
-          name="earlyApplicationDeadline"
-          label="Regular application deadline"
-          help="Shown to teams as the regular deadline. Applications stay open after this time until the late deadline. Leave blank for N/A or TBD."
-        />
-        <DeadlineField
-          iso={profile.applicationDeadline}
-          name="applicationDeadline"
-          label="Late application deadline"
-          help="Shown as the final deadline. After this time, applications close even if Accepting Applications is checked. Leave blank for N/A or TBD; there will be no automatic close."
-        />
-        <div className="field">
-          <label htmlFor="regularApplicationFee">Regular application fee (USD per team)</label>
-          <input id="regularApplicationFee" name="regularApplicationFee" type="number" min="0" max="99999.99" step="0.01" defaultValue={profile.regularApplicationFee} placeholder="Not provided" />
-        </div>
-        <div className="field">
-          <label htmlFor="lateApplicationFee">Late application fee (USD per team)</label>
-          <input id="lateApplicationFee" name="lateApplicationFee" type="number" min="0" max="99999.99" step="0.01" defaultValue={profile.lateApplicationFee} placeholder="Not provided" />
-        </div>
-        <p className="text-xs text-muted sm:col-span-2">Enter the total application fee for each period, including any late fee. Enter 0 for free; leave blank if not announced. Explain when each fee applies in the payment instructions.</p>
+        <fieldset className="space-y-3 sm:col-span-2">
+          <legend className="text-sm font-medium">Application periods</legend>
+          <p className="text-xs text-muted">Use any combination of Early, Regular, and Late. Dates must be in order. When you change the schedule, the last date entered becomes the final application cutoff. Existing schedules keep their current cutoff until you edit a date.</p>
+          <div className="grid gap-4 md:grid-cols-3">
+            <DeadlineField iso={profile.earlyTierDeadline} name="earlyTierDeadline" label="Early application deadline" help="Optional. Ends the Early application period." />
+            <DeadlineField iso={profile.earlyApplicationDeadline} name="earlyApplicationDeadline" label="Regular application deadline" help="Optional. Ends the Regular application period when a later period exists." />
+            <DeadlineField iso={profile.applicationDeadline} name="applicationDeadline" label="Late application deadline" help="Optional. Ends the Late application period." />
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="field">
+              <label htmlFor="earlyApplicationFee">Early application fee (USD per team)</label>
+              <input id="earlyApplicationFee" name="earlyApplicationFee" type="number" min="0" max="99999.99" step="0.01" defaultValue={profile.earlyApplicationFee} placeholder="Not provided" />
+            </div>
+            <div className="field">
+              <label htmlFor="regularApplicationFee">Regular application fee (USD per team)</label>
+              <input id="regularApplicationFee" name="regularApplicationFee" type="number" min="0" max="99999.99" step="0.01" defaultValue={profile.regularApplicationFee} placeholder="Not provided" />
+            </div>
+            <div className="field">
+              <label htmlFor="lateApplicationFee">Late application fee (USD per team)</label>
+              <input id="lateApplicationFee" name="lateApplicationFee" type="number" min="0" max="99999.99" step="0.01" defaultValue={profile.lateApplicationFee} placeholder="Not provided" />
+            </div>
+          </div>
+          <p className="text-xs text-muted">Fees are total USD per team and tracked outside OneLegends. Enter 0 for free; leave blank if not announced. A fee without a matching deadline is informational only.</p>
+        </fieldset>
         <div className="field sm:col-span-2">
           <label htmlFor="paymentInstructions">Payment instructions</label>
           <textarea id="paymentInstructions" name="paymentInstructions" rows={4} maxLength={5000} defaultValue={profile.paymentInstructions} placeholder="Payment link or handle, recipient, payment deadlines, and what teams should include in the payment note" />

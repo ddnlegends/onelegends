@@ -1,11 +1,15 @@
-import type { ApplicationStatus } from "@prisma/client";
+import type { ApplicationPhase, ApplicationStatus } from "@prisma/client";
 import type { RankedTeam } from "@/lib/results";
 import type { ExportCell, ExportTable } from "@/lib/ops-export";
 import { statusLabel } from "@/lib/utils";
+import { applicationPhaseLabel } from "@/lib/application-schedule";
+import { formatApplicationFee } from "@/lib/competition-details";
 
 export type DirectorApplicant = {
   id: string;
   status: ApplicationStatus;
+  appliedPhase?: ApplicationPhase | null;
+  expectedFeeCents?: number | null;
   createdAt: Date;
   viewingPosition: number | null;
   compPaymentReceivedAt: Date | null;
@@ -73,7 +77,7 @@ export function buildDirectorApplicantWorkbook(
 
   const overview: ExportCell[][] = [[
     "Rank", "Team", "Application status", "Average z-score", "Average total (/50)",
-    "Judges scored", "Captains", "Roster size", "AV link", "Applied (UTC)",
+    "Judges scored", "Captains", "Roster size", "AV link", "Applied (UTC)", "Applied phase", "Expected host fee (USD)",
   ]];
   const judgeScores: ExportCell[][] = [[
     "Rank", "Team", "Judge", "Choreography", "Formations", "Technique",
@@ -99,6 +103,8 @@ export function buildDirectorApplicantWorkbook(
       rosterSize,
       team.avDriveUrl,
       date(application.createdAt),
+      applicationPhaseLabel(application.appliedPhase ?? null),
+      formatApplicationFee(application.expectedFeeCents ?? null),
     ]);
 
     if (result) {
@@ -119,6 +125,8 @@ export function buildDirectorApplicantWorkbook(
       ["Profile", "Average total (/50)", result ? number(result.row.avgTotal, 2) : ""],
       ["Profile", "Application status", statusLabel(application.status)],
       ["Profile", "Applied (UTC)", date(application.createdAt)],
+      ["Profile", "Applied phase", applicationPhaseLabel(application.appliedPhase ?? null)],
+      ["Profile", "Expected host fee (USD)", formatApplicationFee(application.expectedFeeCents ?? null)],
       ["Profile", "Viewing order", application.viewingPosition ?? ""],
       ["Profile", "Host payment received", application.compPaymentReceivedAt ? "Yes" : "No"],
       ["Profile", "OneLegends registration paid", team.registrationPaidAt ? "Yes" : "No"],

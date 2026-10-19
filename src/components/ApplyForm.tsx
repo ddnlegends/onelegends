@@ -5,7 +5,7 @@ import Link from "next/link";
 import { applyToCompetitions } from "@/app/actions/team";
 import { CompetitionTypeBadge } from "@/components/CompetitionTypeBadge";
 import { LocalDateTime } from "@/components/LocalDateTime";
-import { formatApplicationFee } from "@/lib/competition-details";
+import { ApplicationPeriodSummary } from "@/components/ApplicationPeriodSummary";
 
 type Comp = {
   id: string;
@@ -14,10 +14,13 @@ type Comp = {
   dates: string;
   location: string;
   venue: string;
+  earlyApplicationFeeCents: number | null;
   regularApplicationFeeCents: number | null;
   lateApplicationFeeCents: number | null;
+  earlyTierDeadline?: string;
   earlyDeadline?: string;
   lateDeadline?: string;
+  finalCutoff?: string;
   acceptingApps: boolean;
   alreadyApplied: boolean;
 };
@@ -28,34 +31,15 @@ function CompetitionSummary({ comp }: { comp: Comp }) {
       <p className="text-sm text-muted">
         {[comp.dates, comp.location, comp.venue].filter(Boolean).join(" · ") || "Event details to be announced"}
       </p>
-      <div className="grid gap-4 md:grid-cols-2">
-        <section className="space-y-2" aria-label={`${comp.name} application deadlines`}>
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-muted">Application deadlines</h4>
-          <dl className="space-y-2">
-            <div className="rounded-lg border border-info-line bg-info-soft px-3 py-2">
-              <dt className="text-xs font-semibold uppercase tracking-wide">Regular</dt>
-              <dd className="mt-1 font-medium">{comp.earlyDeadline ? <LocalDateTime date={comp.earlyDeadline} /> : "Not set"}</dd>
-            </div>
-            <div className="rounded-lg border border-warning-line bg-warning-soft px-3 py-2">
-              <dt className="text-xs font-semibold uppercase tracking-wide">Late · final cutoff</dt>
-              <dd className="mt-1 font-medium">{comp.lateDeadline ? <LocalDateTime date={comp.lateDeadline} /> : "No automatic close"}</dd>
-            </div>
-          </dl>
-        </section>
-        <section className="space-y-2" aria-label={`${comp.name} host fees`}>
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-muted">Host fees · USD per team</h4>
-          <dl className="space-y-2">
-            <div className="rounded-lg border border-info-line bg-info-soft px-3 py-2">
-              <dt className="text-xs font-semibold uppercase tracking-wide">Regular</dt>
-              <dd className="mt-1 font-medium">{formatApplicationFee(comp.regularApplicationFeeCents)}</dd>
-            </div>
-            <div className="rounded-lg border border-warning-line bg-warning-soft px-3 py-2">
-              <dt className="text-xs font-semibold uppercase tracking-wide">Late</dt>
-              <dd className="mt-1 font-medium">{formatApplicationFee(comp.lateApplicationFeeCents)}</dd>
-            </div>
-          </dl>
-        </section>
-      </div>
+      <ApplicationPeriodSummary schedule={{
+        earlyDeadline: comp.earlyTierDeadline,
+        regularDeadline: comp.earlyDeadline,
+        lateDeadline: comp.lateDeadline,
+        finalCutoff: comp.finalCutoff,
+        earlyFeeCents: comp.earlyApplicationFeeCents,
+        regularFeeCents: comp.regularApplicationFeeCents,
+        lateFeeCents: comp.lateApplicationFeeCents,
+      }} />
     </div>
   );
 }
@@ -149,6 +133,7 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
                     <li key={comp.id} className="leading-relaxed">
                       {comp.name} <CompetitionTypeBadge isPartner={comp.isPartner} />
                       {comp.dates ? ` — ${comp.dates}` : ""}
+                      {comp.earlyTierDeadline ? <> · Early deadline <LocalDateTime date={comp.earlyTierDeadline} /></> : null}
                       {comp.earlyDeadline ? <> · Regular deadline <LocalDateTime date={comp.earlyDeadline} /></> : null}
                       {comp.lateDeadline ? <> · Late deadline <LocalDateTime date={comp.lateDeadline} /></> : null}
                     </li>

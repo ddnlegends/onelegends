@@ -6,6 +6,8 @@
  * viewing-order helpers. Keep this file free of `@/lib/prisma` and any other
  * server import, or it ends up in the browser bundle.
  */
+import { finalApplicationCutoff } from "@/lib/application-schedule";
+
 export const RUBRIC_CATEGORIES = [
   { key: "choreography", label: "Choreography", max: 10 },
   { key: "formations", label: "Formations", max: 10 },
@@ -23,6 +25,7 @@ type CompetitionGate = {
   judgingOpen: boolean;
   acceptingApps: boolean;
   applicationDeadline: Date | null;
+  applicationClosesAt?: Date | null;
   resultsReleasedAt?: Date | null;
   claimedAt?: Date | null;
   userId?: string | null;
@@ -40,14 +43,15 @@ export function isCompetitionOpen(
     acceptingApps: boolean;
     earlyApplicationDeadline?: Date | null;
     applicationDeadline: Date | null;
+    applicationClosesAt?: Date | null;
     resultsReleasedAt?: Date | null;
   },
   now = new Date(),
 ): boolean {
   if (comp.resultsReleasedAt) return false;
   if (!comp.acceptingApps) return false;
-  // The regular deadline is informational; only the late deadline closes applications.
-  if (comp.applicationDeadline && now > comp.applicationDeadline) return false;
+  const cutoff = finalApplicationCutoff(comp);
+  if (cutoff && now > cutoff) return false;
   return true;
 }
 

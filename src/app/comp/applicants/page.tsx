@@ -6,6 +6,8 @@ import { getActiveCompetitionId, isCompAdmin } from "@/lib/team-access";
 import { formatDate, statusLabel } from "@/lib/utils";
 import { visibleApplicationWhere } from "@/lib/payment-eligibility";
 import { CompDecisionBoard } from "@/components/CompDecisionBoard";
+import { applicationPhaseLabel } from "@/lib/application-schedule";
+import { formatApplicationFee } from "@/lib/competition-details";
 
 export default async function CompApplicantsPage() {
   const session = await auth();
@@ -25,6 +27,8 @@ export default async function CompApplicantsPage() {
           id: true,
           createdAt: true,
           status: true,
+          appliedPhase: true,
+          expectedFeeCents: true,
           compPaymentReceivedAt: true,
           team: {
             select: {
@@ -51,7 +55,7 @@ export default async function CompApplicantsPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-heading text-4xl">Applied teams</h1>
-          <p className="mt-2 text-muted">{competition.name} · Track competition payments for teams accepted after judging. Full rosters and results unlock after judging.</p>
+          <p className="mt-2 text-muted">{competition.name} · Review applicant names, application dates, dancer counts, phases, and expected host fees. Full rosters and results unlock after judging.</p>
         </div>
         {released ? (
           <a href="/api/comp/applicants/export" className="btn btn-primary">
@@ -77,6 +81,7 @@ export default async function CompApplicantsPage() {
                   Applied {formatDate(application.createdAt)} · {application.team._count.dancers} {application.team._count.dancers === 1 ? "dancer" : "dancers"}
                   {released ? ` · ${application.team.captains || "Captains TBA"}` : null}
                 </p>
+                <p className="mt-1 text-sm font-medium">{application.appliedPhase ? `${applicationPhaseLabel(application.appliedPhase)} phase · Expected host fee: ${formatApplicationFee(application.expectedFeeCents)}` : "Phase and expected host fee were not recorded for this earlier application."}</p>
               </div>
               {released ? (
                 <div className="space-y-2">

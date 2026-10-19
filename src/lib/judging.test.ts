@@ -51,6 +51,7 @@ describe("isCompetitionOpen", () => {
     expect(
       isCompetitionOpen({ ...claimedClosed, acceptingApps: true, applicationDeadline: null }, NOW),
     ).toBe(true);
+    expect(isCompetitionOpen({ ...claimedClosed, acceptingApps: true, applicationDeadline: null, applicationClosesAt: PAST }, NOW)).toBe(false);
     expect(
       isCompetitionOpen(
         { ...claimedClosed, acceptingApps: true, applicationDeadline: null, resultsReleasedAt: PAST },

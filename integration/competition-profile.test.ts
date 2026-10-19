@@ -105,6 +105,44 @@ it("retains existing free-text dates when a host only edits another detail", asy
   expect((await prisma.competitionProfile.findUniqueOrThrow({ where: { id: comp.id } })).dates).toBe(comp.dates);
 });
 
+it("saves an optional Early period and snapshots phase and fee when a team applies", async () => {
+  const comp = await host();
+  const data = detailsForm("40 x 32 feet");
+  const future = (days: number) => new Date(Date.now() + days * 86_400_000).toISOString();
+  const earlyAt = future(1);
+  const regularAt = future(2);
+  const lateAt = future(3);
+  data.set("earlyTierDeadline", earlyAt);
+  data.set("earlyApplicationDeadline", regularAt);
+  data.set("applicationDeadline", lateAt);
+  data.set("earlyApplicationFee", "25.00");
+  data.set("regularApplicationFee", "35.00");
+  data.set("lateApplicationFee", "45.00");
+  expect(await saveCompProfile(undefined, data)).toMatchObject({ ok: true });
+  const saved = await prisma.competitionProfile.findUniqueOrThrow({ where: { id: comp.id } });
+  expect(saved.earlyApplicationFeeCents).toBe(2500);
+  expect(saved.applicationClosesAt).toEqual(new Date(lateAt));
+
+  const teamUser = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.team } });
+  identity.userId = teamUser.id;
+  const selection = new FormData();
+  selection.append("competitionId", comp.id);
+  expect(await applyToCompetitions(undefined, selection)).toMatchObject({ ok: true });
+  const application = await prisma.application.findFirstOrThrow({
+    where: { competitionId: comp.id, team: { slug: E2E.teams.mine.slug } },
+  });
+  expect(application).toMatchObject({ appliedPhase: "EARLY", expectedFeeCents: 2500 });
+
+  identity.userId = saved.userId!;
+  data.set("earlyApplicationFee", "30.00");
+  expect(await saveCompProfile(undefined, data)).toMatchObject({ ok: true });
+  expect(await prisma.application.findUniqueOrThrow({ where: { id: application.id } })).toMatchObject({
+    appliedPhase: "EARLY", expectedFeeCents: 2500,
+  });
+  data.set("earlyTierDeadline", future(4));
+  expect(await saveCompProfile(undefined, data)).toHaveProperty("error");
+});
+
 const driveId = "1EvaXITNNCUf_u22R0gHwSxW7ytge3zaX";
 const driveUrl = `https://drive.google.com/file/d/${driveId}/view`;
 function packetForm(url = driveUrl) {

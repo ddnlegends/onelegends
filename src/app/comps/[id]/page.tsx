@@ -6,10 +6,9 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { isCompetitionOpen } from "@/lib/judging";
 import { isCompetitionVisibleToTeams } from "@/lib/competition-profile";
-import { LocalDateTime } from "@/components/LocalDateTime";
 import { getActiveTeamId, userHasTeamAccess } from "@/lib/team-access";
 import { TEAM_APPLY_OPS_BLOCKED_MESSAGE } from "@/lib/team-profile";
-import { formatApplicationFee } from "@/lib/competition-details";
+import { ApplicationPeriodSummary } from "@/components/ApplicationPeriodSummary";
 import type { ReactNode } from "react";
 
 export default async function CompPublicPage({
@@ -44,20 +43,6 @@ export default async function CompPublicPage({
     ["Stage", comp.stageSize],
     ["AV guidelines", comp.lighting],
     ["Production", comp.productionNotes],
-    ["Regular application fee (USD per team)", formatApplicationFee(comp.regularApplicationFeeCents)],
-    ["Late application fee (USD per team)", formatApplicationFee(comp.lateApplicationFeeCents)],
-    [
-      "Regular application deadline",
-      comp.earlyApplicationDeadline
-        ? <LocalDateTime date={comp.earlyApplicationDeadline} />
-        : "Not set",
-    ],
-    [
-      "Late application deadline",
-      comp.applicationDeadline
-        ? <LocalDateTime date={comp.applicationDeadline} />
-        : "No automatic close",
-    ],
   ];
 
   return (
@@ -84,6 +69,18 @@ export default async function CompPublicPage({
           </div>
         ))}
       </dl>
+      <section className="space-y-3 rounded-xl border border-line bg-card p-6">
+        <h2 className="font-heading text-2xl">Application periods</h2>
+        <ApplicationPeriodSummary schedule={{
+          earlyDeadline: comp.earlyTierDeadline,
+          regularDeadline: comp.earlyApplicationDeadline,
+          lateDeadline: comp.applicationDeadline,
+          finalCutoff: comp.applicationClosesAt,
+          earlyFeeCents: comp.earlyApplicationFeeCents,
+          regularFeeCents: comp.regularApplicationFeeCents,
+          lateFeeCents: comp.lateApplicationFeeCents,
+        }} />
+      </section>
       <section className="space-y-3 rounded-xl border border-line bg-card p-6">
         <h2 className="font-heading text-2xl">Payment instructions</h2>
         <p className="whitespace-pre-wrap break-words">{comp.paymentInstructions || "The host has not provided payment instructions yet. Contact the competition before sending payment."}</p>

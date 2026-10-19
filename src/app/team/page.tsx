@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { formatDate, statusLabel } from "@/lib/utils";
 import { teamVisibleApplicationStatus } from "@/lib/application-decisions";
+import { applicationPhaseLabel } from "@/lib/application-schedule";
+import { formatApplicationFee } from "@/lib/competition-details";
 import { teamProfileGaps, TEAM_APPLY_OPS_BLOCKED_MESSAGE } from "@/lib/team-profile";
 import {
   getActiveTeamId,
@@ -149,6 +151,7 @@ export default async function TeamDashboardPage() {
                     Applied {formatDate(app.createdAt)}
                     {app.competition.dates ? ` · ${app.competition.dates}` : ""}
                   </p>
+                  <p className="text-xs text-muted">{app.appliedPhase ? `${applicationPhaseLabel(app.appliedPhase)} phase · Expected host fee: ${formatApplicationFee(app.expectedFeeCents)}` : "Phase and expected host fee were not recorded for this earlier application."}</p>
                 </div>
                 <span className="text-sm">{statusLabel(teamVisibleApplicationStatus(app.status, app.competition.decisionsSubmittedAt))}</span>
               </li>

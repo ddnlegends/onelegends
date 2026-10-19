@@ -38,8 +38,10 @@ export default async function CompDashboardPage() {
       location: true,
       eventDate: true,
       acceptingApps: true,
+      earlyTierDeadline: true,
       earlyApplicationDeadline: true,
       applicationDeadline: true,
+      applicationClosesAt: true,
       claimedAt: true,
       userId: true,
       judgingOpen: true,
@@ -188,10 +190,11 @@ export default async function CompDashboardPage() {
                           ? "Waiting for a competition admin to claim it."
                           : comp.status === "APPS_OPEN"
                             ? <>
+                                {comp.earlyTierDeadline ? <>Early deadline <LocalDateTime date={comp.earlyTierDeadline} /> · </> : null}
                                 {comp.earlyApplicationDeadline ? <>Regular deadline <LocalDateTime date={comp.earlyApplicationDeadline} /></> : null}
                                 {comp.earlyApplicationDeadline && comp.applicationDeadline ? " · " : null}
                                 {comp.applicationDeadline ? <>Late deadline <LocalDateTime date={comp.applicationDeadline} /></> : null}
-                                {!comp.earlyApplicationDeadline && !comp.applicationDeadline ? "Teams can still apply." : null}
+                                {!comp.earlyTierDeadline && !comp.earlyApplicationDeadline && !comp.applicationDeadline ? "Teams can still apply." : null}
                               </>
                             : comp.isPartner && comp._count.moderatorAccess === 0
                               ? "No moderator assigned yet. Grant access before viewing."

@@ -66,14 +66,17 @@ export default async function TeamApplyPage() {
             dates: c.dates,
             location: c.location,
             venue: c.venue,
+            earlyApplicationFeeCents: c.earlyApplicationFeeCents,
             regularApplicationFeeCents: c.regularApplicationFeeCents,
             lateApplicationFeeCents: c.lateApplicationFeeCents,
+            earlyTierDeadline: c.earlyTierDeadline?.toISOString(),
             earlyDeadline: c.earlyApplicationDeadline
               ? c.earlyApplicationDeadline.toISOString()
               : undefined,
             lateDeadline: c.applicationDeadline
               ? c.applicationDeadline.toISOString()
               : undefined,
+            finalCutoff: c.applicationClosesAt?.toISOString(),
             acceptingApps: isCompetitionOpen(c),
             alreadyApplied: applied.has(c.id),
           }))}

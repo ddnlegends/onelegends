@@ -17,6 +17,7 @@ import { visibleApplicationWhere } from "@/lib/payment-eligibility";
 import { competitionProfileGaps } from "@/lib/competition-profile";
 import { isCompetitionOpen } from "@/lib/judging";
 import { formatEventDateRange, parseApplicationFee, parseEventDate } from "@/lib/competition-details";
+import { latestConfiguredDeadline } from "@/lib/application-schedule";
 
 const profileSchema = z.object({
   eventStartDate: z.string(),
@@ -24,6 +25,7 @@ const profileSchema = z.object({
   location: z.string(),
   venue: z.string(),
   venueAddress: z.string().max(1000, "Venue address must be 1,000 characters or fewer."),
+  earlyApplicationFee: z.string(),
   regularApplicationFee: z.string(),
   lateApplicationFee: z.string(),
   paymentInstructions: z.string().max(5000, "Payment instructions must be 5,000 characters or fewer."),
@@ -32,6 +34,7 @@ const profileSchema = z.object({
   lighting: z.string(),
   description: z.string(),
   acceptingApps: z.string().optional(),
+  earlyTierDeadline: z.string(),
   earlyApplicationDeadline: z.string(),
   applicationDeadline: z.string(),
 });
@@ -54,6 +57,7 @@ export async function saveCompProfile(
     location: String(formData.get("location") ?? "").trim(),
     venue: String(formData.get("venue") ?? "").trim(),
     venueAddress: String(formData.get("venueAddress") ?? "").trim(),
+    earlyApplicationFee: String(formData.get("earlyApplicationFee") ?? "").trim(),
     regularApplicationFee: String(formData.get("regularApplicationFee") ?? "").trim(),
     lateApplicationFee: String(formData.get("lateApplicationFee") ?? "").trim(),
     paymentInstructions: String(formData.get("paymentInstructions") ?? "").trim(),
@@ -62,6 +66,7 @@ export async function saveCompProfile(
     lighting: String(formData.get("lighting") ?? "").trim(),
     description: String(formData.get("description") ?? "").trim(),
     acceptingApps: formData.get("acceptingApps") ? "on" : "",
+    earlyTierDeadline: String(formData.get("earlyTierDeadline") ?? "").trim(),
     earlyApplicationDeadline: String(formData.get("earlyApplicationDeadline") ?? "").trim(),
     applicationDeadline: String(formData.get("applicationDeadline") ?? "").trim(),
   });
@@ -87,15 +92,21 @@ export async function saveCompProfile(
     return { error: "Choose event dates or select Dates to be announced." };
   }
 
+  const earlyApplicationFeeCents = parseApplicationFee(parsed.data.earlyApplicationFee);
   const regularApplicationFeeCents = parseApplicationFee(parsed.data.regularApplicationFee);
   const lateApplicationFeeCents = parseApplicationFee(parsed.data.lateApplicationFee);
-  if (regularApplicationFeeCents === "invalid" || lateApplicationFeeCents === "invalid") {
+  if (earlyApplicationFeeCents === "invalid" || regularApplicationFeeCents === "invalid" || lateApplicationFeeCents === "invalid") {
     return { error: "Application fees must be between $0 and $99,999.99, with at most two decimal places." };
   }
 
-  const earlyRaw = parsed.data.earlyApplicationDeadline;
-  const earlyApplicationDeadline = earlyRaw ? new Date(earlyRaw) : null;
-  if (earlyRaw && Number.isNaN(earlyApplicationDeadline?.getTime())) {
+  const earliestRaw = parsed.data.earlyTierDeadline;
+  const earlyTierDeadline = earliestRaw ? new Date(earliestRaw) : null;
+  if (earliestRaw && Number.isNaN(earlyTierDeadline?.getTime())) {
+    return { error: "Enter a valid early application deadline." };
+  }
+  const regularRaw = parsed.data.earlyApplicationDeadline;
+  const earlyApplicationDeadline = regularRaw ? new Date(regularRaw) : null;
+  if (regularRaw && Number.isNaN(earlyApplicationDeadline?.getTime())) {
     return { error: "Enter a valid regular application deadline." };
   }
   const lateRaw = parsed.data.applicationDeadline;
@@ -103,9 +114,22 @@ export async function saveCompProfile(
   if (lateRaw && Number.isNaN(applicationDeadline?.getTime())) {
     return { error: "Enter a valid late application deadline." };
   }
-  if (earlyApplicationDeadline && applicationDeadline && earlyApplicationDeadline >= applicationDeadline) {
-    return { error: "The regular deadline must be before the late deadline." };
+  const configuredDates = [earlyTierDeadline, earlyApplicationDeadline, applicationDeadline]
+    .filter((date): date is Date => date !== null);
+  if (configuredDates.some((date, index) => index > 0 && configuredDates[index - 1] >= date)) {
+    return { error: "Deadlines must run in order: Early, then Regular, then Late." };
   }
+  if (earlyApplicationFeeCents !== null && !earlyTierDeadline) {
+    return { error: "Add an Early deadline to use an Early fee." };
+  }
+
+  const scheduleChanged =
+    (earlyTierDeadline?.getTime() ?? null) !== (competition.earlyTierDeadline?.getTime() ?? null) ||
+    (earlyApplicationDeadline?.getTime() ?? null) !== (competition.earlyApplicationDeadline?.getTime() ?? null) ||
+    (applicationDeadline?.getTime() ?? null) !== (competition.applicationDeadline?.getTime() ?? null);
+  const applicationClosesAt = scheduleChanged
+    ? latestConfiguredDeadline({ earlyTierDeadline, earlyApplicationDeadline, applicationDeadline })
+    : competition.applicationClosesAt;
 
   const missingDetails = competitionProfileGaps({ ...parsed.data, dates });
   const acceptingApps = parsed.data.acceptingApps === "on" && missingDetails.length === 0;
@@ -138,6 +162,7 @@ export async function saveCompProfile(
       location: parsed.data.location,
       venue: parsed.data.venue,
       venueAddress: parsed.data.venueAddress,
+      earlyApplicationFeeCents,
       regularApplicationFeeCents,
       lateApplicationFeeCents,
       paymentInstructions: parsed.data.paymentInstructions,
@@ -146,8 +171,10 @@ export async function saveCompProfile(
       lighting: parsed.data.lighting,
       description: parsed.data.description,
       acceptingApps,
+      earlyTierDeadline,
       earlyApplicationDeadline,
       applicationDeadline,
+      applicationClosesAt,
       ...(acceptingApps
         ? { judgingOpen: false, livePosition: null, liveUpdatedAt: null }
         : {}),
@@ -172,7 +199,7 @@ export async function saveCompProfile(
     ok: true,
     message: missingDetails.length
       ? `Saved as a draft. Your competition is hidden from teams until you fill: ${missingDetails.join(", ")}.`
-      : isCompetitionOpen({ acceptingApps, applicationDeadline, resultsReleasedAt: competition.resultsReleasedAt })
+      : isCompetitionOpen({ acceptingApps, applicationDeadline, applicationClosesAt, resultsReleasedAt: competition.resultsReleasedAt })
         ? "Competition details saved. Your listing is visible and applications are open."
         : "Competition details saved. Your listing is visible, but applications are closed.",
   };

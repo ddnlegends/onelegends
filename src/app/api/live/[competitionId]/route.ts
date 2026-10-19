@@ -43,6 +43,7 @@ export async function GET(
         judgingOpen: true,
         acceptingApps: true,
         applicationDeadline: true,
+        applicationClosesAt: true,
         resultsReleasedAt: true,
         claimedAt: true,
         userId: true,
