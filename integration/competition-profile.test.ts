@@ -143,8 +143,14 @@ it("saves an optional Early period and snapshots phase and fee when a team appli
   expect(await saveCompProfile(undefined, data)).toHaveProperty("error");
 });
 
-it("saves each application's AV and lets its own team withdraw only while applications are open", async () => {
+it("preserves withdrawn submissions and recalculates AV, phase, and fee on reapplication", async () => {
   const competition = await prisma.competitionProfile.findUniqueOrThrow({ where: { slug: E2E.comps.open.slug } });
+  const daysFromNow = (days: number) => new Date(Date.now() + days * 86_400_000);
+  await prisma.competitionProfile.update({ where: { id: competition.id }, data: {
+    earlyTierDeadline: daysFromNow(1), earlyApplicationDeadline: daysFromNow(5),
+    applicationDeadline: daysFromNow(10), applicationClosesAt: daysFromNow(10),
+    earlyApplicationFeeCents: 2500, regularApplicationFeeCents: 3500, lateApplicationFeeCents: 4500,
+  } });
   const team = await prisma.teamProfile.findUniqueOrThrow({ where: { slug: E2E.teams.mine.slug } });
   const teamUser = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.team } });
   const otherUser = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.comp } });
@@ -152,7 +158,7 @@ it("saves each application's AV and lets its own team withdraw only while applic
   identity.userId = teamUser.id;
   expect(await applyToCompetitions(undefined, apply)).toMatchObject({ ok: true });
   const application = await prisma.application.findFirstOrThrow({ where: { teamId: team.id, competitionId: competition.id } });
-  expect(application.submittedAvDriveUrl).toBe(team.avDriveUrl);
+  expect(application).toMatchObject({ submittedAvDriveUrl: team.avDriveUrl, appliedPhase: "EARLY", expectedFeeCents: 2500 });
 
   const changedLink = "https://drive.google.com/file/d/1LpayQ7KwPVdYpaQ6gr6FyqC8r71LZke6/view";
   await prisma.teamProfile.update({ where: { id: team.id }, data: { avDriveUrl: changedLink } });
@@ -172,7 +178,22 @@ it("saves each application's AV and lets its own team withdraw only while applic
     removedAt: expect.any(Date),
   });
   expect(await prisma.application.count({ where: { competitionId: competition.id, removedAt: null } })).toBe(0);
-  expect(await applyToCompetitions(undefined, apply)).toMatchObject({ ok: true, message: expect.stringContaining("cannot be resubmitted") });
+  await prisma.competitionProfile.update({ where: { id: competition.id }, data: { earlyTierDeadline: daysFromNow(-1) } });
+  expect(await applyToCompetitions(undefined, apply)).toMatchObject({ ok: true, message: expect.stringContaining("Applied to 1 competition") });
+  const regular = await prisma.application.findFirstOrThrow({ where: { teamId: team.id, competitionId: competition.id, removedAt: null } });
+  expect(regular).toMatchObject({ submittedAvDriveUrl: changedLink, appliedPhase: "REGULAR", expectedFeeCents: 3500 });
+  const withdrawRegular = new FormData(); withdrawRegular.set("applicationId", regular.id);
+  expect(await withdrawTeamApplication(undefined, withdrawRegular)).toMatchObject({ ok: true });
+
+  await prisma.competitionProfile.update({ where: { id: competition.id }, data: { earlyApplicationDeadline: daysFromNow(-1) } });
+  expect(await applyToCompetitions(undefined, apply)).toMatchObject({ ok: true });
+  const late = await prisma.application.findFirstOrThrow({ where: { teamId: team.id, competitionId: competition.id, removedAt: null } });
+  expect(late).toMatchObject({ appliedPhase: "LATE", expectedFeeCents: 4500 });
+  expect(await prisma.application.count({ where: { teamId: team.id, competitionId: competition.id } })).toBe(3);
+  expect(await prisma.application.count({ where: { teamId: team.id, competitionId: competition.id, removedAt: null } })).toBe(1);
+  expect(await prisma.application.findUniqueOrThrow({ where: { id: application.id } })).toMatchObject({
+    submittedAvDriveUrl: team.avDriveUrl, appliedPhase: "EARLY", expectedFeeCents: 2500, removedAt: expect.any(Date),
+  });
   expect(await withdrawTeamApplication(undefined, withdraw)).toHaveProperty("error");
 });
 

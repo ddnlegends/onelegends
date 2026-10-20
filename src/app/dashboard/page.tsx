@@ -133,7 +133,8 @@ export default async function DashboardPage() {
 
   const gaps = team ? teamProfileGaps(team) : [];
   const applied = new Set(team?.applications.filter((a) => !a.removedAt).map((a) => a.competitionId) ?? []);
-  const withdrawn = new Set(team?.applications.filter((a) => a.removedAt).map((a) => a.competitionId) ?? []);
+  const withdrawn = new Set(team?.applications.filter((a) => a.removedAt && a.removalReason === "Withdrawn by team").map((a) => a.competitionId) ?? []);
+  const adminRemoved = new Set(team?.applications.filter((a) => a.removedAt && a.removalReason !== "Withdrawn by team").map((a) => a.competitionId) ?? []);
   const now = new Date();
 
   return (
@@ -355,7 +356,8 @@ export default async function DashboardPage() {
                     finalCutoff: c.applicationClosesAt?.toISOString(),
                     acceptingApps: isCompetitionOpen(c),
                     alreadyApplied: applied.has(c.id),
-                    withdrawn: withdrawn.has(c.id),
+                    withdrawn: !applied.has(c.id) && withdrawn.has(c.id),
+                    adminRemoved: adminRemoved.has(c.id),
                   }))}
                 />
               )}

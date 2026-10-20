@@ -331,7 +331,7 @@ model Application {
   competition  CompetitionProfile @relation(fields: [competitionId], references: [id], onDelete: Cascade)
   viewingSlots JudgeViewingSlot[]
 
-  @@unique([teamId, competitionId])
+  // A database partial unique index permits withdrawn history, but only one active application per team and competition.
   @@unique([competitionId, viewingPosition])
   @@index([competitionId])
   @@index([teamId])

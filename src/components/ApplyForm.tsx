@@ -24,6 +24,7 @@ type Comp = {
   acceptingApps: boolean;
   alreadyApplied: boolean;
   withdrawn: boolean;
+  adminRemoved: boolean;
 };
 
 function CompetitionSummary({ comp }: { comp: Comp }) {
@@ -96,7 +97,7 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
                           value={comp.id}
                           id={`comp-${comp.id}`}
                           defaultChecked={comp.alreadyApplied}
-                          disabled={comp.alreadyApplied || comp.withdrawn}
+                          disabled={comp.alreadyApplied || comp.adminRemoved}
                           className="mt-1.5 h-4 w-4 shrink-0"
                         />
                         <div>
@@ -105,7 +106,8 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
                             <CompetitionTypeBadge isPartner={comp.isPartner} />
                           </div>
                           {comp.alreadyApplied ? <p className="mt-1 text-xs font-semibold text-accent">Already applied</p> : null}
-                          {comp.withdrawn ? <p className="mt-1 text-xs font-semibold text-muted">Application withdrawn · cannot reapply online</p> : null}
+                          {comp.withdrawn && !comp.adminRemoved ? <p className="mt-1 text-xs font-semibold text-accent">Withdrawn before · reapply at the current phase and fee</p> : null}
+                          {comp.adminRemoved ? <p className="mt-1 text-xs font-semibold text-muted">Removed by tech admins · contact them for help</p> : null}
                         </div>
                       </div>
                       <Link href={`/comps/${comp.id}`} className="text-sm font-medium text-accent underline">Details &amp; payment</Link>

@@ -13,7 +13,7 @@ export function WithdrawApplicationForm({ applicationId, competitionName }: {
       action={action}
       className="flex flex-col items-start gap-1"
       onSubmit={(event) => {
-        if (!window.confirm(`Withdraw your application to ${competitionName}? This cannot be undone or resubmitted online.`)) {
+        if (!window.confirm(`Withdraw your application to ${competitionName}? You can reapply while applications are open, at the phase and fee then in effect.`)) {
           event.preventDefault();
         }
       }}

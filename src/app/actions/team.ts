@@ -271,13 +271,18 @@ export async function applyToCompetitions(
 
   const existing = await prisma.application.findMany({
     where: { teamId: team.id, competitionId: { in: open.map((c) => c.id) } },
-    select: { competitionId: true, removedAt: true },
+    select: { competitionId: true, removedAt: true, removalReason: true },
   });
-  const already = new Set(existing.map((e) => e.competitionId));
-  const toCreate = open.filter((c) => !already.has(c.id));
+  const toCreate = open.filter((competition) => {
+    const prior = existing.filter((application) => application.competitionId === competition.id);
+    return prior.length === 0 || prior.every((application) =>
+      application.removedAt !== null && application.removalReason === "Withdrawn by team",
+    );
+  });
 
+  let created = 0;
   if (toCreate.length) {
-    await prisma.application.createMany({
+    const result = await prisma.application.createMany({
       data: toCreate.map((c) => ({
         teamId: team.id,
         competitionId: c.id,
@@ -286,19 +291,18 @@ export async function applyToCompetitions(
         appliedPhase: applicationPhaseAt(c, appliedAt),
         expectedFeeCents: expectedApplicationFee(c, applicationPhaseAt(c, appliedAt)),
       })),
+      skipDuplicates: true,
     });
+    created = result.count;
   }
 
-  const skipped = selected.length - toCreate.length;
-  const withdrawn = existing.some((application) => application.removedAt);
+  const skipped = selected.length - created;
   const parts = [
-    toCreate.length
-      ? `Applied to ${toCreate.length} competition${toCreate.length === 1 ? "" : "s"}.`
-      : withdrawn
-        ? "No new applications. A withdrawn application cannot be resubmitted online."
-        : "No new applications (already applied to the selected comps).",
+    created
+      ? `Applied to ${created} competition${created === 1 ? "" : "s"}.`
+      : "No new applications (already applied or unavailable).",
   ];
-  if (skipped > 0 && toCreate.length) {
+  if (skipped > 0 && created) {
     parts.push(`${skipped} already on file were skipped.`);
   }
 
@@ -344,5 +348,5 @@ export async function withdrawTeamApplication(
   });
   if ("error" in result) return result;
   revalidateApplicationSurfaces();
-  return { ok: true, message: `Your application to ${result.name} was withdrawn.` };
+  return { ok: true, message: `Your application to ${result.name} was withdrawn. You can reapply while applications are open at the current phase and fee.` };
 }
