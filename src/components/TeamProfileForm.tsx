@@ -235,6 +235,7 @@ export function TeamProfileForm({ profile }: { profile: Profile }) {
           </p>
           <p className="text-xs text-muted">
             Use a Google Drive <strong>file</strong> link so judges can watch in-app. Folder links cannot play inline without showing file names.
+            Changing this profile link affects future applications only; AV links already submitted to competitions stay fixed.
           </p>
         </div>
         <div className="field sm:col-span-2">

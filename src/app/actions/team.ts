@@ -5,8 +5,8 @@
  *
  * Callers must be an admin of their active team. Applying needs a complete
  * profile (`teamProfileGaps`), no circuit block, and an open competition. The
- * AV link is locked while any application sits in an unreleased viewing order,
- * so the video judges see cannot change mid-judging.
+ * Each new application keeps its own AV link. Legacy applications without a
+ * saved link retain the viewing-order edit lock for judging safety.
  */
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -15,6 +15,7 @@ import { requireUser } from "@/app/actions/auth";
 import { isCompetitionOpen } from "@/lib/judging";
 import { applicationPhaseAt, expectedApplicationFee } from "@/lib/application-schedule";
 import { isCompetitionVisibleToTeams } from "@/lib/competition-profile";
+import { canTeamWithdrawApplication } from "@/lib/application-withdrawal";
 import { parseDriveUrl } from "@/lib/drive";
 import {
   teamProfileGaps,
@@ -54,6 +55,16 @@ function revalidateLiveTeamSurfaces() {
   revalidatePath("/dashboard");
   revalidatePath("/judge", "layout");
   revalidatePath("/comp", "layout");
+}
+
+function revalidateApplicationSurfaces() {
+  revalidateLiveTeamSurfaces();
+  revalidatePath("/team/apply");
+  revalidatePath("/comp/applicants", "layout");
+  revalidatePath("/ops/teams", "layout");
+  revalidatePath("/ops/competitions", "layout");
+  revalidatePath("/ops/comps", "layout");
+  revalidatePath("/moderator", "layout");
 }
 
 async function requireApprovedTeam() {
@@ -118,6 +129,7 @@ export async function saveTeamProfile(
       avDriveUrl: true,
       applications: {
         select: {
+          submittedAvDriveUrl: true,
           viewingPosition: true,
           competition: { select: { name: true, resultsReleasedAt: true } },
         },
@@ -127,11 +139,11 @@ export async function saveTeamProfile(
   if (!existing) return { error: "Team profile missing." };
   if (parsed.data.avDriveUrl !== existing.avDriveUrl) {
     const judging = existing.applications.find(
-      (app) => app.viewingPosition != null && !app.competition.resultsReleasedAt,
+      (app) => !app.submittedAvDriveUrl && app.viewingPosition != null && !app.competition.resultsReleasedAt,
     );
     if (judging) {
       return {
-        error: `Your audition video is locked until ${judging.competition.name} releases results. Contact circuit ops if the link is broken.`,
+        error: `A legacy application for ${judging.competition.name} is using this AV link during judging. Contact circuit ops if the link is broken.`,
       };
     }
   }
@@ -259,7 +271,7 @@ export async function applyToCompetitions(
 
   const existing = await prisma.application.findMany({
     where: { teamId: team.id, competitionId: { in: open.map((c) => c.id) } },
-    select: { competitionId: true },
+    select: { competitionId: true, removedAt: true },
   });
   const already = new Set(existing.map((e) => e.competitionId));
   const toCreate = open.filter((c) => !already.has(c.id));
@@ -269,6 +281,7 @@ export async function applyToCompetitions(
       data: toCreate.map((c) => ({
         teamId: team.id,
         competitionId: c.id,
+        submittedAvDriveUrl: team.avDriveUrl,
         createdAt: appliedAt,
         appliedPhase: applicationPhaseAt(c, appliedAt),
         expectedFeeCents: expectedApplicationFee(c, applicationPhaseAt(c, appliedAt)),
@@ -277,17 +290,59 @@ export async function applyToCompetitions(
   }
 
   const skipped = selected.length - toCreate.length;
+  const withdrawn = existing.some((application) => application.removedAt);
   const parts = [
     toCreate.length
       ? `Applied to ${toCreate.length} competition${toCreate.length === 1 ? "" : "s"}.`
-      : "No new applications (already applied to the selected comps).",
+      : withdrawn
+        ? "No new applications. A withdrawn application cannot be resubmitted online."
+        : "No new applications (already applied to the selected comps).",
   ];
   if (skipped > 0 && toCreate.length) {
     parts.push(`${skipped} already on file were skipped.`);
   }
 
-  revalidatePath("/team");
-  revalidatePath("/team/apply");
-  revalidatePath("/comp");
+  revalidateApplicationSurfaces();
   return { ok: true, message: parts.join(" ") };
+}
+
+/** Teams may withdraw only while their competition is accepting applications. */
+export async function withdrawTeamApplication(
+  _prev: { error?: string; ok?: boolean; message?: string } | undefined,
+  formData: FormData,
+): Promise<{ error?: string; ok?: boolean; message?: string }> {
+  const access = await requireApprovedTeam();
+  if (!("teamId" in access)) return { error: access.error };
+  const applicationId = String(formData.get("applicationId") ?? "");
+  if (!applicationId) return { error: "Application not found." };
+
+  const target = await prisma.application.findUnique({
+    where: { id: applicationId },
+    select: { teamId: true, competitionId: true },
+  });
+  if (!target || target.teamId !== access.teamId) return { error: "Application not found." };
+
+  const result = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${target.competitionId}))`;
+    const application = await tx.application.findUnique({
+      where: { id: applicationId },
+      include: { competition: true },
+    });
+    if (!application || application.teamId !== access.teamId) return { error: "Application not found." };
+    if (!canTeamWithdrawApplication(application)) {
+      return { error: "This competition is no longer accepting applications or viewing has started. Contact tech admins for help." };
+    }
+    await tx.application.update({
+      where: { id: application.id },
+      data: {
+        removedAt: new Date(),
+        removedByEmail: access.user.email ?? "Team admin",
+        removalReason: "Withdrawn by team",
+      },
+    });
+    return { name: application.competition.name };
+  });
+  if ("error" in result) return result;
+  revalidateApplicationSurfaces();
+  return { ok: true, message: `Your application to ${result.name} was withdrawn.` };
 }

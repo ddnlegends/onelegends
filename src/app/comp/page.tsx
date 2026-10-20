@@ -11,6 +11,7 @@ import {
   isPlatformAdmin,
 } from "@/lib/team-access";
 import { CompSwitcher } from "@/components/CompSwitcher";
+import { submittedApplicationAvUrl } from "@/lib/application-av";
 
 function shuffle<T>(items: T[], seed: string): T[] {
   const copy = [...items];
@@ -65,7 +66,7 @@ export default async function CompDashboardPage() {
   const years = apps
     .map((app) => app.team.yearsEstablished)
     .filter((value): value is number => value != null);
-  const withAv = apps.filter((app) => app.team.avDriveUrl.trim()).length;
+  const withAv = apps.filter((app) => submittedApplicationAvUrl(app).trim()).length;
   const dietaryNotes = apps.reduce(
     (sum, app) =>
       sum +

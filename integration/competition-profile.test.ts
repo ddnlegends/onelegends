@@ -7,7 +7,7 @@ vi.mock("next/headers", () => ({ cookies: async () => ({ get: () => undefined })
 vi.mock("@/auth", () => ({ auth: async () => identity.userId ? { user: { id: identity.userId } } : null }));
 
 import { saveCompProfile } from "@/app/actions/comp";
-import { applyToCompetitions } from "@/app/actions/team";
+import { applyToCompetitions, withdrawTeamApplication } from "@/app/actions/team";
 import { saveCompetitionPacketLink } from "@/app/actions/competition-packet";
 import { GET as downloadPacket } from "@/app/api/competitions/[id]/packet/route";
 import { resetCompClaim, softResetCompClaim } from "@/app/actions/team-access";
@@ -141,6 +141,39 @@ it("saves an optional Early period and snapshots phase and fee when a team appli
   });
   data.set("earlyTierDeadline", future(4));
   expect(await saveCompProfile(undefined, data)).toHaveProperty("error");
+});
+
+it("saves each application's AV and lets its own team withdraw only while applications are open", async () => {
+  const competition = await prisma.competitionProfile.findUniqueOrThrow({ where: { slug: E2E.comps.open.slug } });
+  const team = await prisma.teamProfile.findUniqueOrThrow({ where: { slug: E2E.teams.mine.slug } });
+  const teamUser = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.team } });
+  const otherUser = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.comp } });
+  const apply = new FormData(); apply.set("competitionId", competition.id);
+  identity.userId = teamUser.id;
+  expect(await applyToCompetitions(undefined, apply)).toMatchObject({ ok: true });
+  const application = await prisma.application.findFirstOrThrow({ where: { teamId: team.id, competitionId: competition.id } });
+  expect(application.submittedAvDriveUrl).toBe(team.avDriveUrl);
+
+  const changedLink = "https://drive.google.com/file/d/1LpayQ7KwPVdYpaQ6gr6FyqC8r71LZke6/view";
+  await prisma.teamProfile.update({ where: { id: team.id }, data: { avDriveUrl: changedLink } });
+  expect((await prisma.application.findUniqueOrThrow({ where: { id: application.id } })).submittedAvDriveUrl).toBe(team.avDriveUrl);
+
+  const withdraw = new FormData(); withdraw.set("applicationId", application.id);
+  identity.userId = otherUser.id;
+  expect(await withdrawTeamApplication(undefined, withdraw)).toHaveProperty("error");
+  identity.userId = teamUser.id;
+  await prisma.competitionProfile.update({ where: { id: competition.id }, data: { acceptingApps: false } });
+  expect(await withdrawTeamApplication(undefined, withdraw)).toHaveProperty("error");
+  await prisma.competitionProfile.update({ where: { id: competition.id }, data: { acceptingApps: true } });
+  expect(await withdrawTeamApplication(undefined, withdraw)).toMatchObject({ ok: true });
+  expect(await prisma.application.findUniqueOrThrow({ where: { id: application.id } })).toMatchObject({
+    submittedAvDriveUrl: team.avDriveUrl,
+    removalReason: "Withdrawn by team",
+    removedAt: expect.any(Date),
+  });
+  expect(await prisma.application.count({ where: { competitionId: competition.id, removedAt: null } })).toBe(0);
+  expect(await applyToCompetitions(undefined, apply)).toMatchObject({ ok: true, message: expect.stringContaining("cannot be resubmitted") });
+  expect(await withdrawTeamApplication(undefined, withdraw)).toHaveProperty("error");
 });
 
 const driveId = "1EvaXITNNCUf_u22R0gHwSxW7ytge3zaX";

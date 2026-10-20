@@ -26,7 +26,8 @@ export default async function TeamApplyPage() {
     orderBy: [{ eventDate: "desc" }, { name: "asc" }],
   });
   const competitions = listings.filter(isCompetitionVisibleToTeams);
-  const applied = new Set(team.applications.map((a) => a.competitionId));
+  const applied = new Set(team.applications.filter((a) => !a.removedAt).map((a) => a.competitionId));
+  const withdrawn = new Set(team.applications.filter((a) => a.removedAt).map((a) => a.competitionId));
 
   return (
     <div className="space-y-6">
@@ -79,6 +80,7 @@ export default async function TeamApplyPage() {
             finalCutoff: c.applicationClosesAt?.toISOString(),
             acceptingApps: isCompetitionOpen(c),
             alreadyApplied: applied.has(c.id),
+            withdrawn: withdrawn.has(c.id),
           }))}
         />
       )}

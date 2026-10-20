@@ -40,6 +40,8 @@ import { ApplyForm } from "@/components/ApplyForm";
 import { InstantSelect } from "@/components/InstantSelect";
 import { TeamPhoto } from "@/components/TeamPhoto";
 import { visibleApplicationWhere } from "@/lib/payment-eligibility";
+import { WithdrawApplicationForm } from "@/components/WithdrawApplicationForm";
+import { canTeamWithdrawApplication } from "@/lib/application-withdrawal";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -130,7 +132,9 @@ export default async function DashboardPage() {
   const competitionGaps = competition ? competitionProfileGaps(competition) : [];
 
   const gaps = team ? teamProfileGaps(team) : [];
-  const applied = new Set(team?.applications.map((a) => a.competitionId) ?? []);
+  const applied = new Set(team?.applications.filter((a) => !a.removedAt).map((a) => a.competitionId) ?? []);
+  const withdrawn = new Set(team?.applications.filter((a) => a.removedAt).map((a) => a.competitionId) ?? []);
+  const now = new Date();
 
   return (
     <div className="space-y-10">
@@ -351,6 +355,7 @@ export default async function DashboardPage() {
                     finalCutoff: c.applicationClosesAt?.toISOString(),
                     acceptingApps: isCompetitionOpen(c),
                     alreadyApplied: applied.has(c.id),
+                    withdrawn: withdrawn.has(c.id),
                   }))}
                 />
               )}
@@ -375,7 +380,12 @@ export default async function DashboardPage() {
                       </p>
                       <p className="text-xs text-muted">{app.appliedPhase ? `${applicationPhaseLabel(app.appliedPhase)} phase · Expected host fee: ${formatApplicationFee(app.expectedFeeCents)}` : "Phase and expected host fee were not recorded for this earlier application."}</p>
                     </div>
-                    <span className="text-sm">{statusLabel(teamVisibleApplicationStatus(app.status, app.competition.decisionsSubmittedAt))}</span>
+                    <div className="flex flex-col items-start gap-2">
+                      <span className="text-sm">{app.removedAt ? app.removalReason === "Withdrawn by team" ? "Withdrawn" : "Removed" : statusLabel(teamVisibleApplicationStatus(app.status, app.competition.decisionsSubmittedAt))}</span>
+                      {canTeamWithdrawApplication(app, now) ? (
+                        <WithdrawApplicationForm applicationId={app.id} competitionName={app.competition.name} />
+                      ) : null}
+                    </div>
                   </li>
                 ))}
               </ul>

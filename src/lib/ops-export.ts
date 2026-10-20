@@ -23,6 +23,7 @@ import { avDancerNames, statusLabel } from "@/lib/utils";
 import { moderatorResultsReady } from "@/lib/judge-panel-completion";
 import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 import { applicationPhaseLabel } from "@/lib/application-schedule";
+import { submittedApplicationAvUrl } from "@/lib/application-av";
 
 export const EXPORT_DATASETS = [
   {
@@ -221,7 +222,7 @@ async function lineupsTable(competitionId?: string): Promise<ExportCell[][]> {
       app.team.captains,
       app.team.rosterSize ?? app.team.dancers.length,
       avDancerNames(app.team.dancers),
-      app.team.avDriveUrl,
+      submittedApplicationAvUrl(app),
       applicationPhaseLabel(app.appliedPhase),
       formatApplicationFee(app.expectedFeeCents),
     ]),

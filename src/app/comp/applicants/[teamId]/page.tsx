@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getActiveCompetitionId, isCompAdmin } from "@/lib/team-access";
 import { TeamDetails } from "@/components/TeamDetails";
 import { visibleApplicationWhere } from "@/lib/payment-eligibility";
+import { submittedApplicationAvUrl } from "@/lib/application-av";
 
 export default async function CompApplicantDetailsPage({ params }: { params: Promise<{ teamId: string }> }) {
   const session = await auth();
@@ -25,7 +26,7 @@ export default async function CompApplicantDetailsPage({ params }: { params: Pro
   return (
     <div className="space-y-7">
       <Link href="/comp/applicants" className="text-sm underline">← Applied teams</Link>
-      <TeamDetails team={application.team} />
+      <TeamDetails team={{ ...application.team, avDriveUrl: submittedApplicationAvUrl(application) }} />
     </div>
   );
 }

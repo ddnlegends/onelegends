@@ -315,6 +315,7 @@ model Application {
   teamId                     String
   competitionId              String
   status                     ApplicationStatus @default(PENDING)
+  submittedAvDriveUrl        String?
   appliedPhase               ApplicationPhase?
   expectedFeeCents           Int?
   viewingPosition            Int?

@@ -17,6 +17,7 @@ import {
 import { hasModeratorAccess } from "@/lib/moderator";
 import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 import { moderatorResultsReady } from "@/lib/judge-panel-completion";
+import { submittedApplicationAvUrl } from "@/lib/application-av";
 
 export default async function ModeratorCompetitionPage({
   params,
@@ -44,6 +45,7 @@ export default async function ModeratorCompetitionPage({
         select: {
           id: true,
           viewingPosition: true,
+          submittedAvDriveUrl: true,
           team: { select: { avDriveUrl: true } },
         },
       },
@@ -75,7 +77,7 @@ export default async function ModeratorCompetitionPage({
   const status = competitionStatus(competition);
   const teams = competition.applications.map((app) => ({
     position: app.viewingPosition as number,
-    avDriveUrl: app.team.avDriveUrl,
+    avDriveUrl: submittedApplicationAvUrl(app),
     judges: activeJudges.map((assignment) => ({
       id: assignment.id,
       name: assignment.judge.name,

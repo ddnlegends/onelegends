@@ -23,6 +23,7 @@ type Comp = {
   finalCutoff?: string;
   acceptingApps: boolean;
   alreadyApplied: boolean;
+  withdrawn: boolean;
 };
 
 function CompetitionSummary({ comp }: { comp: Comp }) {
@@ -60,8 +61,8 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
     <form action={formAction} className="space-y-6">
       <p className="text-sm text-muted">
         One application, many comps. Check the ones you want — your complete
-        team profile, AV Drive link, roster, dietary notes, and shirt sizes go
-        with it.{" "}
+        team profile and roster stay current for each competition. The AV Drive
+        link is saved when you apply and will not change if you edit your profile.{" "}
         Pay via Zelle or PayPal to{" "}
         <a href="mailto:legends@desidancenetwork.org" className="text-accent underline">
           legends@desidancenetwork.org
@@ -95,7 +96,7 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
                           value={comp.id}
                           id={`comp-${comp.id}`}
                           defaultChecked={comp.alreadyApplied}
-                          disabled={comp.alreadyApplied}
+                          disabled={comp.alreadyApplied || comp.withdrawn}
                           className="mt-1.5 h-4 w-4 shrink-0"
                         />
                         <div>
@@ -104,6 +105,7 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
                             <CompetitionTypeBadge isPartner={comp.isPartner} />
                           </div>
                           {comp.alreadyApplied ? <p className="mt-1 text-xs font-semibold text-accent">Already applied</p> : null}
+                          {comp.withdrawn ? <p className="mt-1 text-xs font-semibold text-muted">Application withdrawn · cannot reapply online</p> : null}
                         </div>
                       </div>
                       <Link href={`/comps/${comp.id}`} className="text-sm font-medium text-accent underline">Details &amp; payment</Link>

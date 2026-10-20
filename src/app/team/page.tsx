@@ -14,6 +14,8 @@ import {
 import { setActiveTeamAction } from "@/app/actions/team-access";
 import { InstantSelect } from "@/components/InstantSelect";
 import { TeamPhoto } from "@/components/TeamPhoto";
+import { WithdrawApplicationForm } from "@/components/WithdrawApplicationForm";
+import { canTeamWithdrawApplication } from "@/lib/application-withdrawal";
 
 export default async function TeamDashboardPage() {
   const session = await auth();
@@ -38,6 +40,7 @@ export default async function TeamDashboardPage() {
 
   const gaps = teamProfileGaps(team);
   const applyHref = gaps.length ? "/team/profile" : "/team/apply";
+  const now = new Date();
 
   return (
     <div className="space-y-8">
@@ -152,8 +155,20 @@ export default async function TeamDashboardPage() {
                     {app.competition.dates ? ` · ${app.competition.dates}` : ""}
                   </p>
                   <p className="text-xs text-muted">{app.appliedPhase ? `${applicationPhaseLabel(app.appliedPhase)} phase · Expected host fee: ${formatApplicationFee(app.expectedFeeCents)}` : "Phase and expected host fee were not recorded for this earlier application."}</p>
+                  {!app.removedAt ? (
+                    <p className="text-xs text-muted">
+                      {app.submittedAvDriveUrl ? "This competition's AV link stays fixed. " : "This earlier application uses your current AV link. "}
+                      Profile and roster updates remain live.
+                      {app.submittedAvDriveUrl ? <> <a href={app.submittedAvDriveUrl} target="_blank" rel="noopener noreferrer" className="text-accent underline">View submitted AV</a></> : null}
+                    </p>
+                  ) : null}
                 </div>
-                <span className="text-sm">{statusLabel(teamVisibleApplicationStatus(app.status, app.competition.decisionsSubmittedAt))}</span>
+                <div className="flex flex-col items-start gap-2">
+                  <span className="text-sm">{app.removedAt ? app.removalReason === "Withdrawn by team" ? "Withdrawn" : "Removed" : statusLabel(teamVisibleApplicationStatus(app.status, app.competition.decisionsSubmittedAt))}</span>
+                  {canTeamWithdrawApplication(app, now) ? (
+                    <WithdrawApplicationForm applicationId={app.id} competitionName={app.competition.name} />
+                  ) : null}
+                </div>
               </li>
             ))}
           </ul>

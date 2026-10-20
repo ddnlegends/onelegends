@@ -30,6 +30,7 @@ export async function GET(request: Request) {
           id: true,
           teamId: true,
           status: true,
+          submittedAvDriveUrl: true,
           appliedPhase: true,
           expectedFeeCents: true,
           createdAt: true,

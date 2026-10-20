@@ -33,7 +33,7 @@ export default async function TeamProfilePage() {
         <p className="mt-2 max-w-2xl text-muted">
           Required before you can apply: team logo, blurb, AV Drive file,
           captains, years, roster count, and at least one dancer with a t-shirt
-          size. Every selected competition receives this same packet.
+          size. Competitions see your current profile and roster after results release. Each application keeps the AV link you submitted when you applied.
         </p>
       </div>
       <TeamProfileForm profile={team} />

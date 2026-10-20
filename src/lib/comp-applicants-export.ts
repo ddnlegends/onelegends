@@ -4,10 +4,12 @@ import type { ExportCell, ExportTable } from "@/lib/ops-export";
 import { statusLabel } from "@/lib/utils";
 import { applicationPhaseLabel } from "@/lib/application-schedule";
 import { formatApplicationFee } from "@/lib/competition-details";
+import { submittedApplicationAvUrl } from "@/lib/application-av";
 
 export type DirectorApplicant = {
   id: string;
   status: ApplicationStatus;
+  submittedAvDriveUrl?: string | null;
   appliedPhase?: ApplicationPhase | null;
   expectedFeeCents?: number | null;
   createdAt: Date;
@@ -88,6 +90,7 @@ export function buildDirectorApplicantWorkbook(
 
   for (const application of ordered) {
     const { team } = application;
+    const avDriveUrl = submittedApplicationAvUrl(application);
     const result = ranking.get(application.id);
     const rank = result?.rank;
     const rankLabel = rank ?? "Unranked";
@@ -101,7 +104,7 @@ export function buildDirectorApplicantWorkbook(
       result?.row.judges.length ?? 0,
       team.captains,
       rosterSize,
-      team.avDriveUrl,
+      avDriveUrl,
       date(application.createdAt),
       applicationPhaseLabel(application.appliedPhase ?? null),
       formatApplicationFee(application.expectedFeeCents ?? null),
@@ -134,7 +137,7 @@ export function buildDirectorApplicantWorkbook(
       ["Profile", "Years established", team.yearsEstablished ?? ""],
       ["Profile", "Roster size", rosterSize],
       ["Profile", "AV dancers", team.dancers.filter((dancer) => dancer.inAV).map((dancer) => dancer.name).join(", ")],
-      ["Profile", "AV link", team.avDriveUrl],
+      ["Profile", "AV link", avDriveUrl],
       ["Profile", "Team wiki", team.wikiUrl],
       ["Profile", "Team logo", logoLink(team.photoUrl, origin)],
       ["Profile", "Team blurb", team.blurb],
