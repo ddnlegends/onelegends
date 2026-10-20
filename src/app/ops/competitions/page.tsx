@@ -17,6 +17,7 @@ import { prisma } from "@/lib/prisma";
 import { competitionStatus } from "@/lib/judging";
 import { formatDate, statusLabel } from "@/lib/utils";
 import { formatApplicationFee } from "@/lib/competition-details";
+import { competitionApplicationClosureReasons } from "@/lib/competition-profile";
 
 const JUDGE_STATUS: Record<string, string> = {
   APPROVED: "Approved",
@@ -55,6 +56,7 @@ export default async function OpsCompetitionsPage() {
   });
   const claimed = competitions.filter((comp) => comp.claimedAt || comp.userId).length;
   const released = competitions.filter((comp) => comp.resultsReleasedAt).length;
+  const now = new Date();
 
   return (
     <div className="space-y-8">
@@ -93,7 +95,9 @@ export default async function OpsCompetitionsPage() {
                 {group.length === 0 ? <p className="text-sm text-muted">No competitions in this group yet.</p> : null}
                 <div className="space-y-3">
           {group.map((competition) => {
-            const status = competitionStatus(competition);
+            const closureReasons = competitionApplicationClosureReasons(competition, now);
+            const status = competitionStatus(competition, now);
+            const displayStatus = status === "APPS_OPEN" && closureReasons.length ? "APPS_CLOSED" : status;
             const approved = competition.memberships.filter((m) => m.status === "APPROVED");
             const pending = competition.memberships.filter((m) => m.status === "PENDING");
             const approvedJudges = competition.judgeAssignments.filter(
@@ -121,7 +125,7 @@ export default async function OpsCompetitionsPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="truncate font-heading text-xl">{competition.name}</span>
                       <CompetitionTypeBadge isPartner={competition.isPartner} />
-                      <CompStatusPill status={status} />
+                      <CompStatusPill status={displayStatus} />
                       {pending.length || competition.invites.length ? (
                         <Chip tone="warn">
                           {pending.length + competition.invites.length} pending
@@ -138,6 +142,9 @@ export default async function OpsCompetitionsPage() {
                         .filter(Boolean)
                         .join(" · ")}
                     </p>
+                    {closureReasons.length ? (
+                      <p className="text-sm text-warning">Why applications are closed: {closureReasons.join(" · ")}</p>
+                    ) : null}
                   </div>
                 }
               >
@@ -213,6 +220,7 @@ export default async function OpsCompetitionsPage() {
                 <PanelSection title="Applications and judging">
                   <InfoGrid
                     items={[
+                      { label: "Application availability", value: closureReasons.length ? `Closed: ${closureReasons.join(" · ")}` : "Open to teams", wide: true },
                       { label: "Accepting applications", value: competition.acceptingApps ? "Yes" : "No" },
                       {
                         label: "Early application deadline",
