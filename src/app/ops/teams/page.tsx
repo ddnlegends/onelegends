@@ -14,6 +14,7 @@ import { TeamDetails } from "@/components/TeamDetails";
 import { TeamPhoto } from "@/components/TeamPhoto";
 import { prisma } from "@/lib/prisma";
 import { formatDate, statusLabel } from "@/lib/utils";
+import { currentApplicationWhere } from "@/lib/payment-eligibility";
 
 export default async function OpsTeamsPage() {
   await requirePlatformAdminPage();
@@ -27,6 +28,7 @@ export default async function OpsTeamsPage() {
       },
       invites: { orderBy: { createdAt: "desc" } },
       applications: {
+        where: currentApplicationWhere,
         include: { competition: { select: { id: true, name: true } } },
         orderBy: { createdAt: "desc" },
       },

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { PageShell } from "@/components/PageShell";
 import { MarkAllRegistrationPaidForm, RegistrationPaymentForm } from "@/components/PaymentForms";
 import { requirePlatformAdminPage } from "@/lib/page-guards";
-import { dollars } from "@/lib/payment-eligibility";
+import { currentApplicationWhere, dollars } from "@/lib/payment-eligibility";
 import { prisma } from "@/lib/prisma";
 import { formatDate, statusLabel } from "@/lib/utils";
 
@@ -13,6 +13,7 @@ export default async function OpsPaymentsPage() {
     prisma.competitionProfile.findMany({ orderBy: { name: "asc" } }),
     prisma.application.findMany({
       where: {
+        ...currentApplicationWhere,
         OR: [
           { status: "ACCEPTED", competition: { decisionsSubmittedAt: { not: null } } },
           { compPaymentReceivedAt: { not: null } },

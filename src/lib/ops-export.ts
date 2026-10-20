@@ -21,7 +21,7 @@ import {
 import { rankTeams } from "@/lib/results";
 import { avDancerNames, statusLabel } from "@/lib/utils";
 import { moderatorResultsReady } from "@/lib/judge-panel-completion";
-import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
+import { currentApplicationWhere, viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 import { applicationPhaseLabel } from "@/lib/application-schedule";
 import { submittedApplicationAvUrl } from "@/lib/application-av";
 
@@ -34,7 +34,7 @@ export const EXPORT_DATASETS = [
   {
     key: "lineups",
     label: "Competition lineups",
-    description: "Every application with its status. Viewing order appears after results release.",
+    description: "Current applications with status. Viewing order appears after results release.",
   },
   {
     key: "teams",
@@ -114,7 +114,7 @@ async function competitionsTable(competitionId?: string): Promise<ExportCell[][]
     where: competitionId ? { id: competitionId } : undefined,
     orderBy: { name: "asc" },
     include: {
-      _count: { select: { applications: true } },
+      _count: { select: { applications: { where: currentApplicationWhere } } },
       applicationPacket: { select: { filename: true } },
       judgeAssignments: {
         where: { status: "APPROVED" },
@@ -190,7 +190,7 @@ async function competitionsTable(competitionId?: string): Promise<ExportCell[][]
 
 async function lineupsTable(competitionId?: string): Promise<ExportCell[][]> {
   const applications = await prisma.application.findMany({
-    where: competitionId ? { competitionId } : undefined,
+    where: { ...currentApplicationWhere, ...(competitionId ? { competitionId } : {}) },
     orderBy: [{ competition: { name: "asc" } }, { createdAt: "asc" }],
     include: {
       competition: { select: { name: true, resultsReleasedAt: true } },
@@ -230,7 +230,7 @@ async function lineupsTable(competitionId?: string): Promise<ExportCell[][]> {
 }
 
 function teamScope(competitionId?: string) {
-  return competitionId ? { applications: { some: { competitionId } } } : undefined;
+  return competitionId ? { applications: { some: { competitionId, ...currentApplicationWhere } } } : undefined;
 }
 
 async function teamsTable(competitionId?: string): Promise<ExportCell[][]> {
@@ -238,7 +238,7 @@ async function teamsTable(competitionId?: string): Promise<ExportCell[][]> {
     where: teamScope(competitionId),
     orderBy: { name: "asc" },
     include: {
-      _count: { select: { dancers: true, applications: true } },
+      _count: { select: { dancers: true, applications: { where: currentApplicationWhere } } },
       memberships: {
         where: { status: "APPROVED" },
         include: { user: { select: { email: true } } },

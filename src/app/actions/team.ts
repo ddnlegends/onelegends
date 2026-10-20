@@ -64,6 +64,7 @@ function revalidateApplicationSurfaces() {
   revalidatePath("/ops/teams", "layout");
   revalidatePath("/ops/competitions", "layout");
   revalidatePath("/ops/comps", "layout");
+  revalidatePath("/ops/payments");
   revalidatePath("/moderator", "layout");
 }
 

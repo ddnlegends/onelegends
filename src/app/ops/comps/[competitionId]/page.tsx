@@ -24,7 +24,7 @@ import { rankTeams } from "@/lib/results";
 import { LocalDateTime } from "@/components/LocalDateTime";
 import { isPlatformAdmin } from "@/lib/team-access";
 import { judgePanelCompletion } from "@/lib/judge-panel-completion";
-import { isViewingEligibleApplication } from "@/lib/payment-eligibility";
+import { currentApplicationWhere, isViewingEligibleApplication } from "@/lib/payment-eligibility";
 
 export default async function CompDashboardDetailPage({
   params,
@@ -46,6 +46,7 @@ export default async function CompDashboardDetailPage({
     where: { id: competitionId },
     include: {
       applications: {
+        where: currentApplicationWhere,
         select: {
           id: true,
           teamId: true,
@@ -200,7 +201,7 @@ export default async function CompDashboardDetailPage({
           value={String(eligibleApplications.length)}
           hint={
             competition.applications.length !== eligibleApplications.length
-              ? `${competition.applications.length} applied; unpaid, blocked, or removed stay off viewing`
+              ? `${competition.applications.length} active; unpaid or blocked teams stay off viewing`
               : undefined
           }
         />

@@ -22,12 +22,12 @@ export default async function OpsTeamDetailsPage({ params }: { params: Promise<{
       {team.applyBlocked ? <p className="rounded-xl border border-danger-line bg-danger-soft p-4 text-sm text-danger">Applications blocked: {team.applyBlockReason || "No reason recorded"}</p> : null}
       <TeamDetails team={team} />
       <section className="space-y-3">
-        <h2 className="font-heading text-2xl">Competition applications</h2>
+        <h2 className="font-heading text-2xl">Competition application history</h2>
         {team.applications.length ? (
           <ul className="divide-y divide-line rounded-xl border border-line bg-card">
             {team.applications.map((application) => (
               <li key={application.id} className="flex flex-wrap justify-between gap-4 px-4 py-3 text-sm">
-                <span>{application.competition.name} · {application.status}{application.removedAt ? " · Removed" : ""}</span>
+                <span>{application.competition.name} · {application.removedAt ? application.removalReason === "Withdrawn by team" ? "Withdrawn" : "Removed" : application.status}</span>
                 {application.removedAt ? (
                   <span className="text-muted">{application.removalReason}</span>
                 ) : application.viewingPosition == null ? (

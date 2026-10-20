@@ -8,6 +8,7 @@ import { LocalDateTime } from "@/components/LocalDateTime";
 import { getActiveCompetitionId, isPlatformAdmin } from "@/lib/team-access";
 import { InviteJudgeForm, CancelJudgeInviteForm } from "@/components/AccountForms";
 import { isScoreComplete } from "@/lib/judging";
+import { visibleApplicationWhere } from "@/lib/payment-eligibility";
 
 export default async function CompJudgesPage() {
   const session = await auth();
@@ -17,7 +18,7 @@ export default async function CompJudgesPage() {
   const competition = await prisma.competitionProfile.findUnique({
     where: { id: competitionId },
     include: {
-      applications: { select: { viewingPosition: true }, take: 1 },
+      applications: { where: visibleApplicationWhere, select: { viewingPosition: true }, take: 1 },
       judgeInvites: { orderBy: { createdAt: "desc" } },
       judgeAssignments: {
         include: {

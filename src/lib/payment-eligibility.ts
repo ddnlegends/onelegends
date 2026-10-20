@@ -18,9 +18,14 @@ export function dollars(cents: number) {
   }).format(cents / 100);
 }
 
+/** Current applications exclude retained withdrawal and removal history. */
+export const currentApplicationWhere = {
+  removedAt: null,
+} satisfies Prisma.ApplicationWhereInput;
+
 /** Removed applications and globally blocked teams are private to circuit ops. */
 export const visibleApplicationWhere = {
-  removedAt: null,
+  ...currentApplicationWhere,
   team: { applyBlocked: false },
 } satisfies Prisma.ApplicationWhereInput;
 

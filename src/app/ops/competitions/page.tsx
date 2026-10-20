@@ -18,6 +18,7 @@ import { competitionStatus } from "@/lib/judging";
 import { formatDate, statusLabel } from "@/lib/utils";
 import { formatApplicationFee } from "@/lib/competition-details";
 import { competitionApplicationClosureReasons } from "@/lib/competition-profile";
+import { currentApplicationWhere } from "@/lib/payment-eligibility";
 
 const JUDGE_STATUS: Record<string, string> = {
   APPROVED: "Approved",
@@ -37,6 +38,7 @@ export default async function OpsCompetitionsPage() {
       },
       invites: { orderBy: { createdAt: "desc" } },
       applications: {
+        where: currentApplicationWhere,
         include: { team: { select: { id: true, name: true } } },
         orderBy: { createdAt: "asc" },
       },

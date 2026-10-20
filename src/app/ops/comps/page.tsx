@@ -14,6 +14,7 @@ import {
 } from "@/lib/judging";
 import { formatDate } from "@/lib/utils";
 import { isPlatformAdmin } from "@/lib/team-access";
+import { currentApplicationWhere } from "@/lib/payment-eligibility";
 
 const STATUS_ORDER: CompStatus[] = [
   "LIVE",
@@ -49,7 +50,7 @@ export default async function CompDashboardPage() {
       liveUpdatedAt: true,
       resultsReleasedAt: true,
       _count: {
-        select: { applications: true, moderatorAccess: true },
+        select: { applications: { where: currentApplicationWhere }, moderatorAccess: true },
       },
       judgeAssignments: {
         where: { status: "APPROVED" },
