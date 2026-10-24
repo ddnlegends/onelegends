@@ -8,6 +8,7 @@ import { visibleApplicationWhere } from "@/lib/payment-eligibility";
 import { CompDecisionBoard } from "@/components/CompDecisionBoard";
 import { applicationPhaseLabel } from "@/lib/application-schedule";
 import { formatApplicationFee } from "@/lib/competition-details";
+import { HostPaymentReview } from "@/components/HostPaymentReview";
 
 export default async function CompApplicantsPage() {
   const session = await auth();
@@ -20,6 +21,8 @@ export default async function CompApplicantsPage() {
       name: true,
       resultsReleasedAt: true,
       decisionsSubmittedAt: true,
+      judgingOpen: true,
+      compPaymentsVerifiedAt: true,
       applications: {
         where: visibleApplicationWhere,
         orderBy: { createdAt: "asc" },
@@ -30,11 +33,14 @@ export default async function CompApplicantsPage() {
           appliedPhase: true,
           expectedFeeCents: true,
           compPaymentReceivedAt: true,
+          compPaymentReviewStatus: true,
+          viewingPosition: true,
           team: {
             select: {
               id: true,
               name: true,
               captains: true,
+              registrationPaidAt: true,
               _count: { select: { dancers: true } },
             },
           },
@@ -48,7 +54,7 @@ export default async function CompApplicantsPage() {
     applicationId: application.id,
     teamName: application.team.name,
     status: application.status,
-    paymentReceived: Boolean(application.compPaymentReceivedAt),
+    paymentStatus: application.compPaymentReviewStatus,
   }));
   return (
     <div className="space-y-6">
@@ -64,11 +70,22 @@ export default async function CompApplicantsPage() {
         ) : null}
       </div>
       {!released ? (
-        <p className="rounded-xl border border-line bg-blush p-5 text-sm">Tech admins verify OneLegends registration payments before AV viewing. Competition payments are tracked after final acceptance. Viewing order, AV links, scores, and full team details remain hidden until results release.</p>
+        <p className="rounded-xl border border-line bg-blush p-5 text-sm">Tech admins verify OneLegends registration payments separately. Verify your competition payments before AV viewing. Viewing order, AV links, scores, and full team details remain hidden until results release.</p>
       ) : null}
+      {!released ? <HostPaymentReview
+        competitionId={competitionId}
+        verified={Boolean(competition.compPaymentsVerifiedAt)}
+        locked={competition.judgingOpen || competition.applications.some((application) => application.viewingPosition != null)}
+        rows={competition.applications.map((application) => ({
+          id: application.id,
+          teamName: application.team.name,
+          status: application.compPaymentReviewStatus,
+          oneLegendsPaid: Boolean(application.team.registrationPaidAt),
+        }))}
+      /> : null}
       {released ? <CompDecisionBoard key={`${competition.decisionsSubmittedAt?.toISOString() ?? "draft"}-${decisionRows.map((row) => row.status).join("-")}`} rows={decisionRows} finalized={Boolean(competition.decisionsSubmittedAt)} /> : null}
       {competition.applications.length ? (
-        <ul className="divide-y divide-line rounded-xl border border-line bg-card">
+        <ul aria-label="Applied teams" className="divide-y divide-line rounded-xl border border-line bg-card">
           {competition.applications.map((application) => (
             <li key={application.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
               <div>
@@ -86,7 +103,7 @@ export default async function CompApplicantsPage() {
               {released ? (
                 <div className="space-y-2">
                   <span className="text-sm text-muted">{statusLabel(application.status)}</span>
-                  {application.compPaymentReceivedAt ? " · Host payment received" : ""}
+                  {` · Host payment ${application.compPaymentReviewStatus === "LEGACY_INCLUDED" ? "unreviewed (historical viewing)" : application.compPaymentReviewStatus.toLowerCase()}`}
                 </div>
               ) : null}
             </li>

@@ -122,13 +122,11 @@ export const getModeratorCompetitions = cache(async (userId: string) => {
     const active = judgeAssignments.filter((row) => row.status === "APPROVED");
     const unresolved = judgeInvites.length +
       judgeAssignments.filter((row) => row.status === "PENDING").length;
+    const panelComplete = moderatorResultsReady(applications, active, unresolved);
     return {
       ...competition,
-      moderatorResultsReady: moderatorResultsReady(
-        applications,
-        active,
-        unresolved,
-      ),
+      panelComplete,
+      moderatorResultsReady: Boolean(competition.resultsReleasedAt) && panelComplete,
     };
   });
 });

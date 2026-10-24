@@ -45,7 +45,7 @@ export default async function CompResultsPage() {
     pendingInvites + pendingRequests,
   );
 
-  // Do not calculate or expose rankings until explicit finalization succeeds.
+  // Only calculate named rankings after the appropriate release path succeeds.
   const ranked = released && panelReady
     ? rankTeams(competition.applications, submitted)
     : [];
@@ -55,8 +55,10 @@ export default async function CompResultsPage() {
       <div>
         <h1 className="font-heading text-4xl">Viewing Results</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          Rankings and scores stay sealed until all active judges submit and an
-          admin finalizes results. Rank is average z-score, then average total.
+          {competition.isPartner
+            ? "Rankings and scores appear after the circuit tech admin releases the completed results."
+            : "Rankings and scores appear automatically when every active judge submits and pending invitations are resolved."}
+          {" "}Rank is average z-score, then average total.
         </p>
       </div>
 
@@ -73,8 +75,10 @@ export default async function CompResultsPage() {
 
       {!released ? (
         <p className="text-muted">
-          Rankings and scores unlock after every active packet is submitted and results are finalized.
-          Applicant names, dates, and dancer counts are available in Applied Teams.
+          Thank you for running this competition. {competition.isPartner
+            ? "Results will appear after circuit tech release."
+            : "Results will appear as soon as the judge panel is complete."}
+          {" "}Applicant names, dates, and dancer counts are available in Applied Teams.
         </p>
       ) : ranked.length === 0 ? (
         <div className="space-y-4">

@@ -52,11 +52,7 @@ export default async function ModeratorHomePage() {
                       : "btn btn-ghost"
                   }
                 >
-                  {comp.moderatorResultsReady
-                    ? comp.resultsReleasedAt
-                      ? "View final rankings"
-                      : "View completed rankings"
-                    : "Open live viewing"}
+                  {comp.moderatorResultsReady ? "View final rankings" : comp.panelComplete ? "Thank you · awaiting release" : "Open live viewing"}
                 </Link>
               </li>
             );

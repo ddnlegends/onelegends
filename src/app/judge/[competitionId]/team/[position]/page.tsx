@@ -37,6 +37,7 @@ export default async function JudgeTeamPage({
     include: { competition: true },
   });
   if (!assignment) notFound();
+  if (assignment.submittedAt) redirect(`/judge/${competitionId}`);
 
   const scoringOpen = isJudgingOpen(assignment.competition);
   if (scoringOpen) {

@@ -24,6 +24,7 @@ import {
   claimCompAction,
   claimTeamAction,
   createCompetition,
+  deleteCompetition,
   createTeam,
   inviteCompAdmin,
   inviteJudge,
@@ -897,6 +898,30 @@ export function SoftResetTeamClaimForm({
       {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
     </form>
   );
+}
+
+export function DeleteCompetitionForm({ competitionId, competitionName, applications, judges, released }: {
+  competitionId: string;
+  competitionName: string;
+  applications: number;
+  judges: number;
+  released: boolean;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [typedName, setTypedName] = useState("");
+  const [typedDelete, setTypedDelete] = useState("");
+  const [state, action, pending] = useActionState(deleteCompetition, undefined);
+  if (!confirming) return <div><button className="btn btn-ghost py-1.5 text-danger" type="button" onClick={() => setConfirming(true)}>Delete competition</button>{state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}{state?.ok ? <p className="text-xs text-success">{state.message}</p> : null}</div>;
+  return <form action={action} className="w-full space-y-3 rounded-lg border border-danger bg-card p-4 text-sm">
+    <input type="hidden" name="competitionId" value={competitionId} />
+    <p className="font-semibold text-danger">Permanently delete {competitionName}?</p>
+    <p>This removes its profile, {applications} applications, {judges} judge assignments, scores, invites, and moderator access{released ? ", including released results" : ""}. This cannot be undone. Live judging must be closed first.</p>
+    <label className="field">Type the exact competition name<input name="competitionName" value={typedName} onChange={(event) => setTypedName(event.target.value)} autoComplete="off" required /></label>
+    <label className="field">Type DELETE<input name="confirmation" value={typedDelete} onChange={(event) => setTypedDelete(event.target.value)} autoComplete="off" required /></label>
+    <label className="field">Reason for deletion<input name="reason" maxLength={500} required /></label>
+    <div className="flex gap-2"><button className="btn btn-primary" type="submit" disabled={pending || typedName !== competitionName || typedDelete !== "DELETE"}>{pending ? "Deleting…" : "Permanently delete"}</button><button className="btn btn-ghost" type="button" onClick={() => setConfirming(false)}>Cancel</button></div>
+    {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
+  </form>;
 }
 
 export function ResetCompClaimForm({

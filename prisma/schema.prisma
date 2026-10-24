@@ -21,6 +21,14 @@ enum ApplicationStatus {
   DECLINED
 }
 
+enum CompPaymentReviewStatus {
+  UNREVIEWED
+  PAID
+  UNPAID
+  WAIVED
+  LEGACY_INCLUDED
+}
+
 enum ApplicationPhase {
   EARLY
   REGULAR
@@ -201,7 +209,11 @@ model CompetitionProfile {
   // Legacy threshold kept for historical data; finalization uses the active approved panel.
   requiredJudgeCount       Int       @default(3)
   resultsReleasedAt        DateTime?
+  resultsValidatedAt       DateTime?
+  resultsValidatedByEmail  String?
   resultsFinalizedByEmail  String?
+  compPaymentsVerifiedAt   DateTime?
+  compPaymentsVerifiedByEmail String?
   decisionsSubmittedAt     DateTime?
   dates                    String    @default("")
   eventStartDate           DateTime? @db.Date
@@ -234,6 +246,18 @@ model CompetitionProfile {
   moderatorAccess  ModeratorAccess[]
   moderatorInvites ModeratorInvite[]
   applicationPacket CompetitionPacketBlob?
+}
+
+model CompetitionDeletionAudit {
+  id              String   @id @default(cuid())
+  competitionId   String
+  competitionName String
+  actorEmail      String
+  reason          String
+  applicationCount Int
+  judgeCount      Int
+  hadReleasedResults Boolean
+  deletedAt       DateTime @default(now())
 }
 
 // Keep binary data out of ordinary competition queries.
@@ -323,6 +347,7 @@ model Application {
   removedByEmail             String?
   removalReason              String            @default("")
   compPaymentReceivedAt      DateTime?
+  compPaymentReviewStatus    CompPaymentReviewStatus @default(UNREVIEWED)
   compPaymentRecordedByEmail String?
   createdAt                  DateTime          @default(now())
   updatedAt                  DateTime          @updatedAt

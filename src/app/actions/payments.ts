@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { visibleApplicationWhere } from "@/lib/payment-eligibility";
 import { requireUser } from "@/app/actions/auth";
 import { isCompAdmin, isPlatformAdmin } from "@/lib/team-access";
 
@@ -142,26 +143,82 @@ export async function removeUnpaidApplication(_prev: ActionState | undefined, fo
   return { ok: true, message: `${result.name} removed from this competition.` };
 }
 
-/** The host checks its own external payment only after a final Accepted decision. */
+/** The host reviews its own competition fee before viewing; OneLegends payment is separate. */
 export async function setCompPaymentReceived(_prev: ActionState | undefined, formData: FormData): Promise<ActionState> {
   const user = await requireUser();
   if (!user) return { error: "Sign in first." };
   if (await isPlatformAdmin(user.id)) return { error: "Competition hosts track their own payments." };
   const applicationId = String(formData.get("applicationId") ?? "");
-  const received = String(formData.get("received") ?? "") === "1";
+  const requested = formData.has("status")
+    ? String(formData.get("status"))
+    : String(formData.get("received") ?? "") === "1" ? "PAID" : "UNPAID";
+  if (!["PAID", "UNPAID", "WAIVED"].includes(requested)) return { error: "Choose paid, unpaid, or waived." };
+  const status = requested as "PAID" | "UNPAID" | "WAIVED";
   const app = await prisma.application.findUnique({
     where: { id: applicationId },
-    select: { id: true, competitionId: true, status: true, removedAt: true, team: { select: { applyBlocked: true } }, competition: { select: { decisionsSubmittedAt: true } } },
+    select: { id: true, competitionId: true, status: true, removedAt: true, team: { select: { applyBlocked: true } } },
   });
   if (!app || app.removedAt || app.team.applyBlocked) return { error: "Application not found." };
   if (!(await isCompAdmin(user.id, app.competitionId))) return { error: "Only this competition's admins can track its payments." };
-  if (!app.competition.decisionsSubmittedAt || app.status !== "ACCEPTED") {
-    return { error: "Payment can be recorded after the final Accepted decision." };
-  }
-  await prisma.application.update({
-    where: { id: applicationId },
-    data: { compPaymentReceivedAt: received ? new Date() : null, compPaymentRecordedByEmail: received ? user.email : null },
+  const result = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${app.competitionId}))`;
+    await tx.$queryRaw`SELECT id FROM "CompetitionProfile" WHERE id = ${app.competitionId} FOR UPDATE`;
+    const competition = await tx.competitionProfile.findUnique({ where: { id: app.competitionId }, select: { judgingOpen: true, resultsReleasedAt: true, decisionsSubmittedAt: true } });
+    const current = await tx.application.findUnique({ where: { id: applicationId }, select: { removedAt: true, status: true } });
+    if (!competition || !current || current.removedAt) return { error: "Application not found." };
+    const anyViewingOrder = await tx.application.count({ where: { competitionId: app.competitionId, viewingPosition: { not: null } } });
+    const frozen = Boolean(anyViewingOrder || competition.judgingOpen || competition.resultsReleasedAt);
+    if (frozen && (!competition.decisionsSubmittedAt || current.status !== "ACCEPTED")) {
+      return { error: "Host payments are locked during viewing. Final accepted-team payments can still be updated." };
+    }
+    await tx.application.update({
+      where: { id: applicationId },
+      data: {
+        compPaymentReviewStatus: status,
+        compPaymentReceivedAt: status === "PAID" ? new Date() : null,
+        compPaymentRecordedByEmail: user.email,
+      },
+    });
+    if (!frozen) await tx.competitionProfile.update({
+      where: { id: app.competitionId },
+      data: { compPaymentsVerifiedAt: null, compPaymentsVerifiedByEmail: null },
+    });
+    return { ok: true };
   });
+  if (result.error) return result;
   refreshPaymentViews();
-  return { ok: true, message: received ? "Payment marked received." : "Payment marked outstanding." };
+  return { ok: true, message: `Host payment marked ${status.toLowerCase()}.` };
+}
+
+export async function verifyCompPayments(_prev: ActionState | undefined, formData: FormData): Promise<ActionState> {
+  const user = await requireUser();
+  if (!user || await isPlatformAdmin(user.id)) return { error: "Only competition admins can verify host payments." };
+  const competitionId = String(formData.get("competitionId") ?? "");
+  if (!(await isCompAdmin(user.id, competitionId))) return { error: "Only this competition's admins can verify host payments." };
+  if (formData.get("confirmation") !== "VERIFY") return { error: "Confirm the payment review first." };
+  const result = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${competitionId}))`;
+    await tx.$queryRaw`SELECT id FROM "CompetitionProfile" WHERE id = ${competitionId} FOR UPDATE`;
+    const competition = await tx.competitionProfile.findUnique({ where: { id: competitionId }, select: { judgingOpen: true, resultsReleasedAt: true } });
+    if (!competition) return { error: "Competition not found." };
+    if (competition.judgingOpen || competition.resultsReleasedAt || await tx.application.count({ where: { competitionId, viewingPosition: { not: null } } })) {
+      return { error: "Viewing has already started; the payment review is locked." };
+    }
+    const applications = await tx.application.findMany({
+      where: { competitionId, ...visibleApplicationWhere },
+      select: { compPaymentReviewStatus: true },
+    });
+    if (!applications.length) return { error: "No active teams to review." };
+    if (applications.some((application) => application.compPaymentReviewStatus === "UNREVIEWED")) {
+      return { error: "Mark every active team paid, unpaid, or waived before verifying." };
+    }
+    await tx.competitionProfile.update({
+      where: { id: competitionId },
+      data: { compPaymentsVerifiedAt: new Date(), compPaymentsVerifiedByEmail: user.email },
+    });
+    return { ok: true };
+  });
+  if (result.error) return result;
+  refreshPaymentViews();
+  return { ok: true, message: "Host payment review verified. Unpaid teams will not appear in AV viewing." };
 }

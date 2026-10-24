@@ -1,44 +1,46 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { finalizeCompetitionResults, removeJudgeAssignment } from "@/app/actions/comp-judging";
+import { finalizeCompetitionResults, releaseCompetitionResults, removeJudgeAssignment } from "@/app/actions/comp-judging";
 
 export function FinalizeResultsForm({
   competitionId,
   approved,
   submitted,
   pending,
+  validated,
   released,
 }: {
   competitionId: string;
   approved: number;
   submitted: number;
   pending: number;
+  validated: boolean;
   released: boolean;
 }) {
   const [confirming, setConfirming] = useState(false);
   const [state, action, saving] = useActionState(finalizeCompetitionResults, undefined);
-  const ready = !released && approved > 0 && submitted === approved && pending === 0;
+  const ready = !released && !validated && approved > 0 && submitted === approved && pending === 0;
   return (
     <div className="space-y-3 rounded-xl border border-line bg-card p-5">
       <h2 className="font-heading text-xl">Validate Comp Results</h2>
       <p className="text-sm text-muted">
         {submitted} of {approved} active judges submitted
         {pending ? ` · ${pending} pending invitation${pending === 1 ? "" : "s"} or request${pending === 1 ? "" : "s"} must be resolved` : ""}.
-        {released ? " Results are final." : " Rankings unlock only after explicit finalization."}
+        {released ? " Results are released." : validated ? " Validated privately. Release when ready." : " Validation keeps results private to circuit tech admins."}
       </p>
       {state?.error ? <p className="notice notice-error">{state.error}</p> : null}
-      {state?.ok ? <p className="notice notice-ok">Results finalized.</p> : null}
-      {!released && !confirming ? (
+      {state?.ok ? <p className="notice notice-ok">Results validated privately.</p> : null}
+      {!released && !validated && !confirming ? (
         <button className="btn btn-primary" type="button" disabled={!ready} onClick={() => setConfirming(true)}>
           Validate Comp Results
         </button>
       ) : null}
-      {!released && confirming ? (
+      {!released && !validated && confirming ? (
         <form action={action} className="space-y-3 rounded-lg border border-warning-line bg-warning-soft p-4">
           <input type="hidden" name="competitionId" value={competitionId} />
-          <input type="hidden" name="confirmation" value="FINALIZE" />
-          <p className="text-sm">Release named rankings using the {submitted} submitted judge packets? This closes judging and locks the panel and scores.</p>
+          <input type="hidden" name="confirmation" value="VALIDATE" />
+          <p className="text-sm">Validate the {submitted} submitted judge packets? This closes judging and locks the panel and scores. Results stay private to circuit tech admins until release.</p>
           <div className="flex gap-2">
             <button className="btn btn-primary" disabled={saving} type="submit">{saving ? "Validating…" : "Yes, validate comp results"}</button>
             <button className="btn btn-ghost" type="button" onClick={() => setConfirming(false)}>Cancel</button>
@@ -47,6 +49,24 @@ export function FinalizeResultsForm({
       ) : null}
     </div>
   );
+}
+
+export function ReleaseResultsForm({ competitionId }: { competitionId: string }) {
+  const [confirming, setConfirming] = useState(false);
+  const [state, action, pending] = useActionState(releaseCompetitionResults, undefined);
+  return <div className="space-y-3 rounded-xl border border-warning-line bg-warning-soft p-5">
+    <h2 className="font-heading text-xl">Release Partner results</h2>
+    <p className="text-sm">Validation is complete. Competition admins and moderators see results only after you release them. Judges never see rankings.</p>
+    {state?.error ? <p className="notice notice-error">{state.error}</p> : null}
+    {state?.ok ? <p className="notice notice-ok">Results released.</p> : null}
+    {!confirming ? <button className="btn btn-primary" type="button" onClick={() => setConfirming(true)}>Release results</button> :
+      <form action={action} className="space-y-3">
+        <input type="hidden" name="competitionId" value={competitionId} />
+        <input type="hidden" name="confirmation" value="RELEASE" />
+        <p className="text-sm">Confirm release of named rankings and scores to competition admins and read-only rankings to moderators.</p>
+        <div className="flex gap-2"><button className="btn btn-primary" disabled={pending} type="submit">{pending ? "Releasing…" : "Yes, release results"}</button><button className="btn btn-ghost" type="button" onClick={() => setConfirming(false)}>Cancel</button></div>
+      </form>}
+  </div>;
 }
 
 export function RemoveJudgeForm({

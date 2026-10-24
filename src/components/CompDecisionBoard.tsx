@@ -11,7 +11,7 @@ type DecisionRow = {
   teamName: string;
   rank?: number;
   status: ApplicationStatus;
-  paymentReceived: boolean;
+  paymentStatus: "UNREVIEWED" | "PAID" | "UNPAID" | "WAIVED" | "LEGACY_INCLUDED";
 };
 
 const STATUSES: ApplicationStatus[] = [
@@ -44,7 +44,7 @@ export function CompDecisionBoard({ rows, finalized }: { rows: DecisionRow[]; fi
               <th className="px-4 py-3 text-left font-semibold">{row.rank ? <span className="mr-2 text-accent">#{row.rank}</span> : null}{row.teamName}</th>
               <td className="px-4 py-3">{statusLabel(row.status)}</td>
               <td className="px-4 py-3">{row.status === "ACCEPTED"
-                ? <CompPaymentCheckbox applicationId={row.applicationId} received={row.paymentReceived} />
+                ? <CompPaymentCheckbox applicationId={row.applicationId} status={row.paymentStatus} />
                 : "—"}</td>
             </tr>)}
           </tbody>

@@ -27,6 +27,7 @@ type CompetitionGate = {
   applicationDeadline: Date | null;
   applicationClosesAt?: Date | null;
   resultsReleasedAt?: Date | null;
+  resultsValidatedAt?: Date | null;
   claimedAt?: Date | null;
   userId?: string | null;
 };
@@ -59,6 +60,7 @@ export function isJudgingOpen(comp: CompetitionGate, now = new Date()): boolean 
   return (
     Boolean(comp.judgingOpen) &&
     !comp.resultsReleasedAt &&
+    !comp.resultsValidatedAt &&
     isCompetitionClaimed(comp) &&
     !isCompetitionOpen(comp, now)
   );
@@ -71,6 +73,7 @@ export function judgingLockMessage(
   if (comp.resultsReleasedAt) {
     return "Results are released. Scores are locked.";
   }
+  if (comp.resultsValidatedAt) return "Results are validated. Scores are locked until circuit tech release.";
   if (!isCompetitionClaimed(comp)) {
     return "Judging opens after this competition is claimed.";
   }

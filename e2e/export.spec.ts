@@ -57,6 +57,7 @@ test("CSV and XLSX keep judging names sealed until results release", async ({ pa
   await login(page, "tech");
   await page.goto(`/ops/comps/${id}`);
   await page.getByRole("button", { name: "Open judging" }).click();
+  await page.getByRole("button", { name: "Confirm and open viewing" }).click();
   await expect(page.getByText(/Judging is open\. The moderator can start/)).toBeVisible();
   const assignment = await db.judgeAssignment.findFirstOrThrow({ where: { competitionId: id }, include: { slots: true } });
   expect(assignment.slots).toHaveLength(2);
@@ -118,6 +119,7 @@ test("competition director downloads ranked profiles, rosters, and scores only a
   const tech = await pageAs(browser, "tech");
   await tech.goto(`/ops/comps/${id}`);
   await tech.getByRole("button", { name: "Open judging" }).click();
+  await tech.getByRole("button", { name: "Confirm and open viewing" }).click();
   await expect(tech.getByText(/Judging is open\. The moderator can start/)).toBeVisible();
   const assignment = await db.judgeAssignment.findFirstOrThrow({
     where: { competitionId: id },
@@ -133,7 +135,11 @@ test("competition director downloads ranked profiles, rosters, and scores only a
   await tech.reload();
   await tech.getByRole("button", { name: "Validate Comp Results", exact: true }).click();
   await tech.getByRole("button", { name: "Yes, validate comp results" }).click();
-  await expect(tech.getByText("Results finalized.")).toBeVisible();
+  await expect(tech.getByText("Results validated privately.")).toBeVisible();
+  expect((await director.request.get(path)).status()).toBe(403);
+  await tech.getByRole("button", { name: "Release results", exact: true }).click();
+  await tech.getByRole("button", { name: "Yes, release results" }).click();
+  await expect.poll(async () => (await db.competitionProfile.findUniqueOrThrow({ where: { id } })).resultsReleasedAt).not.toBeNull();
 
   await director.goto("/comp/applicants");
   await expect(director.getByRole("link", { name: "Download final team workbook" })).toBeVisible();

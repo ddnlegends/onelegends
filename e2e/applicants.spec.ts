@@ -17,7 +17,7 @@ test("competition admins see only applicant basics before results release", asyn
   await expect(comp.getByRole("heading", { name: "Applied teams" })).toBeVisible();
   await expect(comp.getByText(E2E.teams.mine.name, { exact: true })).toHaveCount(0);
   for (const application of applications) {
-    const row = comp.getByRole("listitem").filter({ hasText: application.team.name });
+    const row = comp.getByRole("list", { name: "Applied teams" }).getByRole("listitem").filter({ hasText: application.team.name });
     await expect(row).toContainText("2 dancers");
     await expect(row).toContainText(`Applied ${formatDate(application.createdAt)}`);
     await expect(comp.getByRole("link", { name: application.team.name })).toHaveCount(0);
@@ -66,6 +66,16 @@ test("non-partner competition admins get the same applicant list", async ({ brow
   const comp = await pageAs(browser, "comp");
   await comp.goto("/comp/applicants");
   for (const name of SEALED_NAMES) {
-    await expect(comp.getByText(name, { exact: true })).toBeVisible();
+    await expect(comp.getByRole("list", { name: "Applied teams" }).getByText(name, { exact: true })).toBeVisible();
   }
+});
+
+test("host payment verification can be closed and resumed before viewing", async ({ browser }) => {
+  const comp = await pageAs(browser, "comp");
+  await comp.goto("/comp/applicants");
+  await comp.getByRole("button", { name: "Review verification" }).click();
+  await expect(comp.getByRole("heading", { name: "Verify host payments" })).toBeVisible();
+  await comp.getByRole("button", { name: "Close payment verification" }).click();
+  await expect(comp.getByRole("heading", { name: "Verify host payments" })).not.toBeVisible();
+  await expect(comp.getByRole("button", { name: "Review verification" })).toBeVisible();
 });

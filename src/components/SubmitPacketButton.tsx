@@ -42,8 +42,7 @@ export function SubmitPacketButton({
         </p>
       ) : (
         <p className="text-sm text-muted">
-          Once you submit, your scores are locked. Named results become
-          available after every active judge submits and an admin finalizes.
+          Once you submit, your scores are locked. Judges do not see named results or rankings.
         </p>
       )}
     </form>

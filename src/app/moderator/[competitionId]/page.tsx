@@ -74,6 +74,7 @@ export default async function ModeratorCompetitionPage({
     activeJudges,
     unresolvedJudges,
   );
+  const canSeeResults = Boolean(competition.resultsReleasedAt) && resultsReady;
   const status = competitionStatus(competition);
   const teams = competition.applications.map((app) => ({
     position: app.viewingPosition as number,
@@ -92,7 +93,7 @@ export default async function ModeratorCompetitionPage({
 
   return (
     <div className="space-y-8">
-      <AutoRefresh active={!resultsReady} intervalMs={6000} />
+      <AutoRefresh active={!canSeeResults} intervalMs={6000} />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-2">
           <Link href="/moderator" className="text-sm text-muted underline">
@@ -104,17 +105,15 @@ export default async function ModeratorCompetitionPage({
           </div>
           <p className="max-w-2xl text-sm text-muted">
             Teams stay anonymous while judging is open. Rankings unlock for
-            moderators only after every active judge submits a complete packet.
+            moderators after every active judge submits a complete packet and results are released.
           </p>
         </div>
-        {open && resultsReady ? (
+        {open && canSeeResults ? (
           <Link
             href={`/moderator/${competitionId}/results`}
             className="btn btn-primary"
           >
-            {competition.resultsReleasedAt
-              ? "View final rankings"
-              : "View completed rankings"}
+            View final rankings
           </Link>
         ) : open && teams.length ? (
           <div className="w-full max-w-xs">
@@ -123,7 +122,12 @@ export default async function ModeratorCompetitionPage({
         ) : null}
       </div>
 
-      {!open ? (
+      {resultsReady && !canSeeResults ? (
+        <div className="rounded-xl border border-line bg-blush p-6">
+          <h2 className="font-heading text-2xl">Thank you for moderating</h2>
+          <p className="mt-2 text-sm text-muted">Every active judge has submitted. Results will appear after the circuit tech admin releases them.</p>
+        </div>
+      ) : !open ? (
         <div className="rounded-xl border border-line bg-blush p-6">
           <p className="font-medium">
             {competition.resultsReleasedAt
@@ -134,14 +138,12 @@ export default async function ModeratorCompetitionPage({
             {competition.resultsReleasedAt
               ? "Final rankings are available to moderators and competition admins."
               : resultsReady
-                ? "Every active judge submitted a complete packet. Rankings are ready."
+                ? "Thank you for moderating. Results will appear after the circuit tech admin releases them."
               : (lockMessage ?? "Circuit ops opens judging when it is time.")}
           </p>
-          {resultsReady ? (
+          {canSeeResults ? (
             <Link href={`/moderator/${competitionId}/results`} className="btn btn-primary mt-4 inline-flex">
-              {competition.resultsReleasedAt
-                ? "View final rankings"
-                : "View completed rankings"}
+              View final rankings
             </Link>
           ) : null}
         </div>

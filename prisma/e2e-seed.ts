@@ -62,6 +62,7 @@ function completeTeam(team: { slug: string; name: string; claimCode: string }) {
 }
 
 async function wipe(prisma: PrismaClient) {
+  await prisma.competitionDeletionAudit.deleteMany();
   await prisma.feedback.deleteMany();
   await prisma.judgeScore.deleteMany();
   await prisma.judgeViewingSlot.deleteMany();
@@ -131,6 +132,7 @@ export async function seedE2E() {
         claimedAt: new Date(),
         registrationPaidAt: new Date(),
         userId: compAdmin.id,
+        compPaymentsVerifiedAt: new Date(),
         acceptingApps: false,
         applicationDeadline: lastMonth,
         requiredJudgeCount: 1,
@@ -164,7 +166,7 @@ export async function seedE2E() {
       await prisma.teamProfile.create({
         data: {
           ...completeTeam(fixture),
-          applications: { create: { competitionId: showcase.id } },
+          applications: { create: { competitionId: showcase.id, compPaymentReviewStatus: "PAID", compPaymentReceivedAt: new Date() } },
         },
       });
     }

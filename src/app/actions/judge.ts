@@ -8,7 +8,8 @@
  * submitted and judging-open state inside the transaction, so a save can never
  * land after submit. Rubric scores are limited to the live or earlier teams;
  * comment-only saves may finish after the moderator moves on. A
- * submission marks one packet complete; an admin finalizes results separately.
+ * submission marks one packet complete; the last complete Non Partner packet
+ * can release results in the same locked transaction.
  */
 import { revalidatePath } from "next/cache";
 import type { Prisma } from "@prisma/client";
@@ -22,6 +23,7 @@ import {
   type RubricKey,
 } from "@/lib/judging";
 import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
+import { releaseNonPartnerIfReady } from "@/lib/release";
 
 export async function saveJudgeProfile(
   _prev: { error?: string; ok?: boolean } | undefined,
@@ -204,6 +206,7 @@ export async function submitJudgingPacket(
       where: { id: assignment.id },
       data: { submittedAt: new Date() },
     });
+    await releaseNonPartnerIfReady(tx, assignment.competitionId);
     return null;
   });
   if (failed) return { error: failed };
