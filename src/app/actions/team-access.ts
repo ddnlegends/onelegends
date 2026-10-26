@@ -1110,6 +1110,7 @@ export async function deleteCompetition(
   revalidateAccessPaths();
   revalidatePath("/ops/competitions", "layout");
   revalidatePath("/ops/comps", "layout");
+  revalidatePath("/ops/reg", "layout");
   revalidatePath("/comps", "layout");
   return result;
 }
@@ -1139,6 +1140,8 @@ export async function setCompetitionPartnerStatus(
       where: { id: parsed.data.competitionId },
       select: {
         isPartner: true,
+        name: true,
+        regAssignment: { select: { email: true } },
         resultsValidatedAt: true,
         resultsReleasedAt: true,
         judgingOpen: true,
@@ -1171,6 +1174,19 @@ export async function setCompetitionPartnerStatus(
           : {}),
       },
     });
+    if (parsed.data.type === "non-partner" && competition.regAssignment?.email) {
+      await tx.competitionRegAssignment.update({
+        where: { competitionId: parsed.data.competitionId },
+        data: { email: null, contactName: null },
+      });
+      await tx.competitionRegAssignmentAudit.create({ data: {
+        competitionId: parsed.data.competitionId,
+        competitionName: competition.name,
+        oldEmail: competition.regAssignment.email,
+        newEmail: null,
+        changedByEmail: user.email?.toLowerCase() ?? "unknown",
+      } });
+    }
     return { ok: true };
   });
   if (result.error) return result;
@@ -1178,6 +1194,8 @@ export async function setCompetitionPartnerStatus(
   revalidateAccessPaths();
   revalidatePath("/");
   revalidatePath(`/comps/${parsed.data.competitionId}`);
+  revalidatePath("/ops/reg", "layout");
+  revalidatePath("/comp");
   return { ok: true, message: "Competition type saved." };
 }
 

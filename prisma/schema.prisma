@@ -246,6 +246,36 @@ model CompetitionProfile {
   moderatorAccess  ModeratorAccess[]
   moderatorInvites ModeratorInvite[]
   applicationPacket CompetitionPacketBlob?
+  regAssignment CompetitionRegAssignment?
+}
+
+/** One point of contact per Partner Competition; email works before an invited admin first logs in. */
+model CompetitionRegAssignment {
+  competitionId       String   @id
+  competition         CompetitionProfile @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  email               String?  @db.VarChar(320)
+  contactName         String?  @db.VarChar(120)
+  assignedAt          DateTime @default(now()) @db.Timestamptz(3)
+  assignedByEmail     String   @db.VarChar(320)
+  avReviewedAt        DateTime? @db.Timestamptz(3)
+  avReviewFingerprint String?  @db.VarChar(64)
+  lastContactAt       DateTime? @db.Timestamptz(3)
+  followUpNote        String   @default("") @db.VarChar(3000)
+  updatedAt           DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([email])
+}
+
+model CompetitionRegAssignmentAudit {
+  id              String   @id @default(cuid())
+  competitionId   String
+  competitionName String
+  oldEmail        String?
+  newEmail        String?
+  changedByEmail  String
+  changedAt       DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([competitionId, changedAt])
 }
 
 model CompetitionDeletionAudit {

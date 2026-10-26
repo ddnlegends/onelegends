@@ -222,8 +222,22 @@ export async function cancelPlatformAdminInvite(
     where: { id: inviteId },
   });
   if (!invite) return { error: "Invite not found." };
-  await prisma.platformAdminInvite.delete({ where: { id: invite.id } });
+  await prisma.$transaction(async (tx) => {
+    await tx.platformAdminInvite.delete({ where: { id: invite.id } });
+    const assigned = await tx.competitionRegAssignment.findMany({
+      where: { email: invite.email.toLowerCase() }, include: { competition: { select: { name: true } } },
+    });
+    for (const row of assigned) {
+      await tx.competitionRegAssignment.update({ where: { competitionId: row.competitionId }, data: { email: null, contactName: null } });
+      await tx.competitionRegAssignmentAudit.create({ data: {
+        competitionId: row.competitionId, competitionName: row.competition.name,
+        oldEmail: row.email, newEmail: null, changedByEmail: user.email?.toLowerCase() ?? "unknown",
+      } });
+    }
+  });
   revalidateOps();
+  revalidatePath("/ops/reg", "layout");
+  revalidatePath("/comp");
   return { ok: true };
 }
 
@@ -253,9 +267,21 @@ export async function revokePlatformAdmin(
       where: { id: target.id },
       data: { platformAdmin: false },
     });
+    const assigned = await tx.competitionRegAssignment.findMany({
+      where: { email: target.email.toLowerCase() }, include: { competition: { select: { name: true } } },
+    });
+    for (const row of assigned) {
+      await tx.competitionRegAssignment.update({ where: { competitionId: row.competitionId }, data: { email: null, contactName: null } });
+      await tx.competitionRegAssignmentAudit.create({ data: {
+        competitionId: row.competitionId, competitionName: row.competition.name,
+        oldEmail: row.email, newEmail: null, changedByEmail: user.email?.toLowerCase() ?? "unknown",
+      } });
+    }
     return { email: target.email };
   });
   if ("error" in result) return { error: result.error };
   revalidateOps();
+  revalidatePath("/ops/reg", "layout");
+  revalidatePath("/comp");
   return { ok: true, message: `Removed tech admin access for ${result.email}.` };
 }
