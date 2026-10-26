@@ -62,6 +62,7 @@ function completeTeam(team: { slug: string; name: string; claimCode: string }) {
 }
 
 async function wipe(prisma: PrismaClient) {
+  await prisma.competitionRegAssignmentAudit.deleteMany();
   await prisma.feedback.deleteMany();
   await prisma.judgeScore.deleteMany();
   await prisma.judgeViewingSlot.deleteMany();

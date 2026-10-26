@@ -47,6 +47,7 @@ export default async function CompDashboardPage() {
   const competition = await prisma.competitionProfile.findUnique({
     where: { id: competitionId },
     include: {
+      regAssignment: { select: { email: true, contactName: true } },
       applications: {
         where: visibleApplicationWhere,
         include: {
@@ -135,6 +136,11 @@ export default async function CompDashboardPage() {
       </div>
 
       <CompSwitcher competitions={switcher} activeId={competitionId} />
+
+      {competition.isPartner ? <section className="rounded-xl border border-line bg-card p-5">
+        <h2 className="font-heading text-xl">Your Reg chair</h2>
+        {competition.regAssignment?.email ? <p className="mt-2 text-sm">{competition.regAssignment.contactName} · <a href={`mailto:${competition.regAssignment.email}`} className="text-accent underline">{competition.regAssignment.email}</a></p> : <p className="mt-2 text-sm text-muted">A Reg chair has not been assigned yet.</p>}
+      </section> : null}
 
       {missingDetails.length ? (
         <div className="rounded-xl border border-warning-line bg-warning-soft p-5 text-sm">
