@@ -85,6 +85,7 @@ export const getModeratorCompetitions = cache(async (userId: string) => {
     select: {
       id: true,
       name: true,
+      isPartner: true,
       acceptingApps: true,
       applicationDeadline: true,
       applicationClosesAt: true,
@@ -98,7 +99,6 @@ export const getModeratorCompetitions = cache(async (userId: string) => {
         where: viewingEligibleApplicationWhere,
         select: { id: true },
       },
-      judgeInvites: { select: { id: true } },
       judgeAssignments: {
         where: { status: { in: ["APPROVED", "PENDING"] } },
         select: {
@@ -116,19 +116,13 @@ export const getModeratorCompetitions = cache(async (userId: string) => {
   return competitions.map(({
     applications,
     judgeAssignments,
-    judgeInvites,
     ...competition
   }) => {
     const active = judgeAssignments.filter((row) => row.status === "APPROVED");
-    const unresolved = judgeInvites.length +
-      judgeAssignments.filter((row) => row.status === "PENDING").length;
     return {
       ...competition,
-      moderatorResultsReady: moderatorResultsReady(
-        applications,
-        active,
-        unresolved,
-      ),
+      moderatorResultsReady: Boolean(competition.resultsReleasedAt) ||
+        (!competition.isPartner && moderatorResultsReady(applications, active, 0)),
     };
   });
 });

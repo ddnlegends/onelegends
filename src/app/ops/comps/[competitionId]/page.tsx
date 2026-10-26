@@ -124,7 +124,7 @@ export default async function CompDashboardDetailPage({
     applicationId: string,
   ) => judge.slots.find((slot) => slot.applicationId === applicationId)?.score ?? null;
 
-  const ranked = released && panelReady
+  const ranked = panelReady
     ? rankTeams(eligibleApplications, submitted)
     : [];
 
@@ -147,8 +147,8 @@ export default async function CompDashboardDetailPage({
           </Link>
         </div>
         <p className="max-w-2xl text-sm text-muted">
-          {released
-            ? "Judging is complete. Team names are unsealed below."
+          {panelReady
+            ? "Judging is complete. Tech admins can review named results below."
             : "Teams stay as Team 1, Team 2, … until results release. No videos play here; the moderator runs them."}
         </p>
       </div>
@@ -262,13 +262,14 @@ export default async function CompDashboardDetailPage({
         </ul> : <p className="text-sm text-muted">No active applications.</p>}
       </section>
 
-      <FinalizeResultsForm
+      {competition.isPartner ? <FinalizeResultsForm
         competitionId={competition.id}
         approved={approved.length}
         submitted={submitted.length}
         pending={pendingJudges.length + competition.judgeInvites.length}
         released={released}
-      />
+        validated={Boolean(competition.resultsFinalizedByEmail)}
+      /> : null}
 
       <section className="space-y-3">
         <h2 className="font-heading text-2xl">Active judge panel</h2>
@@ -292,10 +293,10 @@ export default async function CompDashboardDetailPage({
         ) : null}
       </section>
 
-      {released ? (
+      {panelReady ? (
         <section className="space-y-3">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="font-heading text-2xl">Final summary</h2>
+            <h2 className="font-heading text-2xl">{released ? "Final summary" : "Private tech review"}</h2>
             {competition.resultsReleasedAt ? (
               <p className="text-sm text-muted">
                 Released <LocalDateTime date={competition.resultsReleasedAt} />
@@ -372,7 +373,7 @@ export default async function CompDashboardDetailPage({
                       </span>
                     </th>
                   ))}
-                  {released ? <th className="px-3 py-3 font-medium">Avg</th> : null}
+                  {panelReady ? <th className="px-3 py-3 font-medium">Avg</th> : null}
                 </tr>
               </thead>
               <tbody>
@@ -397,7 +398,7 @@ export default async function CompDashboardDetailPage({
                         }`}
                       >
                         Team {app.viewingPosition}
-                        {released ? (
+                        {panelReady ? (
                           <span className="block text-xs font-normal text-muted">
                             {app.team.name}
                           </span>
@@ -424,7 +425,7 @@ export default async function CompDashboardDetailPage({
                           </td>
                         );
                       })}
-                      {released ? <td className="px-3 py-3 font-semibold tabular-nums text-accent">{avg != null ? avg.toFixed(1) : "—"}</td> : null}
+                      {panelReady ? <td className="px-3 py-3 font-semibold tabular-nums text-accent">{avg != null ? avg.toFixed(1) : "—"}</td> : null}
                     </tr>
                   );
                 })}

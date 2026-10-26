@@ -103,12 +103,7 @@ export default async function JudgeDashboardPage() {
                     Completed {row.submittedAt ? <LocalDateTime date={row.submittedAt} /> : "—"}
                   </p>
                 </div>
-                <Link
-                  href={`/judge/${row.competitionId}`}
-                  className="btn btn-ghost py-1.5"
-                >
-                  Review Packet
-                </Link>
+                <span className="text-sm text-muted">Thank you for judging. Your packet is submitted.</span>
               </li>
             ))}
           </ul>

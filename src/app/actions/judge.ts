@@ -204,6 +204,17 @@ export async function submitJudgingPacket(
       where: { id: assignment.id },
       data: { submittedAt: new Date() },
     });
+    if (!fresh.competition.isPartner) {
+      const remaining = await tx.judgeAssignment.count({
+        where: { competitionId: assignment.competitionId, status: "APPROVED", submittedAt: null },
+      });
+      if (remaining === 0) {
+        await tx.competitionProfile.update({
+          where: { id: assignment.competitionId },
+          data: { resultsReleasedAt: new Date(), judgingOpen: false, livePosition: null, liveUpdatedAt: null },
+        });
+      }
+    }
     return null;
   });
   if (failed) return { error: failed };

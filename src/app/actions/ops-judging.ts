@@ -69,8 +69,8 @@ export async function setJudgingOpen(
     if (formData.get("paymentFingerprint") !== hostPaymentFingerprint(paymentRows)) {
       return { error: "The host payment list changed. Refresh and review the latest statuses before opening judging." };
     }
-    if (competition.resultsReleasedAt) {
-      return { error: "Judging cannot reopen after results are released." };
+    if (competition.resultsReleasedAt || competition.resultsFinalizedByEmail) {
+      return { error: "Judging cannot reopen after results are validated or released." };
     }
     if (!isCompetitionClaimed(competition)) {
       return { error: "A competition admin has to claim this listing first." };
@@ -99,10 +99,10 @@ export async function setJudgingOpen(
     });
     if (ordered === 0) return { error: "No paid, unblocked teams are in the viewing order." };
     const updated = await prisma.competitionProfile.updateMany({
-      where: { id: competition.id, resultsReleasedAt: null },
+      where: { id: competition.id, resultsReleasedAt: null, resultsFinalizedByEmail: null },
       data: { judgingOpen: true, acceptingApps: false },
     });
-    if (updated.count === 0) return { error: "Judging cannot reopen after results are released." };
+    if (updated.count === 0) return { error: "Judging cannot reopen after results are validated or released." };
     revalidateJudging(competition.id);
     return {
       ok: true,

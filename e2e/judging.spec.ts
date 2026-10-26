@@ -129,7 +129,7 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
     await expect(judge.getByText("2 of 2 fully scored")).toBeVisible({ timeout: 2_000 });
   }).toPass();
   await judge.getByRole("button", { name: "Submit Scores" }).click();
-  await expect(judge.getByText(/Packet submitted/).first()).toBeVisible();
+  await expect(judge.getByRole("heading", { name: "Thank you for judging" })).toBeVisible();
 
   const stored = await db.judgeAssignment.findFirstOrThrow({
     where: { competitionId: id, judge: { user: { email: E2E.emails.judge } } },
@@ -146,23 +146,22 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
       );
     }
   }
-  const completedRankings = moderator.getByRole("link", {
-    name: "View completed rankings",
-  });
-  await expect(completedRankings).toBeVisible({ timeout: 15_000 });
-  await completedRankings.click();
-  await expect(moderator.getByRole("heading", { name: "Completed rankings" })).toBeVisible();
-  for (const name of SEALED_NAMES) {
-    await expect(moderator.getByRole("cell", { name, exact: true })).toBeVisible();
-  }
+  await expect(moderator.getByRole("link", { name: "View completed rankings" })).toHaveCount(0);
+  await moderator.goto(`/moderator/${id}/results`);
+  await expect(moderator.getByRole("heading", { name: "Thank you for moderating" })).toBeVisible();
   await moderator.goto(`/moderator/${id}`);
 
   await ops.reload();
   await ops.getByRole("button", { name: "Validate Comp Results", exact: true }).click();
   await ops.getByRole("button", { name: "Yes, validate comp results" }).click();
-  await expect(ops.getByText(/Results finalized/)).toBeVisible();
+  await expect(ops.getByText(/Results validated/)).toBeVisible();
+  await comp.reload();
+  await expect(comp.getByText(/Results will be available after tech release/)).toBeVisible();
+  await ops.getByRole("button", { name: "Release Results", exact: true }).click();
+  await ops.getByRole("button", { name: "Yes, release results" }).click();
+  await expect(ops.getByText("Results released.", { exact: true })).toBeVisible();
   await judge.goto(`/judge/${id}/team/1`);
-  await expect(judge.locator("#choreography")).toBeDisabled();
+  await expect(judge.getByRole("heading", { name: "Thank you for judging" })).toBeVisible();
 
   await comp.reload();
   await expect(comp.getByText(/Unlocked/)).toBeVisible();

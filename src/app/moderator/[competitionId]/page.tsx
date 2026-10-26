@@ -68,11 +68,10 @@ export default async function ModeratorCompetitionPage({
   );
   const unresolvedJudges = competition.judgeInvites.length +
     competition.judgeAssignments.filter((assignment) => assignment.status === "PENDING").length;
-  const resultsReady = moderatorResultsReady(
-    competition.applications,
-    activeJudges,
-    unresolvedJudges,
-  );
+  const waitingForTech = competition.isPartner && !competition.resultsReleasedAt &&
+    moderatorResultsReady(competition.applications, activeJudges, unresolvedJudges);
+  const resultsReady = Boolean(competition.resultsReleasedAt) ||
+    (!competition.isPartner && moderatorResultsReady(competition.applications, activeJudges, 0));
   const status = competitionStatus(competition);
   const teams = competition.applications.map((app) => ({
     position: app.viewingPosition as number,
@@ -101,8 +100,8 @@ export default async function ModeratorCompetitionPage({
             <CompStatusPill status={status} />
           </div>
           <p className="max-w-2xl text-sm text-muted">
-            Teams stay anonymous while judging is open. Rankings unlock for
-            moderators only after every active judge submits a complete packet.
+            Teams stay anonymous while judging is open. Rankings unlock after
+            tech release for Partner competitions, or after all active judges submit for Non Partner competitions.
           </p>
         </div>
         {open && resultsReady ? (
@@ -114,6 +113,8 @@ export default async function ModeratorCompetitionPage({
               ? "View final rankings"
               : "View completed rankings"}
           </Link>
+        ) : open && waitingForTech ? (
+          <p className="text-sm text-muted">Thank you for moderating. Results will appear after tech release.</p>
         ) : open && teams.length ? (
           <div className="w-full max-w-xs">
             <LiveProgress current={livePosition} total={teams.length} />
@@ -133,6 +134,8 @@ export default async function ModeratorCompetitionPage({
               ? "Final rankings are available to moderators and competition admins."
               : resultsReady
                 ? "Every active judge submitted a complete packet. Rankings are ready."
+                : competition.isPartner && activeJudges.every((judge) => judge.submittedAt)
+                  ? "Thank you for moderating. Results will appear after tech release."
               : (lockMessage ?? "Circuit ops opens judging when it is time.")}
           </p>
           {resultsReady ? (
@@ -142,6 +145,11 @@ export default async function ModeratorCompetitionPage({
                 : "View completed rankings"}
             </Link>
           ) : null}
+        </div>
+      ) : waitingForTech ? (
+        <div className="rounded-xl border border-line bg-card p-6">
+          <h2 className="font-heading text-2xl">Thank you for moderating</h2>
+          <p className="mt-2 text-muted">Judging is complete. Results will appear after tech release.</p>
         </div>
       ) : teams.length === 0 ? (
         <p className="text-muted">No teams applied to this competition.</p>

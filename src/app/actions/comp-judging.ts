@@ -9,7 +9,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
-import { finalizeResults } from "@/lib/release";
+import { finalizeResults, releaseResults } from "@/lib/release";
 import { hasModeratorAccess } from "@/lib/moderator";
 import { isPlatformAdmin, requireActiveCompetition } from "@/lib/team-access";
 
@@ -33,7 +33,7 @@ export async function decideJudgeRequest(
 
   const competition = await requireActiveCompetition(user.id);
   if (!competition) return { error: "Competition profile missing." };
-  if (competition.resultsReleasedAt) return { error: "Judge roster is locked after results release." };
+  if (competition.resultsReleasedAt || (competition.isPartner && competition.resultsFinalizedByEmail)) return { error: "Judge roster is locked after results validation." };
 
   const assignment = await prisma.judgeAssignment.findFirst({
     where: { id: assignmentId, competitionId: competition.id },
@@ -64,8 +64,8 @@ export async function decideJudgeRequest(
 
   const result = await prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT id FROM "CompetitionProfile" WHERE id = ${competition.id} FOR UPDATE`;
-    const current = await tx.competitionProfile.findUnique({ where: { id: competition.id }, select: { resultsReleasedAt: true } });
-    if (current?.resultsReleasedAt) return { error: "Judge roster is locked after results release." };
+    const current = await tx.competitionProfile.findUnique({ where: { id: competition.id }, select: { isPartner: true, resultsFinalizedByEmail: true, resultsReleasedAt: true } });
+    if (current?.resultsReleasedAt || (current?.isPartner && current.resultsFinalizedByEmail)) return { error: "Judge roster is locked after results validation." };
     const pending = await tx.judgeAssignment.findFirst({ where: { id: assignmentId, competitionId: competition.id, status: "PENDING" }, select: { id: true } });
     if (!pending) return { error: "That request was already decided." };
     await tx.judgeAssignment.update({ where: { id: assignmentId }, data: { status: decision, decidedAt: new Date() } });
@@ -91,6 +91,19 @@ export async function finalizeCompetitionResults(
   return result;
 }
 
+export async function releaseCompetitionResults(
+  _prev: { error?: string; ok?: boolean } | undefined,
+  formData: FormData,
+): Promise<{ error?: string; ok?: boolean }> {
+  const user = await requireUser();
+  if (!user || !(await isPlatformAdmin(user.id))) return { error: "Only tech admins can release results." };
+  if (formData.get("confirmation") !== "RELEASE") return { error: "Confirm release first." };
+  const competitionId = String(formData.get("competitionId") ?? "");
+  const result = await releaseResults(competitionId);
+  if (result.ok) refreshJudgeViews(competitionId);
+  return result;
+}
+
 export async function removeJudgeAssignment(
   _prev: { error?: string; ok?: boolean; message?: string } | undefined,
   formData: FormData,
@@ -106,9 +119,9 @@ export async function removeJudgeAssignment(
 
   const result = await prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT id FROM "CompetitionProfile" WHERE id = ${assignment.competitionId} FOR UPDATE`;
-    const competition = await tx.competitionProfile.findUnique({ where: { id: assignment.competitionId }, select: { resultsReleasedAt: true, judgingOpen: true } });
+    const competition = await tx.competitionProfile.findUnique({ where: { id: assignment.competitionId }, select: { isPartner: true, resultsFinalizedByEmail: true, resultsReleasedAt: true, judgingOpen: true } });
     if (!competition) return { error: "Competition not found." };
-    if (competition.resultsReleasedAt) return { error: "Judges cannot be removed after results release." };
+    if (competition.resultsReleasedAt || (competition.isPartner && competition.resultsFinalizedByEmail)) return { error: "Judges cannot be removed after results validation." };
     const actor = await tx.user.findUnique({ where: { id: user.id }, select: { email: true, platformAdmin: true, competitionMemberships: { where: { competitionId: assignment.competitionId, status: "APPROVED", isAdmin: true }, select: { id: true }, take: 1 } } });
     if (!actor) return { error: "Account not found." };
     const started = await tx.application.findFirst({ where: { competitionId: assignment.competitionId, viewingPosition: { not: null } }, select: { id: true } });

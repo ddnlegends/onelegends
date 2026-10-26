@@ -32,7 +32,6 @@ export default async function CompResultsPage() {
   if (!competition) return null;
 
   const submitted = competition.judgeAssignments.filter((a) => a.submittedAt);
-  const released = Boolean(competition.resultsReleasedAt);
   const [pendingInvites, pendingRequests] = await Promise.all([
     prisma.judgeInvite.count({ where: { competitionId } }),
     prisma.judgeAssignment.count({
@@ -42,8 +41,9 @@ export default async function CompResultsPage() {
   const panelReady = moderatorResultsReady(
     competition.applications,
     competition.judgeAssignments,
-    pendingInvites + pendingRequests,
+    competition.isPartner ? pendingInvites + pendingRequests : 0,
   );
+  const released = Boolean(competition.resultsReleasedAt) || (!competition.isPartner && panelReady);
 
   // Do not calculate or expose rankings until explicit finalization succeeds.
   const ranked = released && panelReady
@@ -55,8 +55,9 @@ export default async function CompResultsPage() {
       <div>
         <h1 className="font-heading text-4xl">Viewing Results</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          Rankings and scores stay sealed until all active judges submit and an
-          admin finalizes results. Rank is average z-score, then average total.
+          {competition.isPartner
+            ? "Rankings and scores appear after tech admins release validated results."
+            : "Rankings and scores appear when the full judge panel finishes."} Rank is average z-score, then average total.
         </p>
       </div>
 
@@ -73,7 +74,9 @@ export default async function CompResultsPage() {
 
       {!released ? (
         <p className="text-muted">
-          Rankings and scores unlock after every active packet is submitted and results are finalized.
+          {competition.isPartner
+            ? "Thank you for judging. Results will be available after tech release."
+            : "Thank you for judging. Results will be available when every active judge finishes."}
           Applicant names, dates, and dancer counts are available in Applied Teams.
         </p>
       ) : ranked.length === 0 ? (
