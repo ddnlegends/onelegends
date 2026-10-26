@@ -59,12 +59,19 @@ export function ModeratorLiveConsole({
   const [state, formAction, pending] = useActionState(setLiveTeam, undefined);
   const [videoUrls, setVideoUrls] = useState<Record<number, string>>({});
   const videoUrlsRef = useRef<Record<number, string>>({});
+  const stageRef = useRef<HTMLElement>(null);
   const [preparing, setPreparing] = useState(false);
   const [viewingMode, setViewingMode] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
   const [fileError, setFileError] = useState("");
   const [loadingPosition, setLoadingPosition] = useState<number | null>(null);
   useEffect(() => () => {
     Object.values(videoUrlsRef.current).forEach((url) => URL.revokeObjectURL(url));
+  }, []);
+  useEffect(() => {
+    const syncFullscreen = () => setFullscreen(document.fullscreenElement === stageRef.current);
+    document.addEventListener("fullscreenchange", syncFullscreen);
+    return () => document.removeEventListener("fullscreenchange", syncFullscreen);
   }, []);
   const index = teams.findIndex((team) => team.position === livePosition);
   const live = index >= 0 ? teams[index] : null;
@@ -112,10 +119,14 @@ export function ModeratorLiveConsole({
       .every((team) => team.judges.length > 0 && team.judges.every((judge) => judge.complete));
   };
   const nextBlocked = next != null && !canShow(next.position);
+  const toggleFullscreen = () => {
+    const request = fullscreen ? document.exitFullscreen() : stageRef.current?.requestFullscreen?.();
+    void request?.catch(() => {});
+  };
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <section className="space-y-4">
+      <section ref={stageRef} className="anonymous-viewing-stage space-y-4">
         {!viewingMode ? (
           <div className="rounded-xl border border-line bg-blush p-4 text-sm">
             <p className="font-semibold">Prepare anonymous AV viewing</p>
@@ -170,9 +181,18 @@ export function ModeratorLiveConsole({
         ) : (
           <div className="flex items-center justify-between gap-3 text-sm">
             <p className="text-muted">Anonymous viewing mode: Google Drive filenames are hidden.</p>
-            <button type="button" className="btn btn-ghost py-1.5" onClick={() => setViewingMode(false)}>
-              Leave viewing mode
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" className="btn btn-ghost py-1.5" onClick={toggleFullscreen}>
+                {fullscreen ? "Exit fullscreen" : "Fullscreen viewing"}
+              </button>
+              {!fullscreen ? (
+                <button type="button" className="btn btn-ghost py-1.5" onClick={() => {
+                  if (window.confirm("Stop sharing your screen before opening private AV links. Leave viewing mode?")) setViewingMode(false);
+                }}>
+                  Leave viewing mode
+                </button>
+              ) : null}
+            </div>
           </div>
         )}
         {live ? (
