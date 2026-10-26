@@ -9,6 +9,8 @@ import { CompDecisionBoard } from "@/components/CompDecisionBoard";
 import { CompPaymentCheckbox } from "@/components/PaymentForms";
 import { applicationPhaseLabel } from "@/lib/application-schedule";
 import { formatApplicationFee } from "@/lib/competition-details";
+import { HostPaymentReview } from "@/components/HostPaymentReview";
+import { isCompetitionOpen } from "@/lib/judging-rules";
 
 export default async function CompApplicantsPage() {
   const session = await auth();
@@ -19,6 +21,11 @@ export default async function CompApplicantsPage() {
     where: { id: competitionId },
     select: {
       name: true,
+      acceptingApps: true,
+      earlyApplicationDeadline: true,
+      applicationDeadline: true,
+      applicationClosesAt: true,
+      judgingOpen: true,
       resultsReleasedAt: true,
       decisionsSubmittedAt: true,
       applications: {
@@ -31,6 +38,7 @@ export default async function CompApplicantsPage() {
           appliedPhase: true,
           expectedFeeCents: true,
           compPaymentReceivedAt: true,
+          viewingPosition: true,
           team: {
             select: {
               id: true,
@@ -45,6 +53,8 @@ export default async function CompApplicantsPage() {
   });
   if (!competition) redirect("/comp");
   const released = Boolean(competition.resultsReleasedAt);
+  const hasOrder = competition.applications.some((application) => application.viewingPosition != null);
+  const canReview = !released && !competition.judgingOpen && !hasOrder && !isCompetitionOpen(competition);
   const decisionRows = competition.applications.map((application) => ({
     applicationId: application.id,
     teamName: application.team.name,
@@ -65,8 +75,12 @@ export default async function CompApplicantsPage() {
         ) : null}
       </div>
       {!released ? (
-        <p className="rounded-xl border border-line bg-blush p-5 text-sm">Tech admins verify OneLegends registration payments before AV viewing. Record payments made to your competition for each applicant below. Viewing order, AV links, scores, and full team details remain hidden until results release.</p>
+        <p className="rounded-xl border border-line bg-blush p-5 text-sm">Tech admins verify OneLegends registration payments before AV viewing. Record payments made to your competition for each applicant below. <strong>Teams not marked paid to your competition will be excluded from AV viewing.</strong> Viewing order, AV links, scores, and full team details remain hidden until results release.</p>
       ) : null}
+      {hasOrder && !released ? <p className="rounded-xl border border-warning-line bg-warning-soft p-5 text-sm text-warning">The AV viewing order is already locked. Updating a host payment now will not add or remove teams from that order.</p> : null}
+      {canReview ? <HostPaymentReview
+        teams={competition.applications.map((application) => ({ id: application.id, name: application.team.name, paid: Boolean(application.compPaymentReceivedAt) }))}
+      /> : null}
       {released ? <CompDecisionBoard key={`${competition.decisionsSubmittedAt?.toISOString() ?? "draft"}-${decisionRows.map((row) => row.status).join("-")}`} rows={decisionRows} finalized={Boolean(competition.decisionsSubmittedAt)} /> : null}
       {competition.applications.length ? (
         <ul className="divide-y divide-line rounded-xl border border-line bg-card">

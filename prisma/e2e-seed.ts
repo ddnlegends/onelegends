@@ -164,7 +164,7 @@ export async function seedE2E() {
       await prisma.teamProfile.create({
         data: {
           ...completeTeam(fixture),
-          applications: { create: { competitionId: showcase.id } },
+          applications: { create: { competitionId: showcase.id, compPaymentReceivedAt: new Date(), compPaymentRecordedByEmail: compAdmin.email } },
         },
       });
     }

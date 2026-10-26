@@ -37,6 +37,7 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
   const ops = await pageAs(browser, "tech");
   await ops.goto(`/ops/comps/${id}`);
   await ops.getByRole("button", { name: "Open judging" }).click();
+  await ops.getByRole("button", { name: "Confirm and open judging" }).click();
   await expect(ops.getByText(/Judging is open\. The moderator can start/)).toBeVisible();
 
   const moderator = await pageAs(browser, "moderator");

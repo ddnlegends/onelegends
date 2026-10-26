@@ -57,6 +57,7 @@ test("CSV and XLSX keep judging names sealed until results release", async ({ pa
   await login(page, "tech");
   await page.goto(`/ops/comps/${id}`);
   await page.getByRole("button", { name: "Open judging" }).click();
+  await page.getByRole("button", { name: "Confirm and open judging" }).click();
   await expect(page.getByText(/Judging is open\. The moderator can start/)).toBeVisible();
   const assignment = await db.judgeAssignment.findFirstOrThrow({ where: { competitionId: id }, include: { slots: true } });
   expect(assignment.slots).toHaveLength(2);
@@ -118,6 +119,7 @@ test("competition director downloads ranked profiles, rosters, and scores only a
   const tech = await pageAs(browser, "tech");
   await tech.goto(`/ops/comps/${id}`);
   await tech.getByRole("button", { name: "Open judging" }).click();
+  await tech.getByRole("button", { name: "Confirm and open judging" }).click();
   await expect(tech.getByText(/Judging is open\. The moderator can start/)).toBeVisible();
   const assignment = await db.judgeAssignment.findFirstOrThrow({
     where: { competitionId: id },

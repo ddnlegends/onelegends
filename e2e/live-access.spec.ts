@@ -83,6 +83,7 @@ test("non-partner admins get moderator controls while pending admins and judges 
   const ops = await pageAs(browser, "tech");
   await ops.goto(`/ops/comps/${id}`);
   await ops.getByRole("button", { name: "Open judging" }).click();
+  await ops.getByRole("button", { name: "Confirm and open judging" }).click();
 
   await comp.goto(`/moderator/${id}`);
   await expect(comp.getByRole("heading", { name: "Ready when you are" })).toBeVisible();

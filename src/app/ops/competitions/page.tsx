@@ -119,6 +119,7 @@ export default async function OpsCompetitionsPage() {
             const paymentsReceived = competition.applications.filter(
               (application) => application.compPaymentReceivedAt,
             ).length;
+            const viewingOrderLocked = competition.applications.some((application) => application.viewingPosition != null);
 
             return (
               <ExpandableRow
@@ -140,6 +141,7 @@ export default async function OpsCompetitionsPage() {
                         competition.dates || null,
                         competition.location || null,
                         `${competition.applications.length} application${competition.applications.length === 1 ? "" : "s"}`,
+                        `${paymentsReceived} host-paid`,
                         `${packets} / ${competition.judgeAssignments.filter((row) => row.status === "APPROVED").length} packets`,
                       ]
                         .filter(Boolean)
@@ -262,6 +264,7 @@ export default async function OpsCompetitionsPage() {
                         value: `${competition.applications.length} total · ${accepted} accepted · ${waitlisted} waitlisted · ${declined} declined`,
                       },
                       { label: "Host payments", value: `${paymentsReceived} received of ${accepted} accepted` },
+                      { label: "Host payment review", value: viewingOrderLocked ? "Viewing order already locked" : "Review before opening judging" },
                       { label: "Active judges", value: competition.judgeAssignments.filter((row) => row.status === "APPROVED").length },
                       { label: "Judging open", value: competition.judgingOpen ? "Yes" : "No" },
                       {
@@ -435,7 +438,7 @@ export default async function OpsCompetitionsPage() {
                           </Link>
                           <span className="text-muted">
                             {statusLabel(application.status)} · applied{" "}
-                            {formatDate(application.createdAt)} · Host payment: {application.compPaymentReceivedAt ? `Received ${formatDate(application.compPaymentReceivedAt)}` : "Not marked paid"}
+                            {formatDate(application.createdAt)} · Host payment: <strong className={application.compPaymentReceivedAt ? "text-success" : "text-warning"}>{application.compPaymentReceivedAt ? "Paid for comp" : "Unpaid for comp"}</strong>{application.compPaymentReceivedAt ? ` (${formatDate(application.compPaymentReceivedAt)})` : ""}
                           </span>
                         </li>
                       ))}

@@ -29,22 +29,33 @@ export const visibleApplicationWhere = {
   team: { applyBlocked: false },
 } satisfies Prisma.ApplicationWhereInput;
 
-/** Only paid teams may receive a Team number or an AV viewing slot. */
+/** Host and OneLegends payments are required for new AV slots. Preserve already
+ * numbered historical rosters so an upgrade never hides existing scores. */
 export const viewingEligibleApplicationWhere = {
   ...visibleApplicationWhere,
   team: {
     applyBlocked: false,
     registrationPaidAt: { not: null },
   },
+  OR: [
+    { viewingPosition: { not: null } },
+    {
+      compPaymentReceivedAt: { not: null },
+      competition: { applications: { none: { viewingPosition: { not: null } } } },
+    },
+  ],
 } satisfies Prisma.ApplicationWhereInput;
 
 export function isViewingEligibleApplication(application: {
   removedAt: Date | null;
+  viewingPosition: number | null;
+  compPaymentReceivedAt: Date | null;
   team: { applyBlocked: boolean; registrationPaidAt: Date | null };
-}) {
+}, orderExists = false) {
   return (
     application.removedAt == null &&
     !application.team.applyBlocked &&
-    application.team.registrationPaidAt != null
+    application.team.registrationPaidAt != null &&
+    (application.viewingPosition != null || (!orderExists && application.compPaymentReceivedAt != null))
   );
 }

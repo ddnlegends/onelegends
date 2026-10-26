@@ -25,6 +25,7 @@ import { LocalDateTime } from "@/components/LocalDateTime";
 import { isPlatformAdmin } from "@/lib/team-access";
 import { judgePanelCompletion } from "@/lib/judge-panel-completion";
 import { currentApplicationWhere, isViewingEligibleApplication } from "@/lib/payment-eligibility";
+import { hostPaymentFingerprint } from "@/lib/host-payment-review";
 
 export default async function CompDashboardDetailPage({
   params,
@@ -52,6 +53,7 @@ export default async function CompDashboardDetailPage({
           teamId: true,
           status: true,
           viewingPosition: true,
+          compPaymentReceivedAt: true,
           removedAt: true,
           team: { select: { name: true, applyBlocked: true, registrationPaidAt: true } },
         },
@@ -95,7 +97,11 @@ export default async function CompDashboardDetailPage({
     for (const membership of competition.memberships) moderatorEmails.add(membership.user.email);
   }
 
-  const eligibleApplications = competition.applications.filter(isViewingEligibleApplication);
+  const orderExists = competition.applications.some((app) => app.viewingPosition != null);
+  const eligibleApplications = competition.applications.filter((app) => isViewingEligibleApplication(app, orderExists));
+  const paymentRows = competition.applications
+    .filter((app) => !app.team.applyBlocked)
+    .map((app) => ({ id: app.id, name: app.team.name, paid: Boolean(app.compPaymentReceivedAt), compPaymentReceivedAt: app.compPaymentReceivedAt }));
   const ordered = eligibleApplications
     .filter((app) => app.viewingPosition != null)
     .sort((a, b) => (a.viewingPosition as number) - (b.viewingPosition as number));
@@ -239,7 +245,22 @@ export default async function CompDashboardDetailPage({
         claimed={claimed}
         released={released}
         closeProgress={closeProgress}
+        paymentRows={paymentRows.map(({ id, name, paid }) => ({ id, name, paid }))}
+        paymentFingerprint={hostPaymentFingerprint(paymentRows)}
       />
+
+      <section className="space-y-3 rounded-xl border border-line bg-card p-5">
+        <h2 className="font-heading text-xl">Applicant host payments</h2>
+        <p className="text-sm text-muted">Competition admins mark payments to their competition. Tech admins can view these statuses here before AV viewing.</p>
+        {competition.applications.length ? <ul className="divide-y divide-line">
+          {competition.applications.map((application) => <li key={application.id} className="flex flex-wrap justify-between gap-3 py-3 text-sm">
+            <span className="font-medium">{application.team.name}</span>
+            <span className={application.compPaymentReceivedAt ? "font-semibold text-success" : "font-semibold text-warning"}>
+              {application.compPaymentReceivedAt ? "Paid for comp" : "Unpaid for comp"}
+            </span>
+          </li>)}
+        </ul> : <p className="text-sm text-muted">No active applications.</p>}
+      </section>
 
       <FinalizeResultsForm
         competitionId={competition.id}

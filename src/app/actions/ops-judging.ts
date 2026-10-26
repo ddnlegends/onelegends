@@ -19,7 +19,8 @@ import {
 } from "@/lib/judging";
 import { isPlatformAdmin } from "@/lib/team-access";
 import { describePanelBlockers, judgePanelCompletion } from "@/lib/judge-panel-completion";
-import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
+import { viewingEligibleApplicationWhere, visibleApplicationWhere } from "@/lib/payment-eligibility";
+import { hostPaymentFingerprint } from "@/lib/host-payment-review";
 
 function revalidateJudging(competitionId: string) {
   revalidatePath("/dashboard");
@@ -58,6 +59,16 @@ export async function setJudgingOpen(
   if (error || !competition) return { error: error ?? "Competition missing." };
 
   if (nextOpen) {
+    if (formData.get("confirmation") !== "HOST_PAYMENTS_REVIEWED") {
+      return { error: "Review the competition's host payments before opening judging." };
+    }
+    const paymentRows = await prisma.application.findMany({
+      where: { competitionId: competition.id, ...visibleApplicationWhere },
+      select: { id: true, compPaymentReceivedAt: true },
+    });
+    if (formData.get("paymentFingerprint") !== hostPaymentFingerprint(paymentRows)) {
+      return { error: "The host payment list changed. Refresh and review the latest statuses before opening judging." };
+    }
     if (competition.resultsReleasedAt) {
       return { error: "Judging cannot reopen after results are released." };
     }
@@ -74,7 +85,7 @@ export async function setJudgingOpen(
       where: { competitionId: competition.id, ...viewingEligibleApplicationWhere },
     });
     if (apps === 0) {
-      return { error: "No paid, unblocked teams are eligible for viewing yet." };
+      return { error: "No teams paid to both OneLegends and this competition are eligible for viewing yet." };
     }
     const approvedJudges = await prisma.judgeAssignment.count({
       where: { competitionId: competition.id, status: "APPROVED" },
