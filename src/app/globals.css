@@ -104,6 +104,18 @@ body {
   color: var(--ink);
 }
 
+.anonymous-viewing-stage:fullscreen {
+  background: var(--paper);
+  color: var(--ink);
+  overflow: auto;
+  padding: 1.5rem;
+}
+
+.anonymous-viewing-stage:fullscreen video {
+  max-height: calc(100vh - 14rem);
+  object-fit: contain;
+}
+
 a {
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
