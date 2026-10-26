@@ -1060,6 +1060,75 @@ export async function createCompetition(
   };
 }
 
+export async function deleteCompetition(
+  _prev: { error?: string; ok?: boolean; message?: string } | undefined,
+  formData: FormData,
+): Promise<{ error?: string; ok?: boolean; message?: string }> {
+  const user = await requireUser();
+  if (!user || !(await isPlatformAdmin(user.id))) {
+    return { error: "Only circuit tech admins can delete competitions." };
+  }
+
+  const competitionId = String(formData.get("competitionId") ?? "");
+  const typedName = String(formData.get("competitionName") ?? "").trim();
+  const typedClaimCode = String(formData.get("claimCode") ?? "").trim();
+  const reason = String(formData.get("reason") ?? "").trim();
+  if (formData.get("confirmation") !== "DELETE" || !reason || reason.length > 500) {
+    return { error: "Type DELETE and provide a reason of 1 to 500 characters." };
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    const locked = await tx.$queryRaw<Array<{ id: string }>>`
+      SELECT id FROM "CompetitionProfile" WHERE id = ${competitionId} FOR UPDATE
+    `;
+    if (!locked.length) return { error: "Competition not found." };
+
+    const competition = await tx.competitionProfile.findUniqueOrThrow({
+      where: { id: competitionId },
+      select: {
+        name: true,
+        claimCode: true,
+        judgingOpen: true,
+        resultsReleasedAt: true,
+        _count: { select: { applications: true, judgeAssignments: true } },
+      },
+    });
+    if (typedName !== competition.name || typedClaimCode !== competition.claimCode) {
+      return { error: "The competition name or claim code does not match. Nothing was deleted." };
+    }
+    if (competition.judgingOpen) {
+      return { error: "Close live judging before deleting this competition." };
+    }
+    const actor = await tx.user.findUnique({
+      where: { id: user.id },
+      select: { email: true, platformAdmin: true },
+    });
+    if (!actor?.platformAdmin) {
+      return { error: "Only circuit tech admins can delete competitions." };
+    }
+
+    await tx.competitionProfile.delete({ where: { id: competitionId } });
+    return {
+      ok: true,
+      message: `${competition.name} was permanently deleted.`,
+      audit: {
+        competitionId,
+        competitionName: competition.name,
+        actorEmail: actor.email,
+        reason,
+        applicationCount: competition._count.applications,
+        judgeCount: competition._count.judgeAssignments,
+        hadReleasedResults: Boolean(competition.resultsReleasedAt),
+      },
+    };
+  });
+  if (result.error) return result;
+
+  console.info("Competition deleted", result.audit);
+  revalidateAccessPaths();
+  return { ok: true, message: result.message };
+}
+
 export async function setCompetitionPartnerStatus(
   _prev: { error?: string; ok?: boolean; message?: string } | undefined,
   formData: FormData,

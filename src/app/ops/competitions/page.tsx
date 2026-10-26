@@ -3,6 +3,7 @@ import { requirePlatformAdminPage } from "@/lib/page-guards";
 import {
   CancelCompInviteForm,
   CompetitionTypeForm,
+  DeleteCompetitionForm,
   InviteCompAdminForm,
   ResetCompClaimForm,
   RevokeCompAccessForm,
@@ -184,6 +185,14 @@ export default async function OpsCompetitionsPage() {
                         />
                       </>
                     ) : null}
+                    <DeleteCompetitionForm
+                      competitionId={competition.id}
+                      competitionName={competition.name}
+                      claimCode={competition.claimCode}
+                      applications={competition.applications.length}
+                      judges={competition.judgeAssignments.length}
+                      released={Boolean(competition.resultsReleasedAt)}
+                    />
                   </div>
                 </div>
 
