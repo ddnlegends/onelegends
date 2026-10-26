@@ -138,26 +138,27 @@ it("rejects payment and removal changes after the viewing roster is locked", asy
   })).toMatchObject({ removedAt: null });
 });
 
-it("lets only the host record payment after a final Accepted decision", async () => {
+it("lets the host track an applicant's payment before AV viewing without changing other data", async () => {
   const application = await prisma.application.findFirstOrThrow({
     where: { competition: { slug: E2E.comps.showcase.slug } },
-    select: { id: true, competitionId: true },
+    select: { id: true, competitionId: true, teamId: true, status: true },
   });
-  await prisma.$transaction([
-    prisma.application.update({
-      where: { id: application.id },
-      data: { status: "ACCEPTED" },
-    }),
-    prisma.competitionProfile.update({
-      where: { id: application.competitionId },
-      data: { resultsReleasedAt: new Date(), decisionsSubmittedAt: new Date() },
-    }),
-  ]);
+  const other = await prisma.application.findFirstOrThrow({
+    where: { competitionId: application.competitionId, id: { not: application.id } },
+    select: { id: true, compPaymentReceivedAt: true },
+  });
 
   const outsider = await prisma.user.findUniqueOrThrow({
     where: { email: E2E.emails.team },
   });
   identity.user = { id: outsider.id, email: outsider.email };
+  expect(await setCompPaymentReceived(undefined, form({
+    applicationId: application.id,
+    received: "1",
+  }))).toHaveProperty("error");
+
+  const tech = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.tech } });
+  identity.user = { id: tech.id, email: tech.email };
   expect(await setCompPaymentReceived(undefined, form({
     applicationId: application.id,
     received: "1",
@@ -174,6 +175,17 @@ it("lets only the host record payment after a final Accepted decision", async ()
   expect(await prisma.application.findUniqueOrThrow({
     where: { id: application.id },
   })).toMatchObject({
+    teamId: application.teamId,
+    status: application.status,
     compPaymentRecordedByEmail: host.email,
+    compPaymentReceivedAt: expect.any(Date),
+  });
+  expect(await prisma.application.findUniqueOrThrow({ where: { id: other.id } })).toMatchObject({
+    compPaymentReceivedAt: other.compPaymentReceivedAt,
+  });
+  expect(await setCompPaymentReceived(undefined, form({ applicationId: application.id, received: "0" }))).toMatchObject({ ok: true });
+  expect(await prisma.application.findUniqueOrThrow({ where: { id: application.id } })).toMatchObject({
+    compPaymentReceivedAt: null,
+    compPaymentRecordedByEmail: null,
   });
 });

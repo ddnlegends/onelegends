@@ -8,17 +8,11 @@ import { formatDate, statusLabel } from "@/lib/utils";
 
 export default async function OpsPaymentsPage() {
   await requirePlatformAdminPage();
-  const [teams, competitions, accepted] = await Promise.all([
+  const [teams, competitions, applications] = await Promise.all([
     prisma.teamProfile.findMany({ orderBy: { name: "asc" } }),
     prisma.competitionProfile.findMany({ orderBy: { name: "asc" } }),
     prisma.application.findMany({
-      where: {
-        ...currentApplicationWhere,
-        OR: [
-          { status: "ACCEPTED", competition: { decisionsSubmittedAt: { not: null } } },
-          { compPaymentReceivedAt: { not: null } },
-        ],
-      },
+      where: currentApplicationWhere,
       select: {
         id: true,
         status: true,
@@ -37,7 +31,7 @@ export default async function OpsPaymentsPage() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="font-heading text-4xl">Payment tracking</h1>
-            <p className="mt-2 text-muted">Verify external OneLegends registration payments here. Competition hosts record their own payments after final acceptance.</p>
+            <p className="mt-2 text-muted">Verify external OneLegends registration payments here. Competition hosts record payments to their competitions for each applicant.</p>
           </div>
           <MarkAllRegistrationPaidForm unpaidTeams={unpaidTeams} unpaidCompetitions={unpaidCompetitions} />
         </div>
@@ -70,13 +64,13 @@ export default async function OpsPaymentsPage() {
           </ul>
         </section>
         <section className="space-y-3">
-          <h2 className="font-heading text-2xl">Accepted teams · host payments</h2>
+          <h2 className="font-heading text-2xl">Applicants · host payments</h2>
           <p className="text-sm text-muted">Hosts check these payments in Applied Teams. This section is read only.</p>
           <ul className="divide-y divide-line rounded-xl border border-line bg-card">
-            {accepted.map((application) => (
+            {applications.map((application) => (
               <li key={application.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
                 <span>{application.team.name} · {application.competition.name} · {statusLabel(application.status)}</span>
-                <span className="text-muted">{application.compPaymentReceivedAt ? `Received ${formatDate(application.compPaymentReceivedAt)}` : "Outstanding"}</span>
+                <span className="text-muted">{application.compPaymentReceivedAt ? `Received ${formatDate(application.compPaymentReceivedAt)}` : "Not marked paid"}</span>
               </li>
             ))}
           </ul>

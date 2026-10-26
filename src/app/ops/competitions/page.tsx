@@ -435,7 +435,7 @@ export default async function OpsCompetitionsPage() {
                           </Link>
                           <span className="text-muted">
                             {statusLabel(application.status)} · applied{" "}
-                            {formatDate(application.createdAt)}
+                            {formatDate(application.createdAt)} · Host payment: {application.compPaymentReceivedAt ? `Received ${formatDate(application.compPaymentReceivedAt)}` : "Not marked paid"}
                           </span>
                         </li>
                       ))}

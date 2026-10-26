@@ -44,7 +44,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Apply with checkboxes",
-        body: "Select every open competition you want and submit once. Check its regular and late deadlines; the late deadline closes applications. Pay the $25 OneLegends registration fee outside the app; you can apply while it is pending, but tech admins must verify it before your AV enters viewing. A later payment to a competition is due only if that host Accepts you after judging.",
+        body: "Select every open competition you want and submit once. Check its regular and late deadlines; the late deadline closes applications. Pay the $25 OneLegends registration fee outside the app; you can apply while it is pending, but tech admins must verify it before your AV enters viewing. Check each competition's separate payment instructions; its host tracks whether it received your payment.",
       },
     ],
     cta: { href: "/register", label: "Create an account" },
@@ -136,7 +136,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Invite judges and check applicants",
-        body: "Invite judges by email. Their acceptance adds them to the active panel; review any separate pending judge requests on the Judges page. The app stores invitations but does not send email. Applied Teams shows applicant names, dates, and dancer counts before results. After you mark a team Accepted, use Payment received to track the host fee you collect outside OneLegends.",
+        body: "Invite judges by email. Their acceptance adds them to the active panel; review any separate pending judge requests on the Judges page. The app stores invitations but does not send email. Applied Teams shows applicant names, dates, and dancer counts before results. Use Payment received there to track the host fee you collect outside OneLegends, including before AV viewing.",
       },
       {
         title: "Review released results",

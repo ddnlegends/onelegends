@@ -45,7 +45,7 @@ export function CompDecisionBoard({ rows, finalized }: { rows: DecisionRow[]; fi
               <td className="px-4 py-3">{statusLabel(row.status)}</td>
               <td className="px-4 py-3">{row.status === "ACCEPTED"
                 ? <CompPaymentCheckbox applicationId={row.applicationId} received={row.paymentReceived} />
-                : "—"}</td>
+                : row.paymentReceived ? "Received" : "Not marked paid"}</td>
             </tr>)}
           </tbody>
         </table>
@@ -112,7 +112,7 @@ export function CompDecisionBoard({ rows, finalized }: { rows: DecisionRow[]; fi
                     </select>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-muted">After final submission</span>
+                    <span className="text-muted">{row.paymentReceived ? "Received" : "Not marked paid"}</span>
                   </td>
                 </tr>
               ))}

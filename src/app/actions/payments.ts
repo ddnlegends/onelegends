@@ -142,7 +142,7 @@ export async function removeUnpaidApplication(_prev: ActionState | undefined, fo
   return { ok: true, message: `${result.name} removed from this competition.` };
 }
 
-/** The host checks its own external payment only after a final Accepted decision. */
+/** Competition hosts track payment from each active applicant before viewing. */
 export async function setCompPaymentReceived(_prev: ActionState | undefined, formData: FormData): Promise<ActionState> {
   const user = await requireUser();
   if (!user) return { error: "Sign in first." };
@@ -151,13 +151,10 @@ export async function setCompPaymentReceived(_prev: ActionState | undefined, for
   const received = String(formData.get("received") ?? "") === "1";
   const app = await prisma.application.findUnique({
     where: { id: applicationId },
-    select: { id: true, competitionId: true, status: true, removedAt: true, team: { select: { applyBlocked: true } }, competition: { select: { decisionsSubmittedAt: true } } },
+    select: { id: true, competitionId: true, removedAt: true, team: { select: { applyBlocked: true } } },
   });
   if (!app || app.removedAt || app.team.applyBlocked) return { error: "Application not found." };
   if (!(await isCompAdmin(user.id, app.competitionId))) return { error: "Only this competition's admins can track its payments." };
-  if (!app.competition.decisionsSubmittedAt || app.status !== "ACCEPTED") {
-    return { error: "Payment can be recorded after the final Accepted decision." };
-  }
   await prisma.application.update({
     where: { id: applicationId },
     data: { compPaymentReceivedAt: received ? new Date() : null, compPaymentRecordedByEmail: received ? user.email : null },

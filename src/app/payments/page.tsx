@@ -36,11 +36,11 @@ export default async function PaymentsPage() {
           {team ? (
             <p className="mt-2 text-sm">{team.registrationPaidAt ? "Your team's OneLegends registration is marked paid." : "Your team's OneLegends registration is still unpaid."}</p>
           ) : null}
-          <p className="mt-2 text-sm text-muted">A team’s payment to a competition is due only after the competition’s final Accepted decision. The host tracks that payment separately.</p>
+          <p className="mt-2 text-sm text-muted">Payments to competition hosts are separate from OneLegends registration. Check each competition’s payment instructions; the host records when it receives your payment.</p>
         </section>
 
         <ol className="list-decimal space-y-4 rounded-xl border border-line bg-card px-8 py-6 text-sm">
-          <li>Confirm the correct recipient with circuit ops for OneLegends registration. Competition payments are arranged separately with the host after acceptance.</li>
+          <li>Confirm the correct recipient with circuit ops for OneLegends registration. Arrange competition payments separately with each host according to its instructions.</li>
           <li>
             Pay via Zelle or PayPal to{" "}
             <a href="mailto:legends@desidancenetwork.org" className="text-accent underline">
@@ -55,7 +55,7 @@ export default async function PaymentsPage() {
             </strong>
           </li>
           <li>
-            Keep your receipt. Tech admins confirm OneLegends registration payments manually; competition hosts track their own payments after final acceptance.
+            Keep your receipt. Tech admins confirm OneLegends registration payments manually; competition hosts track their own payments separately.
           </li>
         </ol>
 

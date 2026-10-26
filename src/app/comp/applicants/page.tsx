@@ -6,6 +6,7 @@ import { getActiveCompetitionId, isCompAdmin } from "@/lib/team-access";
 import { formatDate, statusLabel } from "@/lib/utils";
 import { visibleApplicationWhere } from "@/lib/payment-eligibility";
 import { CompDecisionBoard } from "@/components/CompDecisionBoard";
+import { CompPaymentCheckbox } from "@/components/PaymentForms";
 import { applicationPhaseLabel } from "@/lib/application-schedule";
 import { formatApplicationFee } from "@/lib/competition-details";
 
@@ -64,7 +65,7 @@ export default async function CompApplicantsPage() {
         ) : null}
       </div>
       {!released ? (
-        <p className="rounded-xl border border-line bg-blush p-5 text-sm">Tech admins verify OneLegends registration payments before AV viewing. Competition payments are tracked after final acceptance. Viewing order, AV links, scores, and full team details remain hidden until results release.</p>
+        <p className="rounded-xl border border-line bg-blush p-5 text-sm">Tech admins verify OneLegends registration payments before AV viewing. Record payments made to your competition for each applicant below. Viewing order, AV links, scores, and full team details remain hidden until results release.</p>
       ) : null}
       {released ? <CompDecisionBoard key={`${competition.decisionsSubmittedAt?.toISOString() ?? "draft"}-${decisionRows.map((row) => row.status).join("-")}`} rows={decisionRows} finalized={Boolean(competition.decisionsSubmittedAt)} /> : null}
       {competition.applications.length ? (
@@ -83,12 +84,16 @@ export default async function CompApplicantsPage() {
                 </p>
                 <p className="mt-1 text-sm font-medium">{application.appliedPhase ? `${applicationPhaseLabel(application.appliedPhase)} phase · Expected host fee: ${formatApplicationFee(application.expectedFeeCents)}` : "Phase and expected host fee were not recorded for this earlier application."}</p>
               </div>
-              {released ? (
-                <div className="space-y-2">
+              <div className="space-y-2">
+                {released ? (
+                  <>
                   <span className="text-sm text-muted">{statusLabel(application.status)}</span>
                   {application.compPaymentReceivedAt ? " · Host payment received" : ""}
-                </div>
-              ) : null}
+                  </>
+                ) : (
+                  <CompPaymentCheckbox applicationId={application.id} received={Boolean(application.compPaymentReceivedAt)} />
+                )}
+              </div>
             </li>
           ))}
         </ul>
