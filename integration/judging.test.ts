@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { ensureCompetitionJudgeSlots } from "@/lib/judging";
 import { saveTeamScores, submitJudgingPacket } from "@/app/actions/judge";
 import { setLiveTeam } from "@/app/actions/moderator";
-import { finalizeCompetitionResults, removeJudgeAssignment } from "@/app/actions/comp-judging";
+import { finalizeCompetitionResults, releaseCompetitionResults, removeJudgeAssignment } from "@/app/actions/comp-judging";
 import { setJudgingOpen } from "@/app/actions/ops-judging";
 
 let competitionId: string;
@@ -193,7 +193,7 @@ describe("judging with real PostgreSQL transactions", () => {
       await close;
     }
   });
-  it("duplicate submissions wait for explicit finalization, which then seals scores", async () => {
+  it("Partner submissions require separate validation and release", async () => {
     await completePacket();
     const results = await Promise.all([submitJudgingPacket(undefined, form()), submitJudgingPacket(undefined, form())]);
     expect(results).toEqual([{ ok: true }, { ok: true }]);
@@ -204,6 +204,11 @@ describe("judging with real PostgreSQL transactions", () => {
     confirm.set("competitionId", competitionId);
     confirm.set("confirmation", "FINALIZE");
     expect(await finalizeCompetitionResults(undefined, confirm)).toMatchObject({ ok: true });
+    const validated = await prisma.competitionProfile.findUniqueOrThrow({ where: { id: competitionId } });
+    expect(validated.resultsFinalizedByEmail).toBe(E2E.emails.tech);
+    expect(validated.resultsReleasedAt).toBeNull();
+    const release = new FormData(); release.set("competitionId", competitionId); release.set("confirmation", "RELEASE");
+    expect(await releaseCompetitionResults(undefined, release)).toMatchObject({ ok: true });
     const released = await prisma.competitionProfile.findUniqueOrThrow({ where: { id: competitionId } });
     expect(released.resultsReleasedAt).not.toBeNull();
     expect(released.judgingOpen).toBe(false);
@@ -211,6 +216,18 @@ describe("judging with real PostgreSQL transactions", () => {
     session.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.judge } })).id;
     expect(await saveTeamScores(undefined, form())).toHaveProperty("error");
     expect(await prisma.judgeScore.findMany({ orderBy: { id: "asc" } })).toEqual(before);
+  });
+  it("Non Partner results release automatically after the final packet", async () => {
+    await prisma.competitionProfile.update({ where: { id: competitionId }, data: { isPartner: false } });
+    await completePacket();
+    expect(await submitJudgingPacket(undefined, form())).toMatchObject({ ok: true });
+    const competition = await prisma.competitionProfile.findUniqueOrThrow({ where: { id: competitionId } });
+    expect(competition.resultsReleasedAt).not.toBeNull();
+    expect(competition.resultsFinalizedByEmail).toBeNull();
+    const tech = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.tech } });
+    session.userId = tech.id;
+    const confirm = new FormData(); confirm.set("competitionId", competitionId); confirm.set("confirmation", "FINALIZE");
+    expect(await finalizeCompetitionResults(undefined, confirm)).toHaveProperty("error");
   });
   it("waits for every active judge even when the legacy threshold is one", async () => {
     const otherUser = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.team } });

@@ -409,8 +409,8 @@ export async function acceptJudgeInvite(
 
   const accepted = await prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT id FROM "CompetitionProfile" WHERE id = ${invite.competitionId} FOR UPDATE`;
-    const competition = await tx.competitionProfile.findUnique({ where: { id: invite.competitionId }, select: { resultsReleasedAt: true } });
-    if (!competition || competition.resultsReleasedAt) return false;
+    const competition = await tx.competitionProfile.findUnique({ where: { id: invite.competitionId }, select: { resultsReleasedAt: true, resultsFinalizedByEmail: true } });
+    if (!competition || competition.resultsReleasedAt || competition.resultsFinalizedByEmail) return false;
     const pendingInvite = await tx.judgeInvite.findUnique({ where: { id: invite.id }, select: { id: true } });
     if (!pendingInvite) return false;
     const existing = await tx.judgeAssignment.findUnique({ where: { judgeId_competitionId: { judgeId: judge.id, competitionId: invite.competitionId } }, select: { status: true } });
@@ -667,8 +667,8 @@ export async function inviteJudge(
 
   const invited = await prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT id FROM "CompetitionProfile" WHERE id = ${competitionId} FOR UPDATE`;
-    const competition = await tx.competitionProfile.findUnique({ where: { id: competitionId }, select: { resultsReleasedAt: true } });
-    if (!competition || competition.resultsReleasedAt) return false;
+    const competition = await tx.competitionProfile.findUnique({ where: { id: competitionId }, select: { resultsReleasedAt: true, resultsFinalizedByEmail: true } });
+    if (!competition || competition.resultsReleasedAt || competition.resultsFinalizedByEmail) return false;
     await tx.judgeInvite.upsert({
       where: { competitionId_email: { competitionId, email } },
       create: { competitionId, email },
@@ -1168,10 +1168,13 @@ export async function setCompetitionPartnerStatus(
   }
 
   const currentFee = await prisma.competitionProfile.findUnique({
-    where: { id: parsed.data.competitionId }, select: { registrationPaidAt: true },
+    where: { id: parsed.data.competitionId }, select: { registrationPaidAt: true, resultsFinalizedByEmail: true, resultsReleasedAt: true },
   });
+  if (currentFee?.resultsFinalizedByEmail || currentFee?.resultsReleasedAt) {
+    return { error: "Competition type is locked after results validation or release." };
+  }
   const updated = await prisma.competitionProfile.updateMany({
-    where: { id: parsed.data.competitionId },
+    where: { id: parsed.data.competitionId, resultsFinalizedByEmail: null, resultsReleasedAt: null },
     data: {
       isPartner: parsed.data.type === "partner",
       ...(!currentFee?.registrationPaidAt

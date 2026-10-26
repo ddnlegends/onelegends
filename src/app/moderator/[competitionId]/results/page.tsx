@@ -22,6 +22,7 @@ export default async function ModeratorResultsPage({
     where: { id: competitionId },
     select: {
       name: true,
+      isPartner: true,
       resultsReleasedAt: true,
       applications: {
         where: viewingEligibleApplicationWhere,
@@ -65,11 +66,15 @@ export default async function ModeratorResultsPage({
   );
   const unresolvedJudges = competition.judgeInvites.length +
     competition.judgeAssignments.filter((assignment) => assignment.status === "PENDING").length;
-  if (!moderatorResultsReady(
-    competition.applications,
-    activeJudges,
-    unresolvedJudges,
-  )) notFound();
+  if (!moderatorResultsReady(competition.applications, activeJudges, competition.isPartner ? unresolvedJudges : 0)) notFound();
+  if (competition.isPartner && !competition.resultsReleasedAt) {
+    return (
+      <div className="rounded-xl border border-line bg-card p-6">
+        <h1 className="font-heading text-3xl">Thank you for moderating</h1>
+        <p className="mt-2 text-muted">{competition.isPartner ? "Results will appear after tech release." : "Results will appear when all active judges finish."}</p>
+      </div>
+    );
+  }
 
   const ranked = rankTeams(competition.applications, activeJudges);
   const finalized = Boolean(competition.resultsReleasedAt);

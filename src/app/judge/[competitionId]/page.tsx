@@ -34,6 +34,14 @@ export default async function JudgePacketPage({
   });
   if (!assignment) notFound();
 
+  if (assignment.submittedAt) return (
+    <div className="rounded-xl border border-line bg-card p-6">
+      <h1 className="font-heading text-3xl">Thank you for judging</h1>
+      <p className="mt-2 text-muted">Your scores have been submitted and are locked. You do not need to take any further action.</p>
+      <Link href="/judge" className="btn btn-ghost mt-4 inline-flex">Back to judging</Link>
+    </div>
+  );
+
   const scoringOpen = isJudgingOpen(assignment.competition);
   if (scoringOpen) {
     await ensureViewingSlots(assignment.id);
