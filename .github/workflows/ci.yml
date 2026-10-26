@@ -72,6 +72,9 @@ jobs:
         if: matrix.browser == 'chromium'
       - run: npx playwright install --only-shell chromium
         if: matrix.browser == 'chromium'
+      - name: Use Ubuntu package mirror for WebKit dependencies
+        if: matrix.browser == 'webkit'
+        run: sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|http://archive.ubuntu.com/ubuntu|g' /etc/apt/apt-mirrors.txt
       - run: npx playwright install --with-deps webkit
         if: matrix.browser == 'webkit'
       - run: npm run test:e2e -- --project=${{ matrix.browser }}
