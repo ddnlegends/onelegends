@@ -1126,6 +1126,7 @@ export async function deleteCompetition(
 
   console.info("Competition deleted", result.audit);
   revalidateAccessPaths();
+  revalidatePath("/ops/reg", "layout");
   return { ok: true, message: result.message };
 }
 
@@ -1167,23 +1168,46 @@ export async function setCompetitionPartnerStatus(
     }
   }
 
-  const currentFee = await prisma.competitionProfile.findUnique({
-    where: { id: parsed.data.competitionId }, select: { registrationPaidAt: true },
+  const updated = await prisma.$transaction(async (tx) => {
+    const locked = await tx.$queryRaw<Array<{ id: string }>>`
+      SELECT id FROM "CompetitionProfile" WHERE id = ${parsed.data.competitionId} FOR UPDATE
+    `;
+    if (!locked.length) return false;
+    const competition = await tx.competitionProfile.findUniqueOrThrow({
+      where: { id: parsed.data.competitionId },
+      select: { name: true, registrationPaidAt: true, regAssignment: { select: { email: true } } },
+    });
+    await tx.competitionProfile.update({
+      where: { id: parsed.data.competitionId },
+      data: {
+        isPartner: parsed.data.type === "partner",
+        ...(!competition.registrationPaidAt
+          ? { registrationFeeCents: competitionRegistrationFeeCents(parsed.data.type === "partner") }
+          : {}),
+      },
+    });
+    if (parsed.data.type === "non-partner" && competition.regAssignment?.email) {
+      await tx.competitionRegAssignment.update({
+        where: { competitionId: parsed.data.competitionId },
+        data: { email: null, contactName: null },
+      });
+      await tx.competitionRegAssignmentAudit.create({ data: {
+        competitionId: parsed.data.competitionId,
+        competitionName: competition.name,
+        oldEmail: competition.regAssignment.email,
+        newEmail: null,
+        changedByEmail: user.email?.toLowerCase() ?? "unknown",
+      } });
+    }
+    return true;
   });
-  const updated = await prisma.competitionProfile.updateMany({
-    where: { id: parsed.data.competitionId },
-    data: {
-      isPartner: parsed.data.type === "partner",
-      ...(!currentFee?.registrationPaidAt
-        ? { registrationFeeCents: competitionRegistrationFeeCents(parsed.data.type === "partner") }
-        : {}),
-    },
-  });
-  if (!updated.count) return { error: "Competition not found." };
+  if (!updated) return { error: "Competition not found." };
 
   revalidateAccessPaths();
   revalidatePath("/");
   revalidatePath(`/comps/${parsed.data.competitionId}`);
+  revalidatePath("/ops/reg", "layout");
+  revalidatePath("/comp");
   return { ok: true, message: "Competition type saved." };
 }
 
