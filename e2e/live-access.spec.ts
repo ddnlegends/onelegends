@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { test, db, E2E, competitionId, login, pageAs, SEALED_NAMES, ALL_CLAIM_CODES } from "./helpers";
+import { test, db, E2E, competitionId, login, pageAs, prepareAnonymousVideos, SEALED_NAMES, ALL_CLAIM_CODES } from "./helpers";
 
 test("live state refuses anonymous, team, and competition-admin callers", async ({ page, request }) => {
   const id = await competitionId(E2E.comps.showcase.slug);
@@ -88,8 +88,10 @@ test("non-partner admins get moderator controls while pending admins and judges 
 
   await comp.goto(`/moderator/${id}`);
   await expect(comp.getByRole("heading", { name: "Ready when you are" })).toBeVisible();
+  await prepareAnonymousVideos(comp);
   await comp.getByRole("button", { name: "Show Team 1" }).click();
   await expect(comp.getByRole("heading", { name: "Team 1" })).toBeVisible();
+  await expect(comp.getByLabel("Team 1 audition video")).toHaveAttribute("src", /^blob:/);
   for (const secret of [...SEALED_NAMES, ...ALL_CLAIM_CODES]) {
     expect(await comp.content()).not.toContain(secret);
   }

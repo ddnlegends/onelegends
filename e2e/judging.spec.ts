@@ -1,6 +1,6 @@
 import { test } from "./helpers";
 import { expect, type Page } from "@playwright/test";
-import { competitionId, db, E2E, pageAs, SEALED_NAMES } from "./helpers";
+import { competitionId, db, E2E, pageAs, prepareAnonymousVideos, SEALED_NAMES } from "./helpers";
 
 const SCORES = {
   1: { choreography: "8", formations: "7", technique: "9", syncCleanliness: "8", overallImpression: "9" },
@@ -50,8 +50,12 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
   await moderator.goto(`/moderator/${id}/results`);
   await expect(moderator.getByRole("heading", { name: "Thank you for moderating" })).toBeVisible();
   await moderator.goto(`/moderator/${id}`);
+  await expect(moderator.getByRole("button", { name: "Show Team 1" })).toBeDisabled();
+  await prepareAnonymousVideos(moderator);
   await moderator.getByRole("button", { name: "Show Team 1" }).click();
   await expect(moderator.getByRole("heading", { name: "Team 1" })).toBeVisible();
+  await expect(moderator.getByLabel("Team 1 audition video")).toHaveAttribute("src", /^blob:/);
+  expect(await moderator.content()).not.toContain("Identifying Team Name");
   await expect(moderator.getByRole("button", { name: /Next: Team 2/ })).toBeDisabled();
 
   const judge = await pageAs(browser, "judge");
@@ -73,6 +77,7 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
 
   await expect(async () => {
     await moderator.reload();
+    await prepareAnonymousVideos(moderator);
     await expect(moderator.getByRole("button", { name: /Next: Team 2/ })).toBeEnabled({ timeout: 2_000 });
   }).toPass();
   await moderator.getByRole("button", { name: /Next: Team 2/ }).click();
@@ -103,6 +108,7 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
 
   await expect(async () => {
     await moderator.reload();
+    await prepareAnonymousVideos(moderator);
     await expect(moderator.getByLabel("E2E Judge completed Team 2")).toBeVisible({ timeout: 2_000 });
   }).toPass();
   await expectNoTeamNames(moderator);

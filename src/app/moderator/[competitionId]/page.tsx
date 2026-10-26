@@ -4,7 +4,6 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { CompStatusPill } from "@/components/CompStatusPill";
-import { DriveAvPlayer } from "@/components/DriveAvPlayer";
 import { LiveProgress } from "@/components/LiveProgress";
 import { ModeratorLiveConsole } from "@/components/ModeratorLiveConsole";
 import {
@@ -88,7 +87,6 @@ export default async function ModeratorCompetitionPage({
     })),
   }));
   const livePosition = open ? competition.livePosition : null;
-  const live = teams.find((team) => team.position === livePosition) ?? null;
   const lockMessage = judgingLockMessage(competition);
 
   return (
@@ -152,25 +150,13 @@ export default async function ModeratorCompetitionPage({
       ) : (
         <ModeratorLiveConsole
           competitionId={competition.id}
-          teams={teams.map(({ position, judges }) => ({
+          teams={teams.map(({ position, judges, avDriveUrl }) => ({
             position,
             judges,
+            avDriveUrl,
           }))}
           livePosition={livePosition}
-        >
-          {live ? (
-            <DriveAvPlayer
-              key={live.position}
-              url={live.avDriveUrl}
-              label={`Team ${live.position} audition video`}
-              hideOpenLink
-            />
-          ) : (
-            <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-dashed border-line bg-blush text-sm text-muted">
-              The video for the team you show appears here.
-            </div>
-          )}
-        </ModeratorLiveConsole>
+        />
       )}
     </div>
   );
