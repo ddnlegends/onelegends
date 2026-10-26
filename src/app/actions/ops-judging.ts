@@ -20,7 +20,6 @@ import {
 import { isPlatformAdmin } from "@/lib/team-access";
 import { describePanelBlockers, judgePanelCompletion } from "@/lib/judge-panel-completion";
 import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
-import { visibleApplicationWhere } from "@/lib/payment-eligibility";
 
 function revalidateJudging(competitionId: string) {
   revalidatePath("/dashboard");
@@ -59,11 +58,8 @@ export async function setJudgingOpen(
   if (error || !competition) return { error: error ?? "Competition missing." };
 
   if (nextOpen) {
-    if (formData.get("paymentConfirmation") !== "CONFIRM") {
-      return { error: "Review the payment and AV inclusion notice before opening judging." };
-    }
-    if (competition.resultsReleasedAt || competition.resultsValidatedAt) {
-      return { error: "Judging cannot reopen after results are validated." };
+    if (competition.resultsReleasedAt) {
+      return { error: "Judging cannot reopen after results are released." };
     }
     if (!isCompetitionClaimed(competition)) {
       return { error: "A competition admin has to claim this listing first." };
@@ -74,21 +70,11 @@ export async function setJudgingOpen(
     if (isCompetitionOpen(competition)) {
       return { error: "Close applications before opening judging." };
     }
-    const existingOrder = await prisma.application.count({ where: { competitionId: competition.id, viewingPosition: { not: null } } });
-    if (!existingOrder && !competition.compPaymentsVerifiedAt) {
-      return { error: "Competition admins must verify every host payment before AV viewing." };
-    }
-    const unreviewed = await prisma.application.count({
-      where: { competitionId: competition.id, ...visibleApplicationWhere, compPaymentReviewStatus: "UNREVIEWED" },
-    });
-    if (!existingOrder && unreviewed) {
-      return { error: `${unreviewed} team payment${unreviewed === 1 ? " is" : "s are"} still unreviewed. Return to Applied Teams.` };
-    }
     const apps = await prisma.application.count({
       where: { competitionId: competition.id, ...viewingEligibleApplicationWhere },
     });
     if (apps === 0) {
-      return { error: "No teams have both OneLegends and host payment clearance for viewing yet." };
+      return { error: "No paid, unblocked teams are eligible for viewing yet." };
     }
     const approvedJudges = await prisma.judgeAssignment.count({
       where: { competitionId: competition.id, status: "APPROVED" },
@@ -102,7 +88,7 @@ export async function setJudgingOpen(
     });
     if (ordered === 0) return { error: "No paid, unblocked teams are in the viewing order." };
     const updated = await prisma.competitionProfile.updateMany({
-      where: { id: competition.id, resultsReleasedAt: null, resultsValidatedAt: null },
+      where: { id: competition.id, resultsReleasedAt: null },
       data: { judgingOpen: true, acceptingApps: false },
     });
     if (updated.count === 0) return { error: "Judging cannot reopen after results are released." };

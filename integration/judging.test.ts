@@ -9,9 +9,8 @@ import { prisma } from "@/lib/prisma";
 import { ensureCompetitionJudgeSlots } from "@/lib/judging";
 import { saveTeamScores, submitJudgingPacket } from "@/app/actions/judge";
 import { setLiveTeam } from "@/app/actions/moderator";
-import { finalizeCompetitionResults, releaseCompetitionResults, removeJudgeAssignment } from "@/app/actions/comp-judging";
+import { finalizeCompetitionResults, removeJudgeAssignment } from "@/app/actions/comp-judging";
 import { setJudgingOpen } from "@/app/actions/ops-judging";
-import { cancelJudgeInvite } from "@/app/actions/team-access";
 
 let competitionId: string;
 let assignmentId: string;
@@ -194,7 +193,7 @@ describe("judging with real PostgreSQL transactions", () => {
       await close;
     }
   });
-  it("Partner validation stays private until tech release and seals scores", async () => {
+  it("duplicate submissions wait for explicit finalization, which then seals scores", async () => {
     await completePacket();
     const results = await Promise.all([submitJudgingPacket(undefined, form()), submitJudgingPacket(undefined, form())]);
     expect(results).toEqual([{ ok: true }, { ok: true }]);
@@ -203,15 +202,11 @@ describe("judging with real PostgreSQL transactions", () => {
     session.userId = tech.id;
     const confirm = new FormData();
     confirm.set("competitionId", competitionId);
-    confirm.set("confirmation", "VALIDATE");
+    confirm.set("confirmation", "FINALIZE");
     expect(await finalizeCompetitionResults(undefined, confirm)).toMatchObject({ ok: true });
-    const validated = await prisma.competitionProfile.findUniqueOrThrow({ where: { id: competitionId } });
-    expect(validated.resultsValidatedAt).not.toBeNull();
-    expect(validated.resultsReleasedAt).toBeNull();
-    expect(validated.judgingOpen).toBe(false);
-    const release = new FormData(); release.set("competitionId", competitionId); release.set("confirmation", "RELEASE");
-    expect(await releaseCompetitionResults(undefined, release)).toMatchObject({ ok: true });
-    expect((await prisma.competitionProfile.findUniqueOrThrow({ where: { id: competitionId } })).resultsReleasedAt).not.toBeNull();
+    const released = await prisma.competitionProfile.findUniqueOrThrow({ where: { id: competitionId } });
+    expect(released.resultsReleasedAt).not.toBeNull();
+    expect(released.judgingOpen).toBe(false);
     const before = await prisma.judgeScore.findMany({ orderBy: { id: "asc" } });
     session.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.judge } })).id;
     expect(await saveTeamScores(undefined, form())).toHaveProperty("error");
@@ -224,7 +219,7 @@ describe("judging with real PostgreSQL transactions", () => {
     expect(await submitJudgingPacket(undefined, form())).toMatchObject({ ok: true });
     expect((await prisma.competitionProfile.findUniqueOrThrow({ where: { id: competitionId } })).resultsReleasedAt).toBeNull();
     session.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.comp } })).id;
-    const confirm = new FormData(); confirm.set("competitionId", competitionId); confirm.set("confirmation", "VALIDATE");
+    const confirm = new FormData(); confirm.set("competitionId", competitionId); confirm.set("confirmation", "FINALIZE");
     expect(await finalizeCompetitionResults(undefined, confirm)).toHaveProperty("error");
     session.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.tech } })).id;
     const second = await prisma.judgeAssignment.findFirstOrThrow({ where: { competitionId, judge: { userId: otherUser.id } } });
@@ -233,30 +228,6 @@ describe("judging with real PostgreSQL transactions", () => {
     expect((await prisma.judgeAssignment.findUniqueOrThrow({ where: { id: second.id } })).status).toBe("REMOVED");
     session.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.tech } })).id;
     expect(await finalizeCompetitionResults(undefined, confirm)).toMatchObject({ ok: true });
-  });
-  it("Non Partner results release immediately after the final complete packet without tech approval", async () => {
-    await prisma.competitionProfile.update({ where: { id: competitionId }, data: { isPartner: false } });
-    await completePacket();
-    expect(await submitJudgingPacket(undefined, form())).toMatchObject({ ok: true });
-    const competition = await prisma.competitionProfile.findUniqueOrThrow({ where: { id: competitionId } });
-    expect(competition.resultsReleasedAt).not.toBeNull();
-    expect(competition.resultsValidatedAt).toBeNull();
-    expect(competition.judgingOpen).toBe(false);
-    const tech = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.tech } });
-    session.userId = tech.id;
-    const confirm = new FormData(); confirm.set("competitionId", competitionId); confirm.set("confirmation", "VALIDATE");
-    expect(await finalizeCompetitionResults(undefined, confirm)).toHaveProperty("error");
-  });
-  it("Non Partner waits for pending invites and releases when the host resolves the last one", async () => {
-    await prisma.competitionProfile.update({ where: { id: competitionId }, data: { isPartner: false } });
-    const invite = await prisma.judgeInvite.create({ data: { competitionId, email: "waiting@example.org" } });
-    await completePacket();
-    expect(await submitJudgingPacket(undefined, form())).toMatchObject({ ok: true });
-    expect((await prisma.competitionProfile.findUniqueOrThrow({ where: { id: competitionId } })).resultsReleasedAt).toBeNull();
-    session.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.comp } })).id;
-    const cancel = new FormData(); cancel.set("inviteId", invite.id);
-    expect(await cancelJudgeInvite(undefined, cancel)).toMatchObject({ ok: true });
-    expect((await prisma.competitionProfile.findUniqueOrThrow({ where: { id: competitionId } })).resultsReleasedAt).not.toBeNull();
   });
   it("the database rejects accepting applications while judging is open", async () => {
     await expect(prisma.competitionProfile.update({ where: { id: competitionId }, data: { acceptingApps: true } })).rejects.toThrow();

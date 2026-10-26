@@ -21,14 +21,6 @@ enum ApplicationStatus {
   DECLINED
 }
 
-enum CompPaymentReviewStatus {
-  UNREVIEWED
-  PAID
-  UNPAID
-  WAIVED
-  LEGACY_INCLUDED
-}
-
 enum ApplicationPhase {
   EARLY
   REGULAR
@@ -209,11 +201,7 @@ model CompetitionProfile {
   // Legacy threshold kept for historical data; finalization uses the active approved panel.
   requiredJudgeCount       Int       @default(3)
   resultsReleasedAt        DateTime?
-  resultsValidatedAt       DateTime?
-  resultsValidatedByEmail  String?
   resultsFinalizedByEmail  String?
-  compPaymentsVerifiedAt   DateTime?
-  compPaymentsVerifiedByEmail String?
   decisionsSubmittedAt     DateTime?
   dates                    String    @default("")
   eventStartDate           DateTime? @db.Date
@@ -246,48 +234,6 @@ model CompetitionProfile {
   moderatorAccess  ModeratorAccess[]
   moderatorInvites ModeratorInvite[]
   applicationPacket CompetitionPacketBlob?
-  regAssignment CompetitionRegAssignment?
-}
-
-/** One point of contact per Partner Competition; email works before an invited admin first logs in. */
-model CompetitionRegAssignment {
-  competitionId       String   @id
-  competition         CompetitionProfile @relation(fields: [competitionId], references: [id], onDelete: Cascade)
-  email               String?  @db.VarChar(320)
-  contactName         String?  @db.VarChar(120)
-  assignedAt          DateTime @default(now()) @db.Timestamptz(3)
-  assignedByEmail     String   @db.VarChar(320)
-  avReviewedAt        DateTime? @db.Timestamptz(3)
-  avReviewFingerprint String?  @db.VarChar(64)
-  lastContactAt       DateTime? @db.Timestamptz(3)
-  followUpNote        String   @default("") @db.VarChar(3000)
-  updatedAt           DateTime @updatedAt @db.Timestamptz(3)
-
-  @@index([email])
-}
-
-model CompetitionRegAssignmentAudit {
-  id              String   @id @default(cuid())
-  competitionId   String
-  competitionName String
-  oldEmail        String?
-  newEmail        String?
-  changedByEmail  String
-  changedAt       DateTime @default(now()) @db.Timestamptz(3)
-
-  @@index([competitionId, changedAt])
-}
-
-model CompetitionDeletionAudit {
-  id              String   @id @default(cuid())
-  competitionId   String
-  competitionName String
-  actorEmail      String
-  reason          String
-  applicationCount Int
-  judgeCount      Int
-  hadReleasedResults Boolean
-  deletedAt       DateTime @default(now())
 }
 
 // Keep binary data out of ordinary competition queries.
@@ -377,7 +323,6 @@ model Application {
   removedByEmail             String?
   removalReason              String            @default("")
   compPaymentReceivedAt      DateTime?
-  compPaymentReviewStatus    CompPaymentReviewStatus @default(UNREVIEWED)
   compPaymentRecordedByEmail String?
   createdAt                  DateTime          @default(now())
   updatedAt                  DateTime          @updatedAt

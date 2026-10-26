@@ -14,11 +14,8 @@ import {
   removeUnpaidApplication,
   setCompPaymentReceived,
   setRegistrationPaid,
-  verifyCompPayments,
 } from "@/app/actions/payments";
 import { ensureCompetitionJudgeSlots } from "@/lib/judging";
-import { setJudgingOpen } from "@/app/actions/ops-judging";
-import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 import { prisma } from "@/lib/prisma";
 
 function form(entries: Record<string, string>) {
@@ -179,25 +176,4 @@ it("lets only the host record payment after a final Accepted decision", async ()
   })).toMatchObject({
     compPaymentRecordedByEmail: host.email,
   });
-});
-
-it("requires host review and explicit preflight before viewing, excluding host-unpaid teams", async () => {
-  const competition = await prisma.competitionProfile.findUniqueOrThrow({ where: { slug: E2E.comps.showcase.slug } });
-  const apps = await prisma.application.findMany({ where: { competitionId: competition.id }, orderBy: { team: { name: "asc" } } });
-  await prisma.application.update({ where: { id: apps[0].id }, data: { compPaymentReviewStatus: "UNREVIEWED", compPaymentReceivedAt: null } });
-  await prisma.application.update({ where: { id: apps[1].id }, data: { compPaymentReviewStatus: "UNPAID", compPaymentReceivedAt: null } });
-  await prisma.competitionProfile.update({ where: { id: competition.id }, data: { compPaymentsVerifiedAt: null } });
-
-  const host = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.comp } });
-  identity.user = { id: host.id, email: host.email };
-  expect(await verifyCompPayments(undefined, form({ competitionId: competition.id, confirmation: "VERIFY" }))).toHaveProperty("error");
-  expect(await setCompPaymentReceived(undefined, form({ applicationId: apps[0].id, status: "PAID" }))).toMatchObject({ ok: true });
-  expect(await verifyCompPayments(undefined, form({ competitionId: competition.id, confirmation: "VERIFY" }))).toMatchObject({ ok: true });
-  expect(await prisma.application.count({ where: { competitionId: competition.id, ...viewingEligibleApplicationWhere } })).toBe(1);
-
-  const tech = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.tech } });
-  identity.user = { id: tech.id, email: tech.email };
-  expect(await setJudgingOpen(undefined, form({ competitionId: competition.id, open: "1" }))).toHaveProperty("error");
-  expect(await setJudgingOpen(undefined, form({ competitionId: competition.id, open: "1", paymentConfirmation: "CONFIRM" }))).toMatchObject({ ok: true });
-  expect(await prisma.application.count({ where: { competitionId: competition.id, viewingPosition: { not: null } } })).toBe(1);
 });

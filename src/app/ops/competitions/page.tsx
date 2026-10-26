@@ -2,7 +2,6 @@ import Link from "next/link";
 import { requirePlatformAdminPage } from "@/lib/page-guards";
 import {
   CancelCompInviteForm,
-  DeleteCompetitionForm,
   CompetitionTypeForm,
   InviteCompAdminForm,
   ResetCompClaimForm,
@@ -119,9 +118,6 @@ export default async function OpsCompetitionsPage() {
             const paymentsReceived = competition.applications.filter(
               (application) => application.compPaymentReceivedAt,
             ).length;
-            const paymentsWaived = competition.applications.filter(
-              (application) => application.compPaymentReviewStatus === "WAIVED",
-            ).length;
 
             return (
               <ExpandableRow
@@ -188,13 +184,6 @@ export default async function OpsCompetitionsPage() {
                         />
                       </>
                     ) : null}
-                    <DeleteCompetitionForm
-                      competitionId={competition.id}
-                      competitionName={competition.name}
-                      applications={competition.applications.length}
-                      judges={competition.judgeAssignments.length}
-                      released={Boolean(competition.resultsReleasedAt)}
-                    />
                   </div>
                 </div>
 
@@ -263,7 +252,7 @@ export default async function OpsCompetitionsPage() {
                         label: "Applications",
                         value: `${competition.applications.length} total · ${accepted} accepted · ${waitlisted} waitlisted · ${declined} declined`,
                       },
-                      { label: "Host payments", value: `${paymentsReceived} paid · ${paymentsWaived} waived · ${competition.applications.length} applications` },
+                      { label: "Host payments", value: `${paymentsReceived} received of ${accepted} accepted` },
                       { label: "Active judges", value: competition.judgeAssignments.filter((row) => row.status === "APPROVED").length },
                       { label: "Judging open", value: competition.judgingOpen ? "Yes" : "No" },
                       {

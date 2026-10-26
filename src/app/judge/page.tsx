@@ -107,7 +107,7 @@ export default async function JudgeDashboardPage() {
                   href={`/judge/${row.competitionId}`}
                   className="btn btn-ghost py-1.5"
                 >
-                  View submission
+                  Review Packet
                 </Link>
               </li>
             ))}

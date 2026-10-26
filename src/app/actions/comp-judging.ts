@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * Competition-admin judging decisions and circuit tech Partner result release.
+ * Competition-admin judging decisions and explicit result finalization.
  *
  * Callers must be an admin of their active competition. Moderator staff for a
  * competition can never be approved to judge it.
@@ -9,7 +9,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
-import { releaseNonPartnerIfReady, releasePartnerResults, validatePartnerResults } from "@/lib/release";
+import { finalizeResults } from "@/lib/release";
 import { hasModeratorAccess } from "@/lib/moderator";
 import { isPlatformAdmin, requireActiveCompetition } from "@/lib/team-access";
 
@@ -33,7 +33,7 @@ export async function decideJudgeRequest(
 
   const competition = await requireActiveCompetition(user.id);
   if (!competition) return { error: "Competition profile missing." };
-  if (competition.resultsReleasedAt || competition.resultsValidatedAt) return { error: "Judge roster is locked after results validation." };
+  if (competition.resultsReleasedAt) return { error: "Judge roster is locked after results release." };
 
   const assignment = await prisma.judgeAssignment.findFirst({
     where: { id: assignmentId, competitionId: competition.id },
@@ -64,12 +64,11 @@ export async function decideJudgeRequest(
 
   const result = await prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT id FROM "CompetitionProfile" WHERE id = ${competition.id} FOR UPDATE`;
-    const current = await tx.competitionProfile.findUnique({ where: { id: competition.id }, select: { resultsReleasedAt: true, resultsValidatedAt: true } });
-    if (current?.resultsReleasedAt || current?.resultsValidatedAt) return { error: "Judge roster is locked after results validation." };
+    const current = await tx.competitionProfile.findUnique({ where: { id: competition.id }, select: { resultsReleasedAt: true } });
+    if (current?.resultsReleasedAt) return { error: "Judge roster is locked after results release." };
     const pending = await tx.judgeAssignment.findFirst({ where: { id: assignmentId, competitionId: competition.id, status: "PENDING" }, select: { id: true } });
     if (!pending) return { error: "That request was already decided." };
     await tx.judgeAssignment.update({ where: { id: assignmentId }, data: { status: decision, decidedAt: new Date() } });
-    await releaseNonPartnerIfReady(tx, competition.id);
     return {};
   });
   if (!result.error) refreshJudgeViews(competition.id);
@@ -83,26 +82,11 @@ export async function finalizeCompetitionResults(
   const user = await requireUser();
   if (!user) return { error: "Unauthorized." };
   const competitionId = String(formData.get("competitionId") ?? "");
-  if (formData.get("confirmation") !== "VALIDATE") return { error: "Confirm validation first." };
+  if (formData.get("confirmation") !== "FINALIZE") return { error: "Confirm finalization first." };
   if (!(await isPlatformAdmin(user.id))) return { error: "Only tech admins can validate competition results." };
   const actor = await prisma.user.findUnique({ where: { id: user.id }, select: { email: true } });
   if (!actor) return { error: "Account not found." };
-  const result = await validatePartnerResults(competitionId, actor.email);
-  if (result.ok) refreshJudgeViews(competitionId);
-  return result;
-}
-
-export async function releaseCompetitionResults(
-  _prev: { error?: string; ok?: boolean } | undefined,
-  formData: FormData,
-): Promise<{ error?: string; ok?: boolean }> {
-  const user = await requireUser();
-  if (!user || !(await isPlatformAdmin(user.id))) return { error: "Only tech admins can release Partner results." };
-  if (formData.get("confirmation") !== "RELEASE") return { error: "Confirm release first." };
-  const competitionId = String(formData.get("competitionId") ?? "");
-  const actor = await prisma.user.findUnique({ where: { id: user.id }, select: { email: true } });
-  if (!actor) return { error: "Account not found." };
-  const result = await releasePartnerResults(competitionId, actor.email);
+  const result = await finalizeResults(competitionId, actor.email);
   if (result.ok) refreshJudgeViews(competitionId);
   return result;
 }
@@ -122,9 +106,9 @@ export async function removeJudgeAssignment(
 
   const result = await prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT id FROM "CompetitionProfile" WHERE id = ${assignment.competitionId} FOR UPDATE`;
-    const competition = await tx.competitionProfile.findUnique({ where: { id: assignment.competitionId }, select: { resultsReleasedAt: true, resultsValidatedAt: true, judgingOpen: true } });
+    const competition = await tx.competitionProfile.findUnique({ where: { id: assignment.competitionId }, select: { resultsReleasedAt: true, judgingOpen: true } });
     if (!competition) return { error: "Competition not found." };
-    if (competition.resultsReleasedAt || competition.resultsValidatedAt) return { error: "Judges cannot be removed after results validation." };
+    if (competition.resultsReleasedAt) return { error: "Judges cannot be removed after results release." };
     const actor = await tx.user.findUnique({ where: { id: user.id }, select: { email: true, platformAdmin: true, competitionMemberships: { where: { competitionId: assignment.competitionId, status: "APPROVED", isAdmin: true }, select: { id: true }, take: 1 } } });
     if (!actor) return { error: "Account not found." };
     const started = await tx.application.findFirst({ where: { competitionId: assignment.competitionId, viewingPosition: { not: null } }, select: { id: true } });
@@ -138,7 +122,6 @@ export async function removeJudgeAssignment(
     if (remaining === 0 && competition.judgingOpen) {
       await tx.competitionProfile.update({ where: { id: assignment.competitionId }, data: { judgingOpen: false, livePosition: null, liveUpdatedAt: null } });
     }
-    await releaseNonPartnerIfReady(tx, assignment.competitionId);
     return { ok: true, message: remaining === 0 ? "Judge removed. Judging is paused until a replacement is approved." : "Judge removed from the active panel. Their scores are excluded." };
   });
   if (result.ok) refreshJudgeViews(assignment.competitionId);

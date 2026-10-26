@@ -22,7 +22,6 @@ export default async function ModeratorResultsPage({
     where: { id: competitionId },
     select: {
       name: true,
-      isPartner: true,
       resultsReleasedAt: true,
       applications: {
         where: viewingEligibleApplicationWhere,
@@ -66,20 +65,14 @@ export default async function ModeratorResultsPage({
   );
   const unresolvedJudges = competition.judgeInvites.length +
     competition.judgeAssignments.filter((assignment) => assignment.status === "PENDING").length;
-  const ready = moderatorResultsReady(
+  if (!moderatorResultsReady(
     competition.applications,
     activeJudges,
     unresolvedJudges,
-  );
-  if (!competition.resultsReleasedAt || !ready) return <div className="space-y-4">
-    <Link href={`/moderator/${competitionId}`} className="text-sm text-muted underline">← Back to viewing</Link>
-    <h1 className="font-heading text-4xl">Thank you for moderating</h1>
-    <p className="text-muted">{competition.isPartner
-      ? "Results will appear here after the circuit tech admin releases them."
-      : "Results will appear after every active judge submits a complete packet and pending judge invitations are resolved."}</p>
-  </div>;
+  )) notFound();
 
   const ranked = rankTeams(competition.applications, activeJudges);
+  const finalized = Boolean(competition.resultsReleasedAt);
 
   return (
     <div className="space-y-6">
@@ -88,9 +81,14 @@ export default async function ModeratorResultsPage({
       </Link>
       <div>
         <p className="text-xs uppercase tracking-wide text-muted">{competition.name}</p>
-        <h1 className="font-heading text-4xl">Final rankings</h1>
+        <h1 className="font-heading text-4xl">
+          {finalized ? "Final rankings" : "Completed rankings"}
+        </h1>
         <p className="mt-2 text-muted">
-          Read-only results · Released <LocalDateTime date={competition.resultsReleasedAt} />.
+          Read-only results
+          {competition.resultsReleasedAt
+            ? <> · Released <LocalDateTime date={competition.resultsReleasedAt} /></>
+            : " · Every active judge submitted a complete packet"}.
           {" "}Ranked by average z-score, then average total.
         </p>
       </div>

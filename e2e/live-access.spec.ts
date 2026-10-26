@@ -39,8 +39,7 @@ test("moderator rankings require every active judge even with a stale release fl
     const response = await page.request.get(`/moderator/${id}/results`, { maxRedirects: 0 });
     for (const name of SEALED_NAMES) expect(await response.text()).not.toContain(name);
     await page.goto(`/moderator/${id}/results`);
-    if (id === assigned) await expect(page.getByRole("heading", { name: "Thank you for moderating" })).toBeVisible();
-    else await expect(page.getByText("404", { exact: true })).toBeVisible();
+    await expect(page.getByText("404", { exact: true })).toBeVisible();
   }
   await db.competitionProfile.update({
     where: { id: assigned },
@@ -54,7 +53,7 @@ test("moderator rankings require every active judge even with a stale release fl
     expect(staleReleaseBody).not.toContain(name);
   }
   await page.goto(`/moderator/${assigned}/results`);
-  await expect(page.getByRole("heading", { name: "Thank you for moderating" })).toBeVisible();
+  await expect(page.getByText("404", { exact: true })).toBeVisible();
 });
 
 test("non-partner admins get moderator controls while pending admins and judges do not", async ({ browser }) => {
@@ -84,7 +83,6 @@ test("non-partner admins get moderator controls while pending admins and judges 
   const ops = await pageAs(browser, "tech");
   await ops.goto(`/ops/comps/${id}`);
   await ops.getByRole("button", { name: "Open judging" }).click();
-  await ops.getByRole("button", { name: "Confirm and open viewing" }).click();
 
   await comp.goto(`/moderator/${id}`);
   await expect(comp.getByRole("heading", { name: "Ready when you are" })).toBeVisible();

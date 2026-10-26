@@ -44,7 +44,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Apply with checkboxes",
-        body: "Select every open competition you want and submit once. Check its deadlines and payment instructions. Pay the $25 OneLegends registration fee outside the app; tech admins must verify it before your AV enters viewing. Each competition separately reviews its host payment before viewing. Unpaid teams do not enter its AV order.",
+        body: "Select every open competition you want and submit once. Check its regular and late deadlines; the late deadline closes applications. Pay the $25 OneLegends registration fee outside the app; you can apply while it is pending, but tech admins must verify it before your AV enters viewing. A later payment to a competition is due only if that host Accepts you after judging.",
       },
     ],
     cta: { href: "/register", label: "Create an account" },
@@ -76,7 +76,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Review Scores, then Submit Scores",
-        body: "After the last team is saved, choose Review Scores to check every team. When every slot has all five scores, click Submit Scores to lock the packet. Thank you for judging. Non Partner results release automatically when the panel finishes; Partner results wait for circuit tech release. Judges do not see team names, other judges’ scores, or rankings.",
+        body: "After the last team is saved, choose Review Scores to return to the packet list and check every team. When every slot has all five scores, click Submit Scores to lock the packet. Your submission does not release results; only a tech admin validates results after every active judge submits and pending invitations are resolved. Judges do not see team names, other judges’ scores, or rankings.",
       },
     ],
     cta: { href: "/register", label: "Create an account" },
@@ -107,8 +107,8 @@ const GUIDES: Guide[] = [
         body: "You can return to an earlier team or use Clear screen to pause the live selection. Moving ahead waits until every approved judge has completed all five scores for each earlier team.",
       },
       {
-        title: "View released rankings",
-        body: "After every active judge submits a complete packet and pending invitations are resolved, Non Partner rankings unlock automatically. Partner moderators wait for circuit tech release. You see read-only rankings, without full rosters, judge comments, or competition decisions.",
+        title: "View completed rankings",
+        body: "After every active judge submits a complete packet and all pending judge invitations are resolved, you can see read-only rankings. They become final when a competition or tech admin finalizes results. Moderator access does not include full rosters, judge comments, or competition decisions.",
       },
     ],
     cta: { href: "/login", label: "Log in" },
@@ -136,11 +136,11 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Invite judges and check applicants",
-        body: "Invite judges by email. Their acceptance adds them to the active panel; review pending requests on Judges. The app stores invitations but does not send email. Applied Teams shows applicant names, dates, and dancer counts. Mark each team's separate host payment paid, unpaid, or waived, then verify the list before AV viewing.",
+        body: "Invite judges by email. Their acceptance adds them to the active panel; review any separate pending judge requests on the Judges page. The app stores invitations but does not send email. Applied Teams shows applicant names, dates, and dancer counts before results. After you mark a team Accepted, use Payment received to track the host fee you collect outside OneLegends.",
       },
       {
         title: "Review released results",
-        body: "Circuit ops opens judging after applications close and payment checks finish. Once every active judge submits and pending invitations are resolved, Non Partner results unlock immediately. Partner results stay private until circuit tech admins validate and release them. Then competition admins can see scores, rosters, and team decisions. Non Partner admins can run live viewing; Partner competitions use assigned moderators.",
+        body: "Circuit ops opens judging after applications close. Once every active judge submits and pending invitations are resolved, a tech admin validates the results. Rankings, comments, full applicant rosters, and accept / waitlist / decline decisions then unlock for the competition account. Non-partner admins can also run live viewing; Partner competitions use moderators assigned by circuit ops.",
       },
     ],
     cta: { href: "/register", label: "Create an account" },
@@ -160,15 +160,15 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Manage access",
-        body: "Review team and competition admins, grant Partner moderator access, transfer or reset ownership, and rotate claim codes. Mark OneLegends registration payments on Fees, block a team circuit-wide, remove an application before viewing, or permanently delete a competition with strong confirmation.",
+        body: "Review team and competition admins, grant Partner competition moderator access, transfer or reset ownership when needed, and rotate claim codes. Mark OneLegends registration payments on Fees, block a team circuit-wide, or remove one application before viewing starts.",
       },
       {
         title: "Open judging",
-        body: "Verify the competition's OneLegends fee and each team's $25 registration. Competition admins separately verify each host payment before viewing. Review the included and excluded counts before opening judging; unpaid, blocked, or removed teams stay off the anonymous order.",
+        body: "Verify the competition's OneLegends fee and each team's $25 registration before opening viewing. Unpaid, blocked, or removed applications stay off the roster. Once applications are closed and at least one judge is approved, open judging; the app freezes the anonymous viewing order.",
       },
       {
         title: "Monitor and export",
-        body: "Follow live scoring, manage the judge panel, privately validate Partner results, and explicitly release them when ready. Non Partner results release automatically. Download CSV or XLSX reports for permitted operations; exports may contain emails and rosters.",
+        body: "Follow live scoring progress, help manage the judge panel, validate results when every active judge submits, and download CSV or XLSX reports for permitted operations. Keep exports private because they may contain emails and rosters.",
       },
     ],
     cta: { href: "/login", label: "Log in" },

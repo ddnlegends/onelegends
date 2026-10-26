@@ -7,7 +7,7 @@
  */
 import { prisma } from "@/lib/prisma";
 import { shuffleCopy } from "@/lib/judging-rules";
-import { viewingEligibleApplicationWhere, visibleApplicationWhere } from "@/lib/payment-eligibility";
+import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 
 export * from "@/lib/judging-rules";
 
@@ -32,7 +32,7 @@ export async function ensureSharedViewingOrder(
   const [competition, allEligible, assignments, existingOrder] = await Promise.all([
     prisma.competitionProfile.findUnique({
       where: { id: competitionId },
-      select: { registrationPaidAt: true, compPaymentsVerifiedAt: true },
+      select: { registrationPaidAt: true },
     }),
     prisma.application.findMany({
       where: { competitionId, ...viewingEligibleApplicationWhere },
@@ -54,7 +54,7 @@ export async function ensureSharedViewingOrder(
   if (!competition) return;
   // Do not create a roster until the competition's OneLegends fee is verified.
   // An existing frozen roster is left alone.
-  if (!existingOrder && (!competition.registrationPaidAt || !competition.compPaymentsVerifiedAt)) return;
+  if (!existingOrder && !competition.registrationPaidAt) return;
   // Once positions exist, the roster is frozen. Later payment changes cannot add AVs.
   const order = existingOrder
     ? allEligible.filter((app) => app.viewingPosition != null)
@@ -73,7 +73,7 @@ export async function ensureSharedViewingOrder(
       // Serializes concurrent page loads that would otherwise race on positions.
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${competitionId}))`;
 
-      const [allApps, existing, paid, unreviewed] = await Promise.all([
+      const [allApps, existing, paid] = await Promise.all([
         tx.application.findMany({
         where: { competitionId, ...viewingEligibleApplicationWhere },
         select: { id: true, viewingPosition: true },
@@ -81,11 +81,10 @@ export async function ensureSharedViewingOrder(
         tx.application.findFirst({ where: { competitionId, viewingPosition: { not: null } }, select: { id: true } }),
         tx.competitionProfile.findUnique({
           where: { id: competitionId },
-          select: { registrationPaidAt: true, compPaymentsVerifiedAt: true },
+          select: { registrationPaidAt: true },
         }),
-        tx.application.count({ where: { competitionId, ...visibleApplicationWhere, compPaymentReviewStatus: "UNREVIEWED" } }),
       ]);
-      if (!existing && (!paid?.registrationPaidAt || !paid.compPaymentsVerifiedAt || unreviewed)) return;
+      if (!existing && !paid?.registrationPaidAt) return;
       const apps = existing
         ? allApps.filter((app) => app.viewingPosition != null)
         : allApps;

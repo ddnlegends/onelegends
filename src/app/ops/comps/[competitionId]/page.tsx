@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { CompStatusPill } from "@/components/CompStatusPill";
 import { JudgingControls } from "@/components/JudgingControls";
-import { FinalizeResultsForm, ReleaseResultsForm, RemoveJudgeForm } from "@/components/JudgePanelControls";
+import { FinalizeResultsForm, RemoveJudgeForm } from "@/components/JudgePanelControls";
 import { LiveProgress } from "@/components/LiveProgress";
 import {
   RUBRIC_CATEGORIES,
@@ -52,7 +52,6 @@ export default async function CompDashboardDetailPage({
           teamId: true,
           status: true,
           viewingPosition: true,
-          compPaymentReviewStatus: true,
           removedAt: true,
           team: { select: { name: true, applyBlocked: true, registrationPaidAt: true } },
         },
@@ -89,7 +88,6 @@ export default async function CompDashboardDetailPage({
   const claimed = isCompetitionClaimed(competition);
   const appsOpen = isCompetitionOpen(competition);
   const released = Boolean(competition.resultsReleasedAt);
-  const validated = Boolean(competition.resultsValidatedAt);
   const live = status === "LIVE";
   const livePosition = live ? competition.livePosition : null;
   const moderatorEmails = new Set(competition.moderatorAccess.map((row) => row.user.email));
@@ -114,14 +112,13 @@ export default async function CompDashboardDetailPage({
   const panelReady = closeProgress.ready &&
     pendingJudges.length === 0 &&
     competition.judgeInvites.length === 0;
-  const techCanSeeResults = released || (competition.isPartner && panelReady);
 
   const scoreFor = (
     judge: (typeof approved)[number],
     applicationId: string,
   ) => judge.slots.find((slot) => slot.applicationId === applicationId)?.score ?? null;
 
-  const ranked = techCanSeeResults && panelReady
+  const ranked = released && panelReady
     ? rankTeams(eligibleApplications, submitted)
     : [];
 
@@ -144,8 +141,8 @@ export default async function CompDashboardDetailPage({
           </Link>
         </div>
         <p className="max-w-2xl text-sm text-muted">
-          {techCanSeeResults
-            ? released ? "Judging is complete. Team names are unsealed below." : "Partner results are private to circuit tech review. Competition admins and moderators are still waiting."
+          {released
+            ? "Judging is complete. Team names are unsealed below."
             : "Teams stay as Team 1, Team 2, … until results release. No videos play here; the moderator runs them."}
         </p>
       </div>
@@ -240,26 +237,17 @@ export default async function CompDashboardDetailPage({
         judgingOpen={competition.judgingOpen}
         appsOpen={appsOpen}
         claimed={claimed}
-        released={released || validated}
+        released={released}
         closeProgress={closeProgress}
-        paymentSummary={{
-          verified: Boolean(competition.compPaymentsVerifiedAt) || hasOrder,
-          included: eligibleApplications.length,
-          hostUnpaid: competition.applications.filter((application) => application.compPaymentReviewStatus === "UNPAID").length,
-          oneLegendsUnpaid: competition.applications.filter((application) => !application.team.registrationPaidAt).length,
-          unreviewed: competition.applications.filter((application) => application.compPaymentReviewStatus === "UNREVIEWED" && application.viewingPosition == null).length,
-        }}
       />
 
-      {competition.isPartner ? <FinalizeResultsForm
+      <FinalizeResultsForm
         competitionId={competition.id}
         approved={approved.length}
         submitted={submitted.length}
         pending={pendingJudges.length + competition.judgeInvites.length}
-        validated={validated}
         released={released}
-      /> : <p className="rounded-xl border border-line bg-card p-5 text-sm">Non Partner results release automatically when every active judge submits a complete packet and all pending invitations and requests are resolved. There is no tech approval step.</p>}
-      {competition.isPartner && validated && !released ? <ReleaseResultsForm competitionId={competition.id} /> : null}
+      />
 
       <section className="space-y-3">
         <h2 className="font-heading text-2xl">Active judge panel</h2>
@@ -271,7 +259,7 @@ export default async function CompDashboardDetailPage({
                   <p className="font-medium">{judge.judge.name} · {judge.judge.user.email}</p>
                   <p className="text-sm text-muted">{judge.slots.filter((slot) => isScoreComplete(slot.score)).length} / {ordered.length} scored · {judge.submittedAt ? "Submitted" : "Scoring"}</p>
                 </div>
-                {!released && !validated ? <RemoveJudgeForm assignmentId={judge.id} name={judge.judge.name} email={judge.judge.user.email} scored={judge.slots.filter((slot) => isScoreComplete(slot.score)).length} total={ordered.length} submitted={Boolean(judge.submittedAt)} live={hasOrder} /> : null}
+                {!released ? <RemoveJudgeForm assignmentId={judge.id} name={judge.judge.name} email={judge.judge.user.email} scored={judge.slots.filter((slot) => isScoreComplete(slot.score)).length} total={ordered.length} submitted={Boolean(judge.submittedAt)} live={hasOrder} /> : null}
               </li>
             ))}
           </ul>
@@ -283,10 +271,10 @@ export default async function CompDashboardDetailPage({
         ) : null}
       </section>
 
-      {techCanSeeResults ? (
+      {released ? (
         <section className="space-y-3">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="font-heading text-2xl">{released ? "Final summary" : "Private tech summary"}</h2>
+            <h2 className="font-heading text-2xl">Final summary</h2>
             {competition.resultsReleasedAt ? (
               <p className="text-sm text-muted">
                 Released <LocalDateTime date={competition.resultsReleasedAt} />
@@ -363,7 +351,7 @@ export default async function CompDashboardDetailPage({
                       </span>
                     </th>
                   ))}
-                  {techCanSeeResults ? <th className="px-3 py-3 font-medium">Avg</th> : null}
+                  {released ? <th className="px-3 py-3 font-medium">Avg</th> : null}
                 </tr>
               </thead>
               <tbody>
@@ -388,7 +376,7 @@ export default async function CompDashboardDetailPage({
                         }`}
                       >
                         Team {app.viewingPosition}
-                        {techCanSeeResults ? (
+                        {released ? (
                           <span className="block text-xs font-normal text-muted">
                             {app.team.name}
                           </span>
@@ -415,7 +403,7 @@ export default async function CompDashboardDetailPage({
                           </td>
                         );
                       })}
-                      {techCanSeeResults ? <td className="px-3 py-3 font-semibold tabular-nums text-accent">{avg != null ? avg.toFixed(1) : "—"}</td> : null}
+                      {released ? <td className="px-3 py-3 font-semibold tabular-nums text-accent">{avg != null ? avg.toFixed(1) : "—"}</td> : null}
                     </tr>
                   );
                 })}

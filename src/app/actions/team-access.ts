@@ -20,7 +20,6 @@ import { blurEmail, normalizeClaimCode } from "@/lib/claim-code";
 import { hasModeratorAccess } from "@/lib/moderator";
 import { competitionRegistrationFeeCents } from "@/lib/payment-eligibility";
 import { getCompetitionResetPlan, getTeamResetPlan } from "@/lib/reset-plans";
-import { releaseNonPartnerIfReady } from "@/lib/release";
 import {
   isCompAdmin,
   isCompPrimary,
@@ -410,8 +409,8 @@ export async function acceptJudgeInvite(
 
   const accepted = await prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT id FROM "CompetitionProfile" WHERE id = ${invite.competitionId} FOR UPDATE`;
-    const competition = await tx.competitionProfile.findUnique({ where: { id: invite.competitionId }, select: { resultsReleasedAt: true, resultsValidatedAt: true } });
-    if (!competition || competition.resultsReleasedAt || competition.resultsValidatedAt) return false;
+    const competition = await tx.competitionProfile.findUnique({ where: { id: invite.competitionId }, select: { resultsReleasedAt: true } });
+    if (!competition || competition.resultsReleasedAt) return false;
     const pendingInvite = await tx.judgeInvite.findUnique({ where: { id: invite.id }, select: { id: true } });
     if (!pendingInvite) return false;
     const existing = await tx.judgeAssignment.findUnique({ where: { judgeId_competitionId: { judgeId: judge.id, competitionId: invite.competitionId } }, select: { status: true } });
@@ -443,15 +442,7 @@ export async function cancelJudgeInvite(
   if (!(await isCompAdmin(user.id, invite.competitionId))) {
     return { error: "Only competition admins can cancel judge invites." };
   }
-  const cancelled = await prisma.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT id FROM "CompetitionProfile" WHERE id = ${invite.competitionId} FOR UPDATE`;
-    const competition = await tx.competitionProfile.findUnique({ where: { id: invite.competitionId }, select: { resultsReleasedAt: true, resultsValidatedAt: true } });
-    if (!competition || competition.resultsReleasedAt || competition.resultsValidatedAt) return false;
-    await tx.judgeInvite.delete({ where: { id: invite.id } });
-    await releaseNonPartnerIfReady(tx, invite.competitionId);
-    return true;
-  });
-  if (!cancelled) return { error: "Judge invitations are locked after results are final." };
+  await prisma.judgeInvite.delete({ where: { id: invite.id } });
   revalidateAccessPaths();
   return { ok: true };
 }
@@ -676,8 +667,8 @@ export async function inviteJudge(
 
   const invited = await prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT id FROM "CompetitionProfile" WHERE id = ${competitionId} FOR UPDATE`;
-    const competition = await tx.competitionProfile.findUnique({ where: { id: competitionId }, select: { resultsReleasedAt: true, resultsValidatedAt: true } });
-    if (!competition || competition.resultsReleasedAt || competition.resultsValidatedAt) return false;
+    const competition = await tx.competitionProfile.findUnique({ where: { id: competitionId }, select: { resultsReleasedAt: true } });
+    if (!competition || competition.resultsReleasedAt) return false;
     await tx.judgeInvite.upsert({
       where: { competitionId_email: { competitionId, email } },
       create: { competitionId, email },
@@ -1069,52 +1060,6 @@ export async function createCompetition(
   };
 }
 
-export async function deleteCompetition(
-  _prev: { error?: string; ok?: boolean; message?: string } | undefined,
-  formData: FormData,
-): Promise<{ error?: string; ok?: boolean; message?: string }> {
-  const user = await requireUser();
-  if (!user || !(await isPlatformAdmin(user.id))) return { error: "Only circuit tech admins can delete competitions." };
-  const competitionId = String(formData.get("competitionId") ?? "");
-  const typedName = String(formData.get("competitionName") ?? "").trim();
-  const reason = String(formData.get("reason") ?? "").trim();
-  if (formData.get("confirmation") !== "DELETE" || !reason || reason.length > 500) {
-    return { error: "Type DELETE and provide a reason of 1 to 500 characters." };
-  }
-  const result = await prisma.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT id FROM "CompetitionProfile" WHERE id = ${competitionId} FOR UPDATE`;
-    const competition = await tx.competitionProfile.findUnique({
-      where: { id: competitionId },
-      select: { name: true, judgingOpen: true, resultsReleasedAt: true, _count: { select: { applications: true, judgeAssignments: true } } },
-    });
-    if (!competition) return { error: "Competition not found." };
-    if (typedName !== competition.name) return { error: "The competition name does not match. Nothing was deleted." };
-    if (competition.judgingOpen) return { error: "Close live judging before deleting this competition." };
-    const actor = await tx.user.findUnique({ where: { id: user.id }, select: { email: true, platformAdmin: true } });
-    if (!actor?.platformAdmin) return { error: "Only circuit tech admins can delete competitions." };
-    await tx.competitionDeletionAudit.create({
-      data: {
-        competitionId,
-        competitionName: competition.name,
-        actorEmail: actor.email,
-        reason,
-        applicationCount: competition._count.applications,
-        judgeCount: competition._count.judgeAssignments,
-        hadReleasedResults: Boolean(competition.resultsReleasedAt),
-      },
-    });
-    await tx.competitionProfile.delete({ where: { id: competitionId } });
-    return { ok: true, message: `${competition.name} was permanently deleted.` };
-  });
-  if (result.error) return result;
-  revalidateAccessPaths();
-  revalidatePath("/ops/competitions", "layout");
-  revalidatePath("/ops/comps", "layout");
-  revalidatePath("/ops/reg", "layout");
-  revalidatePath("/comps", "layout");
-  return result;
-}
-
 export async function setCompetitionPartnerStatus(
   _prev: { error?: string; ok?: boolean; message?: string } | undefined,
   formData: FormData,
@@ -1134,68 +1079,42 @@ export async function setCompetitionPartnerStatus(
   });
   if (!parsed.success) return { error: "Choose a valid competition type." };
 
-  const result = await prisma.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT id FROM "CompetitionProfile" WHERE id = ${parsed.data.competitionId} FOR UPDATE`;
-    const competition = await tx.competitionProfile.findUnique({
+  if (parsed.data.type === "non-partner") {
+    const competition = await prisma.competitionProfile.findUnique({
       where: { id: parsed.data.competitionId },
       select: {
-        isPartner: true,
-        name: true,
-        regAssignment: { select: { email: true } },
-        resultsValidatedAt: true,
-        resultsReleasedAt: true,
-        judgingOpen: true,
-        registrationPaidAt: true,
-        applications: { where: { viewingPosition: { not: null } }, select: { id: true }, take: 1 },
         userId: true,
         memberships: { where: { status: "APPROVED", isAdmin: true }, select: { userId: true } },
         judgeAssignments: { where: { status: "APPROVED" }, select: { judge: { select: { userId: true } } } },
       },
     });
     if (!competition) return { error: "Competition not found." };
-    if (competition.isPartner !== (parsed.data.type === "partner") && (competition.resultsValidatedAt || competition.resultsReleasedAt || competition.judgingOpen || competition.applications.length)) {
-      return { error: "Competition type cannot change after AV viewing starts." };
+    const admins = new Set([
+      ...(competition.userId ? [competition.userId] : []),
+      ...competition.memberships.map((membership) => membership.userId),
+    ]);
+    if (competition.judgeAssignments.some((assignment) => admins.has(assignment.judge.userId))) {
+      return { error: "An approved competition admin is also a judge. Resolve that role conflict before switching to Non-partner." };
     }
-    if (parsed.data.type === "non-partner") {
-      const admins = new Set([
-        ...(competition.userId ? [competition.userId] : []),
-        ...competition.memberships.map((membership) => membership.userId),
-      ]);
-      if (competition.judgeAssignments.some((assignment) => admins.has(assignment.judge.userId))) {
-        return { error: "An approved competition admin is also a judge. Resolve that role conflict before switching to Non-partner." };
-      }
-    }
-    await tx.competitionProfile.update({
-      where: { id: parsed.data.competitionId },
-      data: {
-        isPartner: parsed.data.type === "partner",
-        ...(!competition.registrationPaidAt
-          ? { registrationFeeCents: competitionRegistrationFeeCents(parsed.data.type === "partner") }
-          : {}),
-      },
-    });
-    if (parsed.data.type === "non-partner" && competition.regAssignment?.email) {
-      await tx.competitionRegAssignment.update({
-        where: { competitionId: parsed.data.competitionId },
-        data: { email: null, contactName: null },
-      });
-      await tx.competitionRegAssignmentAudit.create({ data: {
-        competitionId: parsed.data.competitionId,
-        competitionName: competition.name,
-        oldEmail: competition.regAssignment.email,
-        newEmail: null,
-        changedByEmail: user.email?.toLowerCase() ?? "unknown",
-      } });
-    }
-    return { ok: true };
+  }
+
+  const currentFee = await prisma.competitionProfile.findUnique({
+    where: { id: parsed.data.competitionId }, select: { registrationPaidAt: true },
   });
-  if (result.error) return result;
+  const updated = await prisma.competitionProfile.updateMany({
+    where: { id: parsed.data.competitionId },
+    data: {
+      isPartner: parsed.data.type === "partner",
+      ...(!currentFee?.registrationPaidAt
+        ? { registrationFeeCents: competitionRegistrationFeeCents(parsed.data.type === "partner") }
+        : {}),
+    },
+  });
+  if (!updated.count) return { error: "Competition not found." };
 
   revalidateAccessPaths();
   revalidatePath("/");
   revalidatePath(`/comps/${parsed.data.competitionId}`);
-  revalidatePath("/ops/reg", "layout");
-  revalidatePath("/comp");
   return { ok: true, message: "Competition type saved." };
 }
 
@@ -1354,12 +1273,7 @@ export async function softResetCompClaim(
       data: {
         acceptingApps: true,
         resultsReleasedAt: null,
-        resultsValidatedAt: null,
-        resultsValidatedByEmail: null,
         resultsFinalizedByEmail: null,
-        decisionsSubmittedAt: null,
-        compPaymentsVerifiedAt: null,
-        compPaymentsVerifiedByEmail: null,
         judgingOpen: false,
         livePosition: null,
         liveUpdatedAt: null,
@@ -1412,12 +1326,7 @@ export async function resetCompClaim(
         earlyApplicationDeadline: null,
         applicationDeadline: null,
         resultsReleasedAt: null,
-        resultsValidatedAt: null,
-        resultsValidatedByEmail: null,
         resultsFinalizedByEmail: null,
-        decisionsSubmittedAt: null,
-        compPaymentsVerifiedAt: null,
-        compPaymentsVerifiedByEmail: null,
         dates: "",
         eventStartDate: null,
         eventEndDate: null,

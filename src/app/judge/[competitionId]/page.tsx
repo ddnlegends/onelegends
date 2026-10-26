@@ -48,13 +48,6 @@ export default async function JudgePacketPage({
   });
   if (!fresh) notFound();
 
-  if (fresh.submittedAt) return <div className="space-y-4 rounded-xl border border-line bg-card p-6">
-    <p className="text-xs uppercase tracking-wide text-muted">{fresh.competition.name}</p>
-    <h1 className="font-heading text-4xl">Thank you for judging</h1>
-    <p className="text-muted">Your packet was submitted <LocalDateTime date={fresh.submittedAt} />. Scores are locked. Judges do not see team names, rankings, or results.</p>
-    <Link href="/judge" className="btn btn-ghost inline-flex">Back to judging</Link>
-  </div>;
-
   const scored = fresh.slots.filter((slot) => isScoreComplete(slot.score)).length;
   const ready = fresh.slots.length > 0 && scored === fresh.slots.length;
   const locked = Boolean(fresh.submittedAt);
@@ -160,11 +153,18 @@ export default async function JudgePacketPage({
               );
             })}
           </ul>
-          <SubmitPacketButton
-            assignmentId={fresh.id}
-            ready={ready && scoringOpen}
-            closed={!scoringOpen}
-          />
+          {locked ? (
+            <p className="text-sm text-muted">
+              Packet submitted. Scores are locked. Ranked names are only shown
+              to the competition.
+            </p>
+          ) : (
+            <SubmitPacketButton
+              assignmentId={fresh.id}
+              ready={ready && scoringOpen}
+              closed={!scoringOpen}
+            />
+          )}
         </>
       )}
     </div>

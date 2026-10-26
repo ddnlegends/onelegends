@@ -65,19 +65,21 @@ export function RemoveApplicationForm({ applicationId }: { applicationId: string
   );
 }
 
-export function CompPaymentCheckbox({ applicationId, status }: { applicationId: string; status: "UNREVIEWED" | "PAID" | "UNPAID" | "WAIVED" | "LEGACY_INCLUDED" }) {
+export function CompPaymentCheckbox({ applicationId, received }: { applicationId: string; received: boolean }) {
   const [state, action, pending] = useActionState(setCompPaymentReceived, undefined);
   return (
     <form action={action} className="flex flex-wrap items-center gap-2 text-sm">
       <input type="hidden" name="applicationId" value={applicationId} />
-      <label className="flex items-center gap-2">Host payment
-        <select name="status" defaultValue={status} disabled={pending} className="rounded-md border border-line bg-card px-2 py-1 text-sm">
-          <option value="UNREVIEWED" disabled>Not reviewed</option>
-          <option value="LEGACY_INCLUDED" disabled>Historical viewing; payment unreviewed</option>
-          <option value="PAID">Paid</option>
-          <option value="UNPAID">Unpaid</option>
-          <option value="WAIVED">Fee waived</option>
-        </select>
+      <label className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          name="received"
+          value="1"
+          defaultChecked={received}
+          disabled={pending}
+          onChange={(event) => event.currentTarget.form?.requestSubmit()}
+        />
+        Payment received
       </label>
       <button className="btn btn-ghost py-1.5 text-xs" disabled={pending} type="submit">{pending ? "Saving…" : "Save"}</button>
       {state?.error ? <span className="text-xs text-danger">{state.error}</span> : null}

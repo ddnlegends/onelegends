@@ -29,13 +29,9 @@ export const visibleApplicationWhere = {
   team: { applyBlocked: false },
 } satisfies Prisma.ApplicationWhereInput;
 
-/** OneLegends and host payments are independent. A frozen viewing order stays intact. */
+/** Only paid teams may receive a Team number or an AV viewing slot. */
 export const viewingEligibleApplicationWhere = {
   ...visibleApplicationWhere,
-  OR: [
-    { viewingPosition: { not: null } },
-    { compPaymentReviewStatus: { in: ["PAID", "WAIVED"] } },
-  ],
   team: {
     applyBlocked: false,
     registrationPaidAt: { not: null },
@@ -44,14 +40,11 @@ export const viewingEligibleApplicationWhere = {
 
 export function isViewingEligibleApplication(application: {
   removedAt: Date | null;
-  viewingPosition: number | null;
-  compPaymentReviewStatus: string;
   team: { applyBlocked: boolean; registrationPaidAt: Date | null };
 }) {
   return (
     application.removedAt == null &&
     !application.team.applyBlocked &&
-    application.team.registrationPaidAt != null &&
-    (application.viewingPosition != null || ["PAID", "WAIVED"].includes(application.compPaymentReviewStatus))
+    application.team.registrationPaidAt != null
   );
 }

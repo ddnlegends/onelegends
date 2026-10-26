@@ -22,7 +22,6 @@
     "test:integration": "vitest run --config vitest.integration.config.mts",
     "test:e2e:production": "playwright test --config playwright.production.config.ts",
     "db:migrate:test": "tsx scripts/check-test-database.ts && prisma migrate deploy",
-    "db:assign-reg": "tsx scripts/assign-reg-chairs.ts",
     "test:load": "node scripts/load-smoke.mjs"
   },
   "prisma": {

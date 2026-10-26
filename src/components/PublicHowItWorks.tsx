@@ -19,7 +19,7 @@ const steps = [
   {
     number: "04",
     title: "Turn scores into decisions",
-    body: "After judging is complete, Non Partner results unlock automatically. Circuit tech admins validate and release Partner results. Hosts then review rankings, scores, comments, and applicant details and decide team outcomes.",
+    body: "After judging is complete, competition hosts finalize results to review rankings, scores, comments, and applicant details, then accept, waitlist, or decline teams. Teams can track where their applications stand.",
   },
 ];
 

@@ -37,8 +37,6 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
   const ops = await pageAs(browser, "tech");
   await ops.goto(`/ops/comps/${id}`);
   await ops.getByRole("button", { name: "Open judging" }).click();
-  await expect(ops.getByText(/Unpaid teams will not show up in AV viewing/)).toBeVisible();
-  await ops.getByRole("button", { name: "Confirm and open viewing" }).click();
   await expect(ops.getByText(/Judging is open\. The moderator can start/)).toBeVisible();
 
   const moderator = await pageAs(browser, "moderator");
@@ -48,7 +46,7 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
   const sealedRankings = await moderator.request.get(`/moderator/${id}/results`, { maxRedirects: 0 });
   for (const name of SEALED_NAMES) expect(await sealedRankings.text()).not.toContain(name);
   await moderator.goto(`/moderator/${id}/results`);
-  await expect(moderator.getByRole("heading", { name: "Thank you for moderating" })).toBeVisible();
+  await expect(moderator.getByText("404", { exact: true })).toBeVisible();
   await moderator.goto(`/moderator/${id}`);
   await expect(moderator.getByRole("button", { name: "Show Team 1" })).toBeDisabled();
   await prepareAnonymousVideos(moderator);
@@ -118,8 +116,7 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
     await expect(judge.getByText("2 of 2 fully scored")).toBeVisible({ timeout: 2_000 });
   }).toPass();
   await judge.getByRole("button", { name: "Submit Scores" }).click();
-  await expect.poll(async () => (await db.judgeAssignment.findFirstOrThrow({ where: { competitionId: id }, select: { submittedAt: true } })).submittedAt).not.toBeNull();
-  await expect(judge.getByText(/Thank you for judging/).first()).toBeVisible();
+  await expect(judge.getByText(/Packet submitted/).first()).toBeVisible();
 
   const stored = await db.judgeAssignment.findFirstOrThrow({
     where: { competitionId: id, judge: { user: { email: E2E.emails.judge } } },
@@ -136,25 +133,24 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
       );
     }
   }
-  await moderator.reload();
-  await expect(moderator.getByRole("heading", { name: "Thank you for moderating" })).toBeVisible();
-  await expectNoTeamNames(moderator);
+  const completedRankings = moderator.getByRole("link", {
+    name: "View completed rankings",
+  });
+  await expect(completedRankings).toBeVisible({ timeout: 15_000 });
+  await completedRankings.click();
+  await expect(moderator.getByRole("heading", { name: "Completed rankings" })).toBeVisible();
+  for (const name of SEALED_NAMES) {
+    await expect(moderator.getByRole("cell", { name, exact: true })).toBeVisible();
+  }
+  await moderator.goto(`/moderator/${id}`);
 
   await ops.reload();
   await ops.getByRole("button", { name: "Validate Comp Results", exact: true }).click();
   await ops.getByRole("button", { name: "Yes, validate comp results" }).click();
-  await expect(ops.getByText(/Results validated privately/)).toBeVisible();
-  expect((await db.competitionProfile.findUniqueOrThrow({ where: { id } })).resultsReleasedAt).toBeNull();
+  await expect(ops.getByText(/Results finalized/)).toBeVisible();
   await judge.goto(`/judge/${id}/team/1`);
-  await expect(judge).toHaveURL(new RegExp(`/judge/${id}$`));
-  await expect(judge.getByRole("heading", { name: "Thank you for judging" })).toBeVisible();
+  await expect(judge.locator("#choreography")).toBeDisabled();
 
-  await comp.reload();
-  await expect(comp.getByText(/Rankings and scores are still hidden/)).toBeVisible();
-  await expectNoTeamNames(comp);
-  await ops.getByRole("button", { name: "Release results", exact: true }).click();
-  await ops.getByRole("button", { name: "Yes, release results" }).click();
-  await expect(ops.getByText(/Results released/).first()).toBeVisible();
   await comp.reload();
   await expect(comp.getByText(/Unlocked/)).toBeVisible();
   for (const name of SEALED_NAMES) {
@@ -180,39 +176,4 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
   await expect(moderator.getByRole("combobox")).toHaveCount(0);
   const judgeRankings = await judge.request.get(`/moderator/${id}/results`, { maxRedirects: 0 });
   expect(await judgeRankings.text()).not.toContain(firstTeam.team.name);
-});
-
-test("Non Partner results unlock for host and moderator as soon as the last judge submits", async ({ browser }) => {
-  const id = await competitionId(E2E.comps.showcase.slug);
-  await db.competitionProfile.update({ where: { id }, data: { isPartner: false } });
-  const ops = await pageAs(browser, "tech");
-  await ops.goto(`/ops/comps/${id}`);
-  await expect(ops.getByRole("button", { name: "Validate Comp Results", exact: true })).toHaveCount(0);
-  await ops.getByRole("button", { name: "Open judging" }).click();
-  await ops.getByRole("button", { name: "Confirm and open viewing" }).click();
-  await expect(ops.getByText(/Judging is open\. The moderator can start/)).toBeVisible();
-
-  const assignment = await db.judgeAssignment.findFirstOrThrow({ where: { competitionId: id }, include: { slots: true } });
-  expect(assignment.slots).toHaveLength(2);
-  for (const slot of assignment.slots) await db.judgeScore.create({ data: {
-    assignmentId: assignment.id, slotId: slot.id,
-    choreography: 8, formations: 8, technique: 8, syncCleanliness: 8, overallImpression: 8,
-  } });
-  const judge = await pageAs(browser, "judge");
-  await judge.goto(`/judge/${id}`);
-  await judge.getByRole("button", { name: "Submit Scores" }).click();
-  await expect.poll(async () => (await db.competitionProfile.findUniqueOrThrow({ where: { id } })).resultsReleasedAt).not.toBeNull();
-  expect((await db.competitionProfile.findUniqueOrThrow({ where: { id } })).resultsValidatedAt).toBeNull();
-  await expect(judge.getByText(/Thank you for judging/).first()).toBeVisible();
-  await expectNoTeamNames(judge);
-
-  const host = await pageAs(browser, "comp");
-  await host.goto("/comp/results");
-  for (const name of SEALED_NAMES) await expect(host.getByRole("cell", { name, exact: true }).first()).toBeVisible();
-  const moderator = await pageAs(browser, "moderator");
-  await moderator.goto(`/moderator/${id}/results`);
-  await expect(moderator.getByRole("heading", { name: "Final rankings" })).toBeVisible();
-  for (const name of SEALED_NAMES) await expect(moderator.getByRole("cell", { name, exact: true })).toBeVisible();
-  await ops.reload();
-  await expect(ops.getByRole("button", { name: "Validate Comp Results", exact: true })).toHaveCount(0);
 });
