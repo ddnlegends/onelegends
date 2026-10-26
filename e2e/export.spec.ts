@@ -135,7 +135,11 @@ test("competition director downloads ranked profiles, rosters, and scores only a
   await tech.reload();
   await tech.getByRole("button", { name: "Validate Comp Results", exact: true }).click();
   await tech.getByRole("button", { name: "Yes, validate comp results" }).click();
-  await expect(tech.getByText("Results finalized.")).toBeVisible();
+  await expect(tech.getByText("Results validated. Release them when ready.")).toBeVisible();
+  expect((await director.request.get(path)).status()).toBe(403);
+  await tech.getByRole("button", { name: "Release Results", exact: true }).click();
+  await tech.getByRole("button", { name: "Yes, release results" }).click();
+  await expect(tech.getByText("Results released.", { exact: true })).toBeVisible();
 
   await director.goto("/comp/applicants");
   await expect(director.getByRole("link", { name: "Download final team workbook" })).toBeVisible();
