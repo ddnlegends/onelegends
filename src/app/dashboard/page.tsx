@@ -435,6 +435,9 @@ export default async function DashboardPage() {
               <Link href="/comp/access" className="btn btn-ghost">
                 Admins
               </Link>
+              <Link href="/comp/moderator" className="btn btn-ghost">
+                Moderator
+              </Link>
             </div>
           </div>
           {compMemberships.length > 1 ? (
