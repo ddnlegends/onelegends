@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requirePlatformAdminPage } from "@/lib/page-guards";
 import {
   CancelTeamInviteForm,
+  DeleteTeamForm,
   InviteTeamAdminForm,
   ResetTeamClaimForm,
   RevokeTeamAccessForm,
@@ -32,6 +33,7 @@ export default async function OpsTeamsPage() {
         include: { competition: { select: { id: true, name: true } } },
         orderBy: { createdAt: "desc" },
       },
+      _count: { select: { applications: true, dancers: true } },
     },
   });
   const claimed = teams.filter((team) => team.claimedAt).length;
@@ -128,6 +130,13 @@ export default async function OpsTeamsPage() {
                         <ResetTeamClaimForm teamId={team.id} teamName={team.name} />
                       </>
                     ) : null}
+                    <DeleteTeamForm
+                      teamId={team.id}
+                      teamName={team.name}
+                      claimCode={team.claimCode}
+                      applications={team._count.applications}
+                      dancers={team._count.dancers}
+                    />
                   </div>
                 </div>
 
