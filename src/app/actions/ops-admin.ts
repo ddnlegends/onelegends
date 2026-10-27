@@ -1,21 +1,24 @@
 "use server";
 
 /**
- * Circuit tech-admin access controls: Moderator grants and invites, and platform
- * admin invites and removal.
+ * Moderator grants and invites for competition admins and circuit tech admins,
+ * plus platform admin invites and removal.
  *
- * Every action requires `platformAdmin`. Removing an admin takes an advisory
- * lock so the circuit can never drop to zero platform admins.
+ * Platform admin changes require `platformAdmin`. Removing an admin takes an
+ * advisory lock so the circuit can never drop to zero platform admins.
  */
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
-import { isPlatformAdmin } from "@/lib/team-access";
+import { isCompAdmin, isPlatformAdmin } from "@/lib/team-access";
 
 function revalidateOps() {
   revalidatePath("/dashboard");
+  revalidatePath("/comp/access");
+  revalidatePath("/comp", "layout");
   revalidatePath("/ops/comps", "layout");
+  revalidatePath("/ops/competitions", "layout");
   revalidatePath("/moderator", "layout");
   revalidatePath("/", "layout");
 }
@@ -26,10 +29,6 @@ export async function grantModeratorAccess(
 ): Promise<{ error?: string; ok?: boolean; message?: string }> {
   const user = await requireUser();
   if (!user) return { error: "You must be signed in." };
-  if (!(await isPlatformAdmin(user.id))) {
-    return { error: "Only circuit ops can grant moderator access." };
-  }
-
   const parsed = z
     .object({
       competitionId: z.string().min(1, "Pick a competition."),
@@ -43,6 +42,9 @@ export async function grantModeratorAccess(
     return { error: parsed.error.issues[0]?.message ?? "Invalid form." };
   }
   const { competitionId, email } = parsed.data;
+  if (!(await isCompAdmin(user.id, competitionId))) {
+    return { error: "Only this competition's admins or circuit tech admins can assign its moderator." };
+  }
 
   const competition = await prisma.competitionProfile.findUnique({
     where: { id: competitionId },
@@ -81,34 +83,42 @@ export async function grantModeratorAccess(
     };
   }
 
-  if (account) {
-    const existing = await prisma.moderatorAccess.findUnique({
-      where: { userId_competitionId: { userId: account.id, competitionId } },
-      select: { id: true },
-    });
-    if (existing) {
-      return { error: `${email} is already a moderator for ${competition.name}.` };
+  const result = await prisma.$transaction(async (tx) => {
+    // Serialize competing assignments for this competition before replacing access.
+    const locked = await tx.$queryRaw<Array<{ id: string }>>`
+      SELECT id FROM "CompetitionProfile" WHERE id = ${competitionId} FOR UPDATE
+    `;
+    if (!locked.length) return { error: "Competition not found." };
+    const [access, invites] = await Promise.all([
+      tx.moderatorAccess.findMany({
+        where: { competitionId },
+        select: { userId: true },
+      }),
+      tx.moderatorInvite.findMany({
+        where: { competitionId },
+        select: { email: true },
+      }),
+    ]);
+    if (access.length + invites.length === 1 &&
+      (account ? access[0]?.userId === account.id : invites[0]?.email === email)) {
+      return { error: `${email} is already the moderator for ${competition.name}.` };
     }
-    await prisma.moderatorAccess.create({
-      data: { userId: account.id, competitionId },
-    });
-    await prisma.moderatorInvite.deleteMany({ where: { competitionId, email } });
-    revalidateOps();
-    return {
-      ok: true,
-      message: `${email} can run live viewing for ${competition.name}.`,
-    };
-  }
-
-  await prisma.moderatorInvite.upsert({
-    where: { competitionId_email: { competitionId, email } },
-    create: { competitionId, email },
-    update: {},
+    await tx.moderatorAccess.deleteMany({ where: { competitionId } });
+    await tx.moderatorInvite.deleteMany({ where: { competitionId } });
+    if (account) {
+      await tx.moderatorAccess.create({ data: { userId: account.id, competitionId } });
+    } else {
+      await tx.moderatorInvite.create({ data: { competitionId, email } });
+    }
+    return { ok: true };
   });
+  if (result.error) return result;
   revalidateOps();
   return {
     ok: true,
-    message: `${email} gets moderator access for ${competition.name} as soon as they log in or register.`,
+    message: account
+      ? `${email} can run live viewing for ${competition.name}.`
+      : `${email} gets moderator access for ${competition.name} as soon as they log in or register.`,
   };
 }
 
@@ -118,15 +128,15 @@ export async function removeModeratorAccess(
 ): Promise<{ error?: string; ok?: boolean }> {
   const user = await requireUser();
   if (!user) return { error: "You must be signed in." };
-  if (!(await isPlatformAdmin(user.id))) {
-    return { error: "Only circuit ops can remove moderator access." };
-  }
   const accessId = String(formData.get("accessId") ?? "");
   const row = await prisma.moderatorAccess.findUnique({
     where: { id: accessId },
-    select: { id: true },
+    select: { id: true, competitionId: true },
   });
   if (!row) return { error: "Moderator access not found." };
+  if (!(await isCompAdmin(user.id, row.competitionId))) {
+    return { error: "Only this competition's admins or circuit tech admins can remove its moderator." };
+  }
   await prisma.moderatorAccess.delete({ where: { id: row.id } });
   revalidateOps();
   return { ok: true };
@@ -138,15 +148,15 @@ export async function cancelModeratorInvite(
 ): Promise<{ error?: string; ok?: boolean }> {
   const user = await requireUser();
   if (!user) return { error: "You must be signed in." };
-  if (!(await isPlatformAdmin(user.id))) {
-    return { error: "Only circuit ops can cancel moderator invites." };
-  }
   const inviteId = String(formData.get("inviteId") ?? "");
   const invite = await prisma.moderatorInvite.findUnique({
     where: { id: inviteId },
-    select: { id: true },
+    select: { id: true, competitionId: true },
   });
   if (!invite) return { error: "Invite not found." };
+  if (!(await isCompAdmin(user.id, invite.competitionId))) {
+    return { error: "Only this competition's admins or circuit tech admins can cancel its moderator invite." };
+  }
   await prisma.moderatorInvite.delete({ where: { id: invite.id } });
   revalidateOps();
   return { ok: true };

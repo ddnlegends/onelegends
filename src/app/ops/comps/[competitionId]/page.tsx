@@ -77,10 +77,6 @@ export default async function CompDashboardDetailPage({
         include: { user: { select: { email: true } } },
         orderBy: { createdAt: "asc" },
       },
-      memberships: {
-        where: { status: "APPROVED", isAdmin: true },
-        include: { user: { select: { email: true } } },
-      },
       moderatorInvites: { orderBy: { createdAt: "asc" } },
     },
   });
@@ -92,10 +88,7 @@ export default async function CompDashboardDetailPage({
   const released = Boolean(competition.resultsReleasedAt);
   const live = status === "LIVE";
   const livePosition = live ? competition.livePosition : null;
-  const moderatorEmails = new Set(competition.moderatorAccess.map((row) => row.user.email));
-  if (!competition.isPartner) {
-    for (const membership of competition.memberships) moderatorEmails.add(membership.user.email);
-  }
+  const moderatorEmails = competition.moderatorAccess.map((row) => row.user.email);
 
   const orderExists = competition.applications.some((app) => app.viewingPosition != null);
   const eligibleApplications = competition.applications.filter((app) => isViewingEligibleApplication(app, orderExists));
@@ -227,16 +220,33 @@ export default async function CompDashboardDetailPage({
         />
         <Stat
           label="Moderator"
-          value={String(moderatorEmails.size)}
+          value={String(moderatorEmails.length)}
           hint={
-            moderatorEmails.size
-              ? [...moderatorEmails].join(", ")
+            moderatorEmails.length
+              ? moderatorEmails.join(", ")
               : competition.moderatorInvites.length
                 ? `${competition.moderatorInvites.length} waiting to log in`
-                : "Grant one on circuit ops home"
+                : competition.isPartner ? "No moderator assigned" : "Comp admins can run viewing"
           }
         />
       </div>
+
+      <section className="space-y-3 rounded-xl border border-line bg-card p-5">
+        <h2 className="font-heading text-xl">Assigned moderator</h2>
+        {competition.moderatorAccess.length || competition.moderatorInvites.length ? (
+          <ul className="divide-y divide-line text-sm">
+            {competition.moderatorAccess.map((row) => (
+              <li key={row.id} className="py-2">{row.user.email}</li>
+            ))}
+            {competition.moderatorInvites.map((invite) => (
+              <li key={invite.id} className="py-2">
+                {invite.email}<span className="text-muted"> · waiting to log in</span>
+              </li>
+            ))}
+          </ul>
+        ) : <p className="text-sm text-muted">No moderator account assigned.</p>}
+        {!competition.isPartner ? <p className="text-sm text-muted">Competition admins can also run viewing for non-partner competitions.</p> : null}
+      </section>
 
       <JudgingControls
         competitionId={competition.id}
