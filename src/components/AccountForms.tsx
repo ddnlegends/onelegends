@@ -1241,6 +1241,48 @@ export function GrantModeratorForm({
   );
 }
 
+export function AssignCompModeratorForm({
+  competitionId,
+  replacing,
+}: {
+  competitionId: string;
+  replacing: boolean;
+}) {
+  const [state, formAction, pending] = useActionState(grantModeratorAccess, undefined);
+  const [email, setEmail] = useState("");
+  const [seen, setSeen] = useState(state);
+  clearEmailAfterSuccess(state, seen, setSeen, setEmail);
+
+  return (
+    <form action={formAction} className="space-y-3">
+      <input type="hidden" name="competitionId" value={competitionId} />
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="field min-w-0 flex-1">
+          <label htmlFor="comp-moderator-email">Moderator account email</label>
+          <input
+            id="comp-moderator-email"
+            name="email"
+            type="email"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="moderator@example.org"
+          />
+        </div>
+        <button className="btn btn-primary" disabled={pending} type="submit">
+          {pending ? "Saving…" : replacing ? "Replace moderator" : "Assign moderator"}
+        </button>
+      </div>
+      <p className="text-sm text-muted">
+        One moderator account per competition. Assigning a new email replaces the current
+        moderator. If the account does not exist yet, access starts when they log in or
+        register. No email is sent.
+      </p>
+      <SaveNotice state={state} />
+    </form>
+  );
+}
+
 export function RemoveModeratorAccessForm({ accessId }: { accessId: string }) {
   const [state, formAction, pending] = useActionState(
     removeModeratorAccess,

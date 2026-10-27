@@ -30,34 +30,50 @@ export async function applyModeratorInvites(userId: string, email: string) {
     where: { email: email.trim().toLowerCase() },
   });
   for (const invite of invites) {
-    const [assignment, judgeInvite] = await Promise.all([
-      prisma.judgeAssignment.findFirst({
-        where: {
-          competitionId: invite.competitionId,
-          status: { not: "DENIED" },
-          judge: { userId },
-        },
-        select: { id: true },
-      }),
-      prisma.judgeInvite.findUnique({
-        where: {
-          competitionId_email: {
+    await prisma.$transaction(async (tx) => {
+      const locked = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT id FROM "CompetitionProfile" WHERE id = ${invite.competitionId} FOR UPDATE
+      `;
+      if (!locked.length) return;
+      const pending = await tx.moderatorInvite.findUnique({ where: { id: invite.id } });
+      if (!pending) return;
+      const [assignment, judgeInvite] = await Promise.all([
+        tx.judgeAssignment.findFirst({
+          where: {
             competitionId: invite.competitionId,
-            email: email.trim().toLowerCase(),
+            status: { not: "DENIED" },
+            judge: { userId },
           },
+          select: { id: true },
+        }),
+        tx.judgeInvite.findUnique({
+          where: {
+            competitionId_email: {
+              competitionId: invite.competitionId,
+              email: email.trim().toLowerCase(),
+            },
+          },
+          select: { id: true },
+        }),
+      ]);
+      if (assignment || judgeInvite) return;
+      const [otherAccess, otherInvite] = await Promise.all([
+        tx.moderatorAccess.findFirst({ where: { competitionId: invite.competitionId, userId: { not: userId } }, select: { id: true } }),
+        tx.moderatorInvite.findFirst({ where: { competitionId: invite.competitionId, id: { not: invite.id } }, select: { id: true } }),
+      ]);
+      if (otherAccess || otherInvite) {
+        await tx.moderatorInvite.delete({ where: { id: invite.id } });
+        return;
+      }
+      await tx.moderatorAccess.upsert({
+        where: {
+          userId_competitionId: { userId, competitionId: invite.competitionId },
         },
-        select: { id: true },
-      }),
-    ]);
-    if (assignment || judgeInvite) continue;
-    await prisma.moderatorAccess.upsert({
-      where: {
-        userId_competitionId: { userId, competitionId: invite.competitionId },
-      },
-      create: { userId, competitionId: invite.competitionId },
-      update: {},
+        create: { userId, competitionId: invite.competitionId },
+        update: {},
+      });
+      await tx.moderatorInvite.delete({ where: { id: invite.id } });
     });
-    await prisma.moderatorInvite.delete({ where: { id: invite.id } });
   }
 }
 
