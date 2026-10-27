@@ -33,7 +33,7 @@ export default async function CompModeratorPage() {
   const assigned = Boolean(competition.moderatorAccess.length || competition.moderatorInvites.length);
   return (
     <div className="space-y-8">
-      <Link href="/comp" className="text-sm underline">← Competition dashboard</Link>
+      <Link href="/dashboard" className="text-sm underline">← Back to dashboard</Link>
       <div>
         <h1 className="font-heading text-4xl">Moderator · {competition.name}</h1>
         <p className="mt-2 max-w-2xl text-muted">
