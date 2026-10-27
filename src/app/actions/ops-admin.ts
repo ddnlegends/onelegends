@@ -16,6 +16,7 @@ import { isCompAdmin, isPlatformAdmin } from "@/lib/team-access";
 function revalidateOps() {
   revalidatePath("/dashboard");
   revalidatePath("/comp/access");
+  revalidatePath("/comp/moderator");
   revalidatePath("/comp", "layout");
   revalidatePath("/ops/comps", "layout");
   revalidatePath("/ops/competitions", "layout");
