@@ -26,6 +26,7 @@ import {
   createCompetition,
   createTeam,
   deleteCompetition,
+  deleteTeam,
   inviteCompAdmin,
   inviteJudge,
   inviteTeamAdmin,
@@ -961,6 +962,77 @@ export function DeleteCompetitionForm({
       </label>
       <div className="flex flex-wrap gap-2">
         <button className="btn btn-primary" type="submit" disabled={pending || typedName !== competitionName || typedClaimCode !== claimCode || typedDelete !== "DELETE"}>
+          {pending ? "Deleting…" : "Permanently delete"}
+        </button>
+        <button className="btn btn-ghost" type="button" onClick={() => setConfirming(false)}>
+          Cancel
+        </button>
+      </div>
+      {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
+    </form>
+  );
+}
+
+export function DeleteTeamForm({
+  teamId,
+  teamName,
+  claimCode,
+  applications,
+  dancers,
+}: {
+  teamId: string;
+  teamName: string;
+  claimCode: string;
+  applications: number;
+  dancers: number;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [typedName, setTypedName] = useState("");
+  const [typedClaimCode, setTypedClaimCode] = useState("");
+  const [typedDelete, setTypedDelete] = useState("");
+  const [state, formAction, pending] = useActionState(deleteTeam, undefined);
+
+  if (!confirming) {
+    return (
+      <div>
+        <button className="btn btn-ghost py-1.5 text-danger" type="button" onClick={() => setConfirming(true)}>
+          Delete team
+        </button>
+        {state?.error ? <p className="text-xs text-danger">{state.error}</p> : null}
+        {state?.ok ? <p className="text-xs text-success">{state.message}</p> : null}
+      </div>
+    );
+  }
+
+  return (
+    <form action={formAction} className="w-full space-y-3 rounded-lg border border-danger bg-card p-4 text-sm">
+      <input type="hidden" name="teamId" value={teamId} />
+      <p className="font-semibold text-danger">Permanently delete {teamName}?</p>
+      <p>
+        This removes this team, its {dancers} dancers, {applications} applications,
+        memberships, invites, and photo. Any viewing slots and scores for those applications
+        are also deleted, including from competitions with released results. Competition listings
+        and other teams remain. This cannot be undone. Close live judging first.
+      </p>
+      <p className="font-mono">Claim code: {claimCode}</p>
+      <label className="field">
+        Type the exact team name
+        <input name="teamName" value={typedName} onChange={(event) => setTypedName(event.target.value)} autoComplete="off" required />
+      </label>
+      <label className="field">
+        Type the exact claim code
+        <input name="claimCode" value={typedClaimCode} onChange={(event) => setTypedClaimCode(event.target.value)} autoComplete="off" required />
+      </label>
+      <label className="field">
+        Type DELETE
+        <input name="confirmation" value={typedDelete} onChange={(event) => setTypedDelete(event.target.value)} autoComplete="off" required />
+      </label>
+      <label className="field">
+        Reason for deletion
+        <input name="reason" maxLength={500} required />
+      </label>
+      <div className="flex flex-wrap gap-2">
+        <button className="btn btn-primary" type="submit" disabled={pending || typedName !== teamName || typedClaimCode !== claimCode || typedDelete !== "DELETE"}>
           {pending ? "Deleting…" : "Permanently delete"}
         </button>
         <button className="btn btn-ghost" type="button" onClick={() => setConfirming(false)}>

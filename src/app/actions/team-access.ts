@@ -1129,6 +1129,80 @@ export async function deleteCompetition(
   return { ok: true, message: result.message };
 }
 
+export async function deleteTeam(
+  _prev: { error?: string; ok?: boolean; message?: string } | undefined,
+  formData: FormData,
+): Promise<{ error?: string; ok?: boolean; message?: string }> {
+  const user = await requireUser();
+  if (!user || !(await isPlatformAdmin(user.id))) {
+    return { error: "Only circuit tech admins can delete teams." };
+  }
+
+  const teamId = String(formData.get("teamId") ?? "");
+  const typedName = String(formData.get("teamName") ?? "").trim();
+  const typedClaimCode = String(formData.get("claimCode") ?? "").trim();
+  const reason = String(formData.get("reason") ?? "").trim();
+  if (formData.get("confirmation") !== "DELETE" || !reason || reason.length > 500) {
+    return { error: "Type DELETE and provide a reason of 1 to 500 characters." };
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    const locked = await tx.$queryRaw<Array<{ id: string }>>`
+      SELECT id FROM "TeamProfile" WHERE id = ${teamId} FOR UPDATE
+    `;
+    if (!locked.length) return { error: "Team not found." };
+
+    const team = await tx.teamProfile.findUniqueOrThrow({
+      where: { id: teamId },
+      select: {
+        name: true,
+        claimCode: true,
+        applications: {
+          select: { competition: { select: { name: true, judgingOpen: true, resultsReleasedAt: true } } },
+        },
+        _count: { select: { applications: true, dancers: true, memberships: true } },
+      },
+    });
+    if (typedName !== team.name || typedClaimCode !== team.claimCode) {
+      return { error: "The team name or claim code does not match. Nothing was deleted." };
+    }
+    if (team.applications.some((application) => application.competition.judgingOpen)) {
+      return { error: "Close live judging for this team's competitions before deleting it." };
+    }
+    const actor = await tx.user.findUnique({
+      where: { id: user.id },
+      select: { email: true, platformAdmin: true },
+    });
+    if (!actor?.platformAdmin) {
+      return { error: "Only circuit tech admins can delete teams." };
+    }
+
+    const scoreCount = await tx.judgeScore.count({ where: { slot: { application: { teamId } } } });
+    await tx.teamProfile.delete({ where: { id: teamId } });
+    return {
+      ok: true,
+      message: `${team.name} was permanently deleted.`,
+      audit: {
+        teamId,
+        teamName: team.name,
+        actorEmail: actor.email,
+        reason,
+        applicationCount: team._count.applications,
+        dancerCount: team._count.dancers,
+        membershipCount: team._count.memberships,
+        scoreCount,
+        affectedCompetitions: [...new Set(team.applications.map((application) => application.competition.name))],
+        hadReleasedResults: team.applications.some((application) => Boolean(application.competition.resultsReleasedAt)),
+      },
+    };
+  });
+  if (result.error) return result;
+
+  console.info("Team deleted", result.audit);
+  revalidateAccessPaths();
+  return { ok: true, message: result.message };
+}
+
 export async function setCompetitionPartnerStatus(
   _prev: { error?: string; ok?: boolean; message?: string } | undefined,
   formData: FormData,
