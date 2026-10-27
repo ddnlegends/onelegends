@@ -7,11 +7,8 @@ import {
   isCompPrimary,
 } from "@/lib/team-access";
 import {
-  AssignCompModeratorForm,
-  CancelModeratorInviteForm,
   CancelCompInviteForm,
   InviteCompAdminForm,
-  RemoveModeratorAccessForm,
   RevokeCompAccessForm,
   TransferCompPrimaryForm,
 } from "@/components/AccountForms";
@@ -33,11 +30,6 @@ export default async function CompAccessPage() {
         orderBy: { createdAt: "asc" },
       },
       invites: { orderBy: { createdAt: "desc" } },
-      moderatorAccess: {
-        include: { user: { select: { email: true, name: true } } },
-        orderBy: { createdAt: "asc" },
-      },
-      moderatorInvites: { orderBy: { createdAt: "asc" } },
     },
   });
   if (!competition) redirect("/dashboard");
@@ -123,39 +115,6 @@ export default async function CompAccessPage() {
             </li>
           ))}
         </ul>
-      </section>
-
-      <section className="space-y-4 rounded-xl border border-line bg-card p-5">
-        <div>
-          <h2 className="font-heading text-2xl">Moderator</h2>
-          <p className="mt-1 text-sm text-muted">
-            The moderator runs anonymous live AV viewing: they play each video and
-            choose which team judges score next. Moderator access does not grant
-            competition admin rights or the ability to submit judge scores.
-          </p>
-        </div>
-        {competition.moderatorAccess.length || competition.moderatorInvites.length ? (
-          <ul className="divide-y divide-line rounded-lg border border-line text-sm">
-            {competition.moderatorAccess.map((row) => (
-              <li key={row.id} className="flex flex-wrap items-center justify-between gap-3 px-3 py-2">
-                <span>{row.user.name ? `${row.user.name} · ` : ""}{row.user.email}</span>
-                {admin ? <RemoveModeratorAccessForm accessId={row.id} /> : null}
-              </li>
-            ))}
-            {competition.moderatorInvites.map((invite) => (
-              <li key={invite.id} className="flex flex-wrap items-center justify-between gap-3 px-3 py-2">
-                <span>{invite.email}<span className="text-muted"> · waiting to log in</span></span>
-                {admin ? <CancelModeratorInviteForm inviteId={invite.id} /> : null}
-              </li>
-            ))}
-          </ul>
-        ) : <p className="text-sm text-muted">No moderator assigned yet.</p>}
-        {admin ? (
-          <AssignCompModeratorForm
-            competitionId={competition.id}
-            replacing={Boolean(competition.moderatorAccess.length || competition.moderatorInvites.length)}
-          />
-        ) : null}
       </section>
     </div>
   );

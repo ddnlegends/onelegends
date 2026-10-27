@@ -113,7 +113,7 @@ export default async function CompDashboardPage() {
             {competition.location ? `· ${competition.location}` : ""}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link href="/comp/judges" className="btn btn-ghost">
             Judges
           </Link>
@@ -125,6 +125,9 @@ export default async function CompDashboardPage() {
           </Link>
           <Link href="/comp/access" className="btn btn-ghost">
             Admins
+          </Link>
+          <Link href="/comp/moderator" className="btn btn-ghost">
+            Moderator
           </Link>
           {!ops ? (
             <Link href="/comp/profile" className="btn btn-ghost">
