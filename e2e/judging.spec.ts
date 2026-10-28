@@ -1,6 +1,6 @@
 import { test } from "./helpers";
 import { expect, type Page } from "@playwright/test";
-import { competitionId, db, E2E, pageAs, prepareAnonymousVideos, SEALED_NAMES } from "./helpers";
+import { competitionId, db, E2E, pageAs, SEALED_NAMES } from "./helpers";
 
 const SCORES = {
   1: { choreography: "8", formations: "7", technique: "9", syncCleanliness: "8", overallImpression: "9" },
@@ -49,24 +49,11 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
   await moderator.goto(`/moderator/${id}/results`);
   await expect(moderator.getByText("404", { exact: true })).toBeVisible();
   await moderator.goto(`/moderator/${id}`);
-  await expect(moderator.getByRole("button", { name: "Show Team 1" })).toBeDisabled();
-  await prepareAnonymousVideos(moderator);
-  await moderator.getByRole("button", { name: "Fullscreen viewing" }).click();
-  await expect(moderator.getByRole("button", { name: "Exit fullscreen" })).toBeVisible();
-  await expect.poll(() => moderator.evaluate(() => document.fullscreenElement?.classList.contains("anonymous-viewing-stage"))).toBe(true);
-  await expect(moderator.getByRole("button", { name: "Leave viewing mode" })).toHaveCount(0);
+  await expect(moderator.getByRole("button", { name: "Show Team 1" })).toBeEnabled();
+  await expect(moderator.getByRole("button", { name: "Begin anonymous viewing" })).toHaveCount(0);
   await moderator.getByRole("button", { name: "Show Team 1" }).click();
-  const fullscreenPlayer = moderator.getByLabel("Team 1 audition video");
-  await expect(fullscreenPlayer).toHaveAttribute("src", /^blob:/);
-  const playerBox = await fullscreenPlayer.boundingBox();
-  expect(playerBox).not.toBeNull();
-  await moderator.mouse.move(playerBox!.x + playerBox!.width - 2, playerBox!.y + playerBox!.height / 2);
-  expect(await moderator.content()).not.toContain("Identifying Team Name");
-  await moderator.getByRole("button", { name: "Exit fullscreen" }).click();
-  await expect.poll(() => moderator.evaluate(() => document.fullscreenElement)).toBeNull();
   await expect(moderator.getByRole("heading", { name: "Team 1" })).toBeVisible();
-  await expect(moderator.getByLabel("Team 1 audition video")).toHaveAttribute("src", /^blob:/);
-  expect(await moderator.content()).not.toContain("Identifying Team Name");
+  await expect(moderator.getByTitle("Team 1 audition video")).toHaveAttribute("src", /drive\.google\.com\/file\/.*\/preview/);
   await expect(moderator.getByRole("button", { name: /Next: Team 2/ })).toBeDisabled();
 
   const judge = await pageAs(browser, "judge");
@@ -88,7 +75,6 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
 
   await expect(async () => {
     await moderator.reload();
-    await prepareAnonymousVideos(moderator);
     await expect(moderator.getByRole("button", { name: /Next: Team 2/ })).toBeEnabled({ timeout: 2_000 });
   }).toPass();
   await moderator.getByRole("button", { name: /Next: Team 2/ }).click();
@@ -119,7 +105,6 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
 
   await expect(async () => {
     await moderator.reload();
-    await prepareAnonymousVideos(moderator);
     await expect(moderator.getByLabel("E2E Judge completed Team 2")).toBeVisible({ timeout: 2_000 });
   }).toPass();
   await expectNoTeamNames(moderator);

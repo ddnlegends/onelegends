@@ -1,5 +1,4 @@
 import { test as base, expect, type Browser, type BrowserContext, type Page } from "@playwright/test";
-import { readFile } from "node:fs/promises";
 import { PrismaClient } from "@prisma/client";
 import { E2E, seedE2E } from "../prisma/e2e-seed";
 
@@ -57,26 +56,6 @@ export async function competitionId(slug: string): Promise<string> {
 }
 
 export const SEALED_NAMES = [E2E.teams.alpha.name, E2E.teams.beta.name];
-
-/** Prepare a playable local AV with an identifying filename, then enter the safe viewer. */
-export async function prepareAnonymousVideos(page: Page) {
-  // Linux WebKit has no MediaRecorder; use the same playable clip in every browser.
-  const fixture = await readFile(`${process.cwd()}/e2e/fixtures/anonymous-av.mp4`);
-  await page.getByRole("button", { name: "Prepare videos privately" }).click();
-  const selectors = page.getByLabel(/^Select local video for Team /);
-  const count = await selectors.count();
-  for (let index = 0; index < count; index++) {
-    await selectors.nth(index).setInputFiles({
-      name: "Identifying Team Name audition.mp4",
-      mimeType: "video/mp4",
-      buffer: fixture,
-    });
-  }
-  await expect(page.getByRole("button", { name: "Begin anonymous viewing" })).toBeEnabled();
-  await page.getByRole("button", { name: "Begin anonymous viewing" }).click();
-  await expect(page.locator("iframe[src*='drive.google.com']")).toHaveCount(0);
-  expect(await page.content()).not.toContain("Identifying Team Name");
-}
 
 export const ALL_CLAIM_CODES = [
   ...Object.values(E2E.teams).map((team) => team.claimCode),
