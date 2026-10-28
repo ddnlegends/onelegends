@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { competitionType, competitionTypeLabel, usesAssignedModerator, usesTechRelease } from "./competition-type";
+import { competitionType, competitionTypeLabel, hostCanViewApplicantDetails, usesAssignedModerator, usesTechRelease } from "./competition-type";
 
 describe("competition type", () => {
   it.each([
@@ -11,5 +11,7 @@ describe("competition type", () => {
     expect(competitionTypeLabel(competition)).toBe(label);
     expect(usesAssignedModerator(competition)).toBe(assignedModerator);
     expect(usesTechRelease(competition)).toBe(assignedModerator);
+    expect(hostCanViewApplicantDetails({ ...competition, resultsReleasedAt: null })).toBe(!assignedModerator);
+    expect(hostCanViewApplicantDetails({ ...competition, resultsReleasedAt: new Date() })).toBe(true);
   });
 });

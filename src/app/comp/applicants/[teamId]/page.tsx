@@ -6,6 +6,7 @@ import { getActiveCompetitionId, isCompAdmin } from "@/lib/team-access";
 import { TeamDetails } from "@/components/TeamDetails";
 import { visibleApplicationWhere } from "@/lib/payment-eligibility";
 import { submittedApplicationAvUrl } from "@/lib/application-av";
+import { hostCanViewApplicantDetails } from "@/lib/competition-type";
 
 export default async function CompApplicantDetailsPage({ params }: { params: Promise<{ teamId: string }> }) {
   const session = await auth();
@@ -14,9 +15,9 @@ export default async function CompApplicantDetailsPage({ params }: { params: Pro
   if (!competitionId || !(await isCompAdmin(session.user.id, competitionId))) redirect("/comp");
   const competition = await prisma.competitionProfile.findUnique({
     where: { id: competitionId },
-    select: { resultsReleasedAt: true },
+    select: { resultsReleasedAt: true, isPartner: true, isAffiliate: true },
   });
-  if (!competition?.resultsReleasedAt) notFound();
+  if (!competition || !hostCanViewApplicantDetails(competition)) notFound();
   const { teamId } = await params;
   const application = await prisma.application.findFirst({
     where: { teamId, competitionId, ...visibleApplicationWhere },

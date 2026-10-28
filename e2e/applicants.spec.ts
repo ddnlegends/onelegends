@@ -58,14 +58,51 @@ test("moderator-only and judge accounts cannot see applicant names", async ({ br
   }
 });
 
-test("non-partner competition admins get the same applicant list", async ({ browser }) => {
-  await db.competitionProfile.update({
+test("affiliate hosts cannot open applicant details before release", async ({ browser }) => {
+  const competition = await db.competitionProfile.update({
     where: { slug: E2E.comps.showcase.slug },
-    data: { isPartner: false },
+    data: { isPartner: false, isAffiliate: true },
   });
+  const application = await db.application.findFirstOrThrow({ where: { competitionId: competition.id } });
+  const comp = await pageAs(browser, "comp");
+  await comp.goto("/comp/applicants");
+  await expect(comp.getByRole("link", { name: E2E.teams.alpha.name })).toHaveCount(0);
+  await comp.goto(`/comp/applicants/${application.teamId}`);
+  await expect(comp.getByText("404", { exact: true })).toBeVisible();
+});
+
+test("non-partner hosts can see applicant profiles and submitted AVs before release", async ({ browser }) => {
+  const competition = await db.competitionProfile.update({
+    where: { slug: E2E.comps.showcase.slug },
+    data: { isPartner: false, isAffiliate: false },
+  });
+  const application = await db.application.findFirstOrThrow({
+    where: { competitionId: competition.id },
+    include: { team: true },
+  });
+  const submittedAvDriveUrl = "https://drive.google.com/file/d/1E2ESubmittedSnapshotAAAAAAAAAAAA/view";
+  await db.application.update({ where: { id: application.id }, data: { submittedAvDriveUrl } });
   const comp = await pageAs(browser, "comp");
   await comp.goto("/comp/applicants");
   for (const name of SEALED_NAMES) {
-    await expect(comp.getByText(name, { exact: true })).toBeVisible();
+    await expect(comp.getByRole("link", { name })).toBeVisible();
   }
+  await expect(comp.getByRole("link", { name: "Download final team workbook" })).toHaveCount(0);
+  expect((await comp.request.get("/api/comp/applicants/export")).status()).toBe(403);
+  await comp.getByRole("link", { name: application.team.name }).click();
+  await expect(comp.getByRole("rowheader", { name: "Dancer One" })).toBeVisible();
+  await expect(comp.getByTitle(`${application.team.name} audition video`)).toHaveAttribute("src", /1E2ESubmittedSnapshotAAAAAAAAAAAA/);
+  await expect(comp.getByRole("link", { name: "Open In Drive" })).toHaveAttribute("href", submittedAvDriveUrl);
+
+  for (const role of ["team", "moderator", "judge"] as const) {
+    const page = await pageAs(browser, role);
+    await page.goto(`/comp/applicants/${application.teamId}`);
+    await expect(page).not.toHaveURL(new RegExp(`/comp/applicants/${application.teamId}$`));
+  }
+
+  await db.application.update({ where: { id: application.id }, data: { removedAt: new Date() } });
+  await comp.goto(`/comp/applicants/${application.teamId}`);
+  await expect(comp.getByText("404", { exact: true })).toBeVisible();
+  await comp.goto("/comp/applicants");
+  await expect(comp.getByRole("link", { name: application.team.name })).toHaveCount(0);
 });

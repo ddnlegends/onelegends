@@ -11,6 +11,7 @@ import { applicationPhaseLabel } from "@/lib/application-schedule";
 import { formatApplicationFee } from "@/lib/competition-details";
 import { HostPaymentReview } from "@/components/HostPaymentReview";
 import { isCompetitionOpen } from "@/lib/judging-rules";
+import { hostCanViewApplicantDetails } from "@/lib/competition-type";
 
 export default async function CompApplicantsPage() {
   const session = await auth();
@@ -27,6 +28,8 @@ export default async function CompApplicantsPage() {
       applicationClosesAt: true,
       judgingOpen: true,
       resultsReleasedAt: true,
+      isPartner: true,
+      isAffiliate: true,
       decisionsSubmittedAt: true,
       applications: {
         where: visibleApplicationWhere,
@@ -53,6 +56,7 @@ export default async function CompApplicantsPage() {
   });
   if (!competition) redirect("/comp");
   const released = Boolean(competition.resultsReleasedAt);
+  const canViewApplicantDetails = hostCanViewApplicantDetails(competition);
   const hasOrder = competition.applications.some((application) => application.viewingPosition != null);
   const canReview = !released && !competition.judgingOpen && !hasOrder && !isCompetitionOpen(competition);
   const decisionRows = competition.applications.map((application) => ({
@@ -66,7 +70,7 @@ export default async function CompApplicantsPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-heading text-4xl">Applied teams</h1>
-          <p className="mt-2 text-muted">{competition.name} · Review applicant names, application dates, dancer counts, phases, and expected host fees. Full rosters and results unlock after judging.</p>
+          <p className="mt-2 text-muted">{competition.name} · Review applicant names, application dates, dancer counts, phases, and expected host fees. {canViewApplicantDetails ? "Open a team to see its profile, roster, and submitted AV." : "Full team profiles, rosters, and AVs unlock after results release."}</p>
         </div>
         {released ? (
           <a href="/api/comp/applicants/export" className="btn btn-primary">
@@ -75,7 +79,7 @@ export default async function CompApplicantsPage() {
         ) : null}
       </div>
       {!released ? (
-        <p className="rounded-xl border border-line bg-blush p-5 text-sm">Tech admins verify OneLegends registration payments before AV viewing. Record payments made to your competition for each applicant below. <strong>Teams not marked paid to your competition will be excluded from AV viewing.</strong> Viewing order, AV links, scores, and full team details remain hidden until results release.</p>
+        <p className="rounded-xl border border-line bg-blush p-5 text-sm">Tech admins verify OneLegends registration payments before AV viewing. Record payments made to your competition for each applicant below. <strong>Teams not marked paid to your competition will be excluded from AV viewing.</strong> {canViewApplicantDetails ? "Applicant profiles, rosters, and submitted AVs are available below. Viewing order, scores, and results remain hidden until release." : "Viewing order, AV links, scores, and full team details remain hidden until results release."}</p>
       ) : null}
       {hasOrder && !released ? <p className="rounded-xl border border-warning-line bg-warning-soft p-5 text-sm text-warning">The AV viewing order is already locked. Updating a host payment now will not add or remove teams from that order.</p> : null}
       {canReview ? <HostPaymentReview
@@ -87,7 +91,7 @@ export default async function CompApplicantsPage() {
           {competition.applications.map((application) => (
             <li key={application.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
               <div>
-                {released ? (
+                {canViewApplicantDetails ? (
                   <Link href={`/comp/applicants/${application.team.id}`} className="font-semibold hover:underline">{application.team.name}</Link>
                 ) : (
                   <span className="font-semibold">{application.team.name}</span>
