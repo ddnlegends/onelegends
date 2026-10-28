@@ -6,6 +6,7 @@ import { AutoRefresh } from "@/components/AutoRefresh";
 import { CompStatusPill } from "@/components/CompStatusPill";
 import { LiveProgress } from "@/components/LiveProgress";
 import { ModeratorLiveConsole } from "@/components/ModeratorLiveConsole";
+import { DriveAvPlayer } from "@/components/DriveAvPlayer";
 import {
   competitionStatus,
   ensureSharedViewingOrder,
@@ -85,6 +86,7 @@ export default async function ModeratorCompetitionPage({
     })),
   }));
   const livePosition = open ? competition.livePosition : null;
+  const liveTeam = teams.find((team) => team.position === livePosition);
   const lockMessage = judgingLockMessage(competition);
 
   return (
@@ -156,13 +158,25 @@ export default async function ModeratorCompetitionPage({
       ) : (
         <ModeratorLiveConsole
           competitionId={competition.id}
-          teams={teams.map(({ position, judges, avDriveUrl }) => ({
+          teams={teams.map(({ position, judges }) => ({
             position,
             judges,
-            avDriveUrl,
           }))}
           livePosition={livePosition}
-        />
+        >
+          {liveTeam ? (
+            <DriveAvPlayer
+              key={liveTeam.position}
+              url={liveTeam.avDriveUrl}
+              label={`Team ${liveTeam.position} audition video`}
+              hideOpenLink
+            />
+          ) : (
+            <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-dashed border-line bg-blush text-sm text-muted">
+              The video for the team you show appears here.
+            </div>
+          )}
+        </ModeratorLiveConsole>
       )}
     </div>
   );
