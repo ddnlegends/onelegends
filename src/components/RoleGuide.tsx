@@ -92,7 +92,7 @@ const GUIDES: Guide[] = [
     steps: [
       {
         title: "Sign in with your assigned email",
-        body: "Circuit ops grants moderator access for a Partner competition. Use an account separate from circuit admins and judges scoring that competition. For a Non-partner competition, approved competition admins also get moderator controls. There is no moderator claim code or judge packet for this role.",
+        body: "Competition admins or circuit ops assign a moderator for Partner and Affiliate competitions. Use an account separate from tech admins and judges scoring that competition. For a Non-partner competition, approved competition admins also get moderator controls. There is no moderator claim code or judge packet for this role.",
       },
       {
         title: "Open Live Viewing",
@@ -140,7 +140,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Review released results",
-        body: "Circuit ops opens judging after applications close. Once every active judge submits and pending invitations are resolved, a tech admin validates the results. Rankings, comments, full applicant rosters, and accept / waitlist / decline decisions then unlock for the competition account. Non-partner admins can also run live viewing; Partner competitions use moderators assigned by circuit ops.",
+        body: "Circuit ops opens judging after applications close. Once every active judge submits and pending invitations are resolved, a tech admin validates and releases Partner and Affiliate results; Non-partner results release when judging finishes. Rankings, comments, full applicant rosters, and decisions then unlock for the competition account. Non-partner admins can run live viewing; Partner and Affiliate competitions use assigned moderators.",
       },
     ],
     cta: { href: "/register", label: "Create an account" },
@@ -156,11 +156,11 @@ const GUIDES: Guide[] = [
     steps: [
       {
         title: "Create official listings",
-        body: "Create team and competition listings, choose Partner or Non-partner for each competition, and hand claim codes to the intended primary admins outside the app.",
+        body: "Create team and competition listings, choose Partner, Affiliate, or Non-partner for each competition, and hand claim codes to the intended primary admins outside the app.",
       },
       {
         title: "Manage access",
-        body: "Review team and competition admins, grant Partner competition moderator access, transfer or reset ownership when needed, and rotate claim codes. Mark OneLegends registration payments on Fees, block a team circuit-wide, or remove one application before viewing starts.",
+        body: "Review team and competition admins, help assign Partner and Affiliate competition moderators, transfer or reset ownership when needed, and rotate claim codes. Mark OneLegends registration payments on Fees, block a team circuit-wide, or remove one application before viewing starts.",
       },
       {
         title: "Open judging",

@@ -8,6 +8,7 @@ import { isCompetitionOpen } from "@/lib/judging";
 import { formatApplicationFee } from "@/lib/competition-details";
 import { ApplicationPeriodSummary } from "@/components/ApplicationPeriodSummary";
 import { LocalDateTime } from "@/components/LocalDateTime";
+import { COMPETITION_TYPE_GROUPS, competitionType } from "@/lib/competition-type";
 
 export default async function AllCompetitionsPage() {
   const session = await auth();
@@ -22,6 +23,7 @@ export default async function AllCompetitionsPage() {
       id: true,
       name: true,
       isPartner: true,
+      isAffiliate: true,
       claimedAt: true,
       dates: true,
       location: true,
@@ -54,12 +56,12 @@ export default async function AllCompetitionsPage() {
       </div>
       <h2 className="font-heading text-2xl">Accepting Applications</h2>
       {open.length === 0 ? <p className="text-muted">No competitions are accepting applications right now.</p> : null}
-      {([true, false] as const).map((partner) => {
-        const group = open.filter((competition) => competition.isPartner === partner);
+      {COMPETITION_TYPE_GROUPS.map(({ type, label }) => {
+        const group = open.filter((competition) => competitionType(competition) === type);
         if (!group.length) return null;
         return (
-          <section key={String(partner)} className="space-y-3" aria-label={partner ? "Partner Competitions" : "Non-partner Competitions"}>
-            <h3 className="font-heading text-xl">{partner ? "Partner Competitions" : "Non-partner Competitions"}</h3>
+          <section key={type} className="space-y-3" aria-label={label}>
+            <h3 className="font-heading text-xl">{label}</h3>
             <div className="grid gap-4 md:grid-cols-2">
               {group.map((competition) => (
                 <article key={competition.id} className="space-y-3 rounded-xl border border-line bg-card p-5">
@@ -86,10 +88,9 @@ export default async function AllCompetitionsPage() {
       {closed.length ? (
         <section className="space-y-4" aria-label="Not accepting apps">
           <h2 className="font-heading text-2xl">Not accepting apps</h2>
-          {([true, false] as const).map((partner) => {
-            const group = closed.filter((competition) => competition.isPartner === partner);
+          {COMPETITION_TYPE_GROUPS.map(({ type, label }) => {
+            const group = closed.filter((competition) => competitionType(competition) === type);
             if (!group.length) return null;
-            const label = partner ? "Partner Competitions" : "Non-partner Competitions";
             return (
               <section key={label} aria-label={`${label} not accepting applications`}>
                 <h3 className="font-semibold">{label}</h3>

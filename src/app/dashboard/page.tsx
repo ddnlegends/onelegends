@@ -340,6 +340,7 @@ export default async function DashboardPage() {
                     id: c.id,
                     name: c.name,
                     isPartner: c.isPartner,
+                    isAffiliate: c.isAffiliate,
                     dates: c.dates,
                     location: c.location,
                     venue: c.venue,

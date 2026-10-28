@@ -190,6 +190,7 @@ model CompetitionProfile {
   claimedAt                DateTime?
   name                     String
   isPartner                Boolean   @default(true)
+  isAffiliate              Boolean   @default(false)
   registrationFeeCents     Int       @default(2500)
   registrationPaidAt       DateTime?
   registrationPaidByEmail  String?

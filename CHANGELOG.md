@@ -4,6 +4,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Add Affiliate as a third competition type in public, team, host, and tech-admin views. Affiliates use Partner moderator and tech result-release rules with the $40 registration rate; Rang de Storrs becomes Affiliate without changing its already-paid amount. Apply migration `20261028120000_affiliate_competitions` before deploying.
 - Group team and competition links into one navigation menu for accounts that manage both, keeping the header on one line at desktop widths.
 - Show claimed, complete competitions that are not accepting applications in a separate Partner/Non-partner section of the host All Competitions view.
 - Keep closed competitions in a compact text list on team Apply, with clearer spacing between listings.

@@ -19,6 +19,7 @@ import { claimAttemptError } from "@/lib/claim-rate-limit";
 import { blurEmail, normalizeClaimCode } from "@/lib/claim-code";
 import { hasModeratorAccess } from "@/lib/moderator";
 import { competitionRegistrationFeeCents } from "@/lib/payment-eligibility";
+import { usesAssignedModerator } from "@/lib/competition-type";
 import { getCompetitionResetPlan, getTeamResetPlan } from "@/lib/reset-plans";
 import {
   isCompAdmin,
@@ -162,7 +163,7 @@ export async function previewCompClaim(
     };
   }
 
-  if (!listing.isPartner && await prisma.judgeAssignment.findFirst({
+  if (!usesAssignedModerator(listing) && await prisma.judgeAssignment.findFirst({
     where: { competitionId: listing.id, status: "APPROVED", judge: { userId: user.id } },
     select: { id: true },
   })) {
@@ -269,7 +270,7 @@ export async function claimCompAction(
     };
   }
 
-  if (!listing.isPartner && await prisma.judgeAssignment.findFirst({
+  if (!usesAssignedModerator(listing) && await prisma.judgeAssignment.findFirst({
     where: { competitionId: listing.id, status: "APPROVED", judge: { userId: user.id } },
     select: { id: true },
   })) {
@@ -350,11 +351,11 @@ export async function acceptCompInvite(
   const membershipId = String(formData.get("membershipId") ?? "");
   const membership = await prisma.competitionMembership.findFirst({
     where: { id: membershipId, userId: user.id, status: "PENDING" },
-    include: { competition: { select: { isPartner: true } } },
+    include: { competition: { select: { isPartner: true, isAffiliate: true } } },
   });
   if (!membership) return { error: "That competition request was not found." };
 
-  if (!membership.competition.isPartner && await prisma.judgeAssignment.findFirst({
+  if (!usesAssignedModerator(membership.competition) && await prisma.judgeAssignment.findFirst({
     where: { competitionId: membership.competitionId, status: "APPROVED", judge: { userId: user.id } },
     select: { id: true },
   })) {
@@ -560,9 +561,9 @@ export async function inviteCompAdmin(
     }
     const competition = await prisma.competitionProfile.findUnique({
       where: { id: competitionId },
-      select: { isPartner: true },
+      select: { isPartner: true, isAffiliate: true },
     });
-    if (!competition?.isPartner && await prisma.judgeAssignment.findFirst({
+    if (competition && !usesAssignedModerator(competition) && await prisma.judgeAssignment.findFirst({
       where: { competitionId, status: "APPROVED", judge: { userId: account.id } },
       select: { id: true },
     })) {
@@ -1026,7 +1027,7 @@ export async function createCompetition(
   const parsed = z
     .object({
       name: z.string().min(2, "Competition name is required."),
-      type: z.enum(["partner", "non-partner"]),
+      type: z.enum(["partner", "affiliate", "non-partner"]),
     })
     .safeParse({
       name: String(formData.get("name") ?? "").trim(),
@@ -1042,6 +1043,7 @@ export async function createCompetition(
     data: {
       name: parsed.data.name,
       isPartner: parsed.data.type === "partner",
+      isAffiliate: parsed.data.type === "affiliate",
       registrationFeeCents: competitionRegistrationFeeCents(parsed.data.type === "partner"),
       slug,
       claimCode,
@@ -1215,7 +1217,7 @@ export async function setCompetitionPartnerStatus(
 
   const parsed = z.object({
     competitionId: z.string().min(1),
-    type: z.enum(["partner", "non-partner"]),
+    type: z.enum(["partner", "affiliate", "non-partner"]),
   }).safeParse({
     competitionId: String(formData.get("competitionId") ?? ""),
     type: String(formData.get("type") ?? ""),
@@ -1251,6 +1253,7 @@ export async function setCompetitionPartnerStatus(
     where: { id: parsed.data.competitionId, resultsFinalizedByEmail: null, resultsReleasedAt: null },
     data: {
       isPartner: parsed.data.type === "partner",
+      isAffiliate: parsed.data.type === "affiliate",
       ...(!currentFee?.registrationPaidAt
         ? { registrationFeeCents: competitionRegistrationFeeCents(parsed.data.type === "partner") }
         : {}),

@@ -26,6 +26,7 @@ import { isPlatformAdmin } from "@/lib/team-access";
 import { judgePanelCompletion } from "@/lib/judge-panel-completion";
 import { currentApplicationWhere, isViewingEligibleApplication } from "@/lib/payment-eligibility";
 import { hostPaymentFingerprint } from "@/lib/host-payment-review";
+import { usesAssignedModerator, usesTechRelease } from "@/lib/competition-type";
 
 export default async function CompDashboardDetailPage({
   params,
@@ -226,7 +227,7 @@ export default async function CompDashboardDetailPage({
               ? moderatorEmails.join(", ")
               : competition.moderatorInvites.length
                 ? `${competition.moderatorInvites.length} waiting to log in`
-                : competition.isPartner ? "No moderator assigned" : "Comp admins can run viewing"
+                : usesAssignedModerator(competition) ? "No moderator assigned" : "Comp admins can run viewing"
           }
         />
       </div>
@@ -245,7 +246,7 @@ export default async function CompDashboardDetailPage({
             ))}
           </ul>
         ) : <p className="text-sm text-muted">No moderator account assigned.</p>}
-        {!competition.isPartner ? <p className="text-sm text-muted">Competition admins can also run viewing for non-partner competitions.</p> : null}
+        {!usesAssignedModerator(competition) ? <p className="text-sm text-muted">Competition admins can also run viewing for non-partner competitions.</p> : null}
       </section>
 
       <JudgingControls
@@ -272,7 +273,7 @@ export default async function CompDashboardDetailPage({
         </ul> : <p className="text-sm text-muted">No active applications.</p>}
       </section>
 
-      {competition.isPartner ? <FinalizeResultsForm
+      {usesTechRelease(competition) ? <FinalizeResultsForm
         competitionId={competition.id}
         approved={approved.length}
         submitted={submitted.length}

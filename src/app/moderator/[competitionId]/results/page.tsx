@@ -7,6 +7,7 @@ import { rankTeams } from "@/lib/results";
 import { LocalDateTime } from "@/components/LocalDateTime";
 import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 import { moderatorResultsReady } from "@/lib/judge-panel-completion";
+import { usesTechRelease } from "@/lib/competition-type";
 
 export default async function ModeratorResultsPage({
   params,
@@ -23,6 +24,7 @@ export default async function ModeratorResultsPage({
     select: {
       name: true,
       isPartner: true,
+      isAffiliate: true,
       resultsReleasedAt: true,
       applications: {
         where: viewingEligibleApplicationWhere,
@@ -66,12 +68,12 @@ export default async function ModeratorResultsPage({
   );
   const unresolvedJudges = competition.judgeInvites.length +
     competition.judgeAssignments.filter((assignment) => assignment.status === "PENDING").length;
-  if (!moderatorResultsReady(competition.applications, activeJudges, competition.isPartner ? unresolvedJudges : 0)) notFound();
-  if (competition.isPartner && !competition.resultsReleasedAt) {
+  if (!moderatorResultsReady(competition.applications, activeJudges, usesTechRelease(competition) ? unresolvedJudges : 0)) notFound();
+  if (usesTechRelease(competition) && !competition.resultsReleasedAt) {
     return (
       <div className="rounded-xl border border-line bg-card p-6">
         <h1 className="font-heading text-3xl">Thank you for moderating</h1>
-        <p className="mt-2 text-muted">{competition.isPartner ? "Results will appear after tech release." : "Results will appear when all active judges finish."}</p>
+        <p className="mt-2 text-muted">Results will appear after tech release.</p>
       </div>
     );
   }

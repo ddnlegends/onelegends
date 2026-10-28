@@ -3,6 +3,7 @@ import { PageShell } from "@/components/PageShell";
 import { MarkAllRegistrationPaidForm, RegistrationPaymentForm } from "@/components/PaymentForms";
 import { requirePlatformAdminPage } from "@/lib/page-guards";
 import { currentApplicationWhere, dollars } from "@/lib/payment-eligibility";
+import { competitionTypeLabel } from "@/lib/competition-type";
 import { prisma } from "@/lib/prisma";
 import { formatDate, statusLabel } from "@/lib/utils";
 
@@ -56,7 +57,7 @@ export default async function OpsPaymentsPage() {
               <li key={competition.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
                 <div>
                   <Link href={`/ops/competitions`} className="font-semibold hover:underline">{competition.name}</Link>
-                  <p className="text-sm text-muted">{competition.isPartner ? "Partner" : "Non-partner"} · {dollars(competition.registrationFeeCents)} · {competition.registrationPaidAt ? `Paid ${formatDate(competition.registrationPaidAt)}` : "Unpaid"}</p>
+                  <p className="text-sm text-muted">{competitionTypeLabel(competition)} · {dollars(competition.registrationFeeCents)} · {competition.registrationPaidAt ? `Paid ${formatDate(competition.registrationPaidAt)}` : "Unpaid"}</p>
                 </div>
                 <RegistrationPaymentForm kind="competition" id={competition.id} paid={Boolean(competition.registrationPaidAt)} />
               </li>

@@ -20,6 +20,7 @@ import { formatDate, statusLabel } from "@/lib/utils";
 import { formatApplicationFee } from "@/lib/competition-details";
 import { competitionApplicationClosureReasons } from "@/lib/competition-profile";
 import { currentApplicationWhere } from "@/lib/payment-eligibility";
+import { COMPETITION_TYPE_GROUPS, competitionType, usesAssignedModerator } from "@/lib/competition-type";
 
 const JUDGE_STATUS: Record<string, string> = {
   APPROVED: "Approved",
@@ -89,9 +90,8 @@ export default async function OpsCompetitionsPage() {
         <p className="text-muted">No competitions yet. Create one from Circuit ops.</p>
       ) : (
         <div className="space-y-8">
-          {([true, false] as const).map((isPartner) => {
-            const group = competitions.filter((competition) => competition.isPartner === isPartner);
-            const label = isPartner ? "Partner Competitions" : "Non-partner Competitions";
+          {COMPETITION_TYPE_GROUPS.map(({ type, label }) => {
+            const group = competitions.filter((competition) => competitionType(competition) === type);
             return (
               <section key={label} aria-label={label} className="space-y-3">
                 <h2 className="font-heading text-2xl">{label} ({group.length})</h2>
@@ -128,7 +128,7 @@ export default async function OpsCompetitionsPage() {
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="truncate font-heading text-xl">{competition.name}</span>
-                      <CompetitionTypeBadge isPartner={competition.isPartner} />
+                      <CompetitionTypeBadge isPartner={competition.isPartner} isAffiliate={competition.isAffiliate} />
                       <CompStatusPill status={displayStatus} />
                       {pending.length || competition.invites.length ? (
                         <Chip tone="warn">
@@ -202,6 +202,7 @@ export default async function OpsCompetitionsPage() {
                   <CompetitionTypeForm
                     competitionId={competition.id}
                     isPartner={competition.isPartner}
+                    isAffiliate={competition.isAffiliate}
                   />
                   <InfoGrid
                     items={[
@@ -351,7 +352,7 @@ export default async function OpsCompetitionsPage() {
                 ) : null}
 
                 <PanelSection title="Moderator access">
-                  {!competition.isPartner ? (
+                  {!usesAssignedModerator(competition) ? (
                     <p className="mb-2 text-sm text-muted">
                       Approved competition admins can run live viewing automatically.
                     </p>
@@ -371,7 +372,7 @@ export default async function OpsCompetitionsPage() {
                         </li>
                       ))}
                     </ul>
-                  ) : competition.isPartner ? (
+                  ) : usesAssignedModerator(competition) ? (
                     <p className="text-sm text-muted">
                       No moderator assigned. Grant access from Circuit ops.
                     </p>

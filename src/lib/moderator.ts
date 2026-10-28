@@ -6,6 +6,7 @@ import {
   visibleApplicationWhere,
 } from "@/lib/payment-eligibility";
 import { moderatorResultsReady } from "@/lib/judge-panel-completion";
+import { usesTechRelease } from "@/lib/competition-type";
 
 /** Non-partner competition admins run the same live console as assigned moderators. */
 function moderatorCompetitionWhere(userId: string): Prisma.CompetitionProfileWhereInput {
@@ -16,6 +17,7 @@ function moderatorCompetitionWhere(userId: string): Prisma.CompetitionProfileWhe
       { moderatorAccess: { some: { userId } } },
       {
         isPartner: false,
+        isAffiliate: false,
         OR: [
           { userId }, // Legacy primary owner, before competition memberships existed.
           { memberships: { some: { userId, status: "APPROVED", isAdmin: true } } },
@@ -102,6 +104,7 @@ export const getModeratorCompetitions = cache(async (userId: string) => {
       id: true,
       name: true,
       isPartner: true,
+      isAffiliate: true,
       acceptingApps: true,
       applicationDeadline: true,
       applicationClosesAt: true,
@@ -138,7 +141,7 @@ export const getModeratorCompetitions = cache(async (userId: string) => {
     return {
       ...competition,
       moderatorResultsReady: Boolean(competition.resultsReleasedAt) ||
-        (!competition.isPartner && moderatorResultsReady(applications, active, 0)),
+        (!usesTechRelease(competition) && moderatorResultsReady(applications, active, 0)),
     };
   });
 });

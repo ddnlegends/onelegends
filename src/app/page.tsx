@@ -113,7 +113,7 @@ export default async function HomePage() {
                       >
                         {comp.name}
                       </Link>
-                      <CompetitionTypeBadge isPartner={comp.isPartner} />
+                      <CompetitionTypeBadge isPartner={comp.isPartner} isAffiliate={comp.isAffiliate} />
                     </div>
                   </td>
                   <td className="px-4 py-3 text-muted">{comp.dates || "TBA"}</td>

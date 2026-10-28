@@ -24,6 +24,7 @@ import { moderatorResultsReady } from "@/lib/judge-panel-completion";
 import { currentApplicationWhere, viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 import { applicationPhaseLabel } from "@/lib/application-schedule";
 import { submittedApplicationAvUrl } from "@/lib/application-av";
+import { competitionTypeLabel, usesAssignedModerator } from "@/lib/competition-type";
 
 export const EXPORT_DATASETS = [
   {
@@ -156,7 +157,7 @@ async function competitionsTable(competitionId?: string): Promise<ExportCell[][]
     ],
     ...competitions.map((comp) => [
       comp.name,
-      comp.isPartner ? "Partner" : "Non-partner",
+      competitionTypeLabel(comp),
       COMP_STATUS_LABEL[competitionStatus(comp)],
       yesNo(Boolean(comp.claimedAt || comp.userId)),
       comp.dates,
@@ -543,7 +544,7 @@ async function accessTable(competitionId?: string): Promise<ExportCell[][]> {
       where: compWhere,
       orderBy: [{ competition: { name: "asc" } }, { createdAt: "asc" }],
       include: {
-        competition: { select: { name: true, isPartner: true } },
+        competition: { select: { name: true, isPartner: true, isAffiliate: true } },
         user: { select: { email: true, name: true } },
       },
     }),
@@ -615,7 +616,7 @@ async function accessTable(competitionId?: string): Promise<ExportCell[][]> {
       m.competition.name,
       m.user.email,
       m.user.name,
-      m.status === "APPROVED" && m.isAdmin && !m.competition.isPartner
+      m.status === "APPROVED" && m.isAdmin && !usesAssignedModerator(m.competition)
         ? `${membershipRole(m)} + moderator`
         : membershipRole(m),
       membershipStatus(m.status),

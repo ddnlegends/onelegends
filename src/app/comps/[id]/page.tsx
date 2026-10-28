@@ -51,7 +51,7 @@ export default async function CompPublicPage({
       <div>
         <p className="text-xs uppercase tracking-wide text-muted">Competition</p>
         <h1 className="font-heading text-4xl">{comp.name}</h1>
-        <div className="mt-2"><CompetitionTypeBadge isPartner={comp.isPartner} /></div>
+        <div className="mt-2"><CompetitionTypeBadge isPartner={comp.isPartner} isAffiliate={comp.isAffiliate} /></div>
         <p className="mt-2 text-sm">
           {open ? (
             <span className="font-medium text-accent">Accepting applications</span>

@@ -23,6 +23,25 @@ test("competition hosts and teams see visible listings grouped by type and appli
       lateApplicationFeeCents: 5000,
     },
   });
+  const affiliate = await db.competitionProfile.create({
+    data: {
+      slug: "e2e-affiliate-open",
+      claimCode: "COMP-E2EAFF",
+      name: "E2E Affiliate Open",
+      isPartner: false,
+      isAffiliate: true,
+      claimedAt: new Date(),
+      dates: "Fixture dates",
+      location: "Test City",
+      venue: "Test Hall",
+      stageSize: "40 x 32 feet",
+      lighting: "Standard AV guidelines",
+      productionNotes: "Standard production setup",
+      description: "Fixture competition details",
+      acceptingApps: true,
+      applicationDeadline: new Date(Date.now() + 14 * 86_400_000),
+    },
+  });
   try {
     await login(page, "comp");
     await page.getByRole("navigation").getByRole("link", { name: "All Competitions" }).click();
@@ -32,16 +51,19 @@ test("competition hosts and teams see visible listings grouped by type and appli
     await expect(nonPartnerSection.getByRole("link", { name: nonPartner.name })).toBeVisible();
     await expect(nonPartnerSection).toContainText("$35.00");
     await expect(nonPartnerSection).toContainText("$50.00");
+    await expect(page.getByRole("region", { name: "Affiliate Competitions" }).getByRole("link", { name: affiliate.name })).toBeVisible();
     await expect(page.getByRole("region", { name: "Partner Competitions not accepting applications" })).toContainText(E2E.comps.closed.name);
 
     const teamPage = await pageAs(browser, "team");
     await teamPage.goto("/team/apply");
     await expect(teamPage.getByRole("region", { name: "Partner Competitions", exact: true })).toContainText(E2E.comps.open.name);
     await expect(teamPage.getByRole("region", { name: "Non-partner Competitions", exact: true })).toContainText(nonPartner.name);
+    await expect(teamPage.getByRole("region", { name: "Affiliate Competitions", exact: true })).toContainText(affiliate.name);
     await expect(teamPage.getByRole("region", { name: "Partner Competitions not accepting applications" })).toContainText(E2E.comps.closed.name);
     await teamPage.goto("/comp/competitions");
     await expect(teamPage).toHaveURL(/\/dashboard$/);
   } finally {
+    await db.competitionProfile.delete({ where: { id: affiliate.id } });
     await db.competitionProfile.delete({ where: { id: nonPartner.id } });
   }
 });

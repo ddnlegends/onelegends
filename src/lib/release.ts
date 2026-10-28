@@ -2,6 +2,7 @@
 import { prisma } from "@/lib/prisma";
 import { judgePanelCompletion, moderatorResultsReady } from "@/lib/judge-panel-completion";
 import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
+import { usesTechRelease } from "@/lib/competition-type";
 
 export async function finalizeResults(competitionId: string, actorEmail: string) {
   return prisma.$transaction(async (tx) => {
@@ -10,6 +11,7 @@ export async function finalizeResults(competitionId: string, actorEmail: string)
       where: { id: competitionId },
       select: {
         isPartner: true,
+        isAffiliate: true,
         resultsFinalizedByEmail: true,
         resultsReleasedAt: true,
         applications: { where: viewingEligibleApplicationWhere, select: { id: true } },
@@ -25,7 +27,7 @@ export async function finalizeResults(competitionId: string, actorEmail: string)
       },
     });
     if (!competition) return { error: "Competition not found." };
-    if (!competition.isPartner) return { error: "Non Partner competitions do not need tech validation." };
+    if (!usesTechRelease(competition)) return { error: "Non-partner competitions do not need tech validation." };
     if (competition.resultsReleasedAt) return { error: "Results have already been finalized." };
     if (competition.resultsFinalizedByEmail) return { error: "Results have already been validated." };
     if (!competition.applications.length) return { error: "No teams applied." };
@@ -56,7 +58,7 @@ export async function releaseResults(competitionId: string) {
     const competition = await tx.competitionProfile.findUnique({
       where: { id: competitionId },
       select: {
-        isPartner: true, resultsFinalizedByEmail: true, resultsReleasedAt: true,
+        isPartner: true, isAffiliate: true, resultsFinalizedByEmail: true, resultsReleasedAt: true,
         applications: { where: viewingEligibleApplicationWhere, select: { id: true } },
         judgeInvites: { select: { id: true } },
         judgeAssignments: {
@@ -65,7 +67,7 @@ export async function releaseResults(competitionId: string) {
         },
       },
     });
-    if (!competition?.isPartner) return { error: "Only Partner competitions use tech release." };
+    if (!competition || !usesTechRelease(competition)) return { error: "Only Partner and Affiliate competitions use tech release." };
     if (!competition.resultsFinalizedByEmail) return { error: "Validate results before releasing them." };
     if (competition.resultsReleasedAt) return { error: "Results have already been released." };
     const active = competition.judgeAssignments.filter((row) => row.status === "APPROVED");

@@ -15,6 +15,7 @@ import {
 import { formatDate } from "@/lib/utils";
 import { isPlatformAdmin } from "@/lib/team-access";
 import { currentApplicationWhere } from "@/lib/payment-eligibility";
+import { usesAssignedModerator } from "@/lib/competition-type";
 
 const STATUS_ORDER: CompStatus[] = [
   "LIVE",
@@ -36,6 +37,7 @@ export default async function CompDashboardPage() {
       id: true,
       name: true,
       isPartner: true,
+      isAffiliate: true,
       location: true,
       eventDate: true,
       acceptingApps: true,
@@ -141,7 +143,7 @@ export default async function CompDashboardPage() {
                       <h2 className="truncate font-heading text-xl group-hover:text-accent">
                         {comp.name}
                       </h2>
-                      <CompetitionTypeBadge isPartner={comp.isPartner} />
+                      <CompetitionTypeBadge isPartner={comp.isPartner} isAffiliate={comp.isAffiliate} />
                       <p className="truncate text-xs text-muted">
                         {[comp.location, comp.eventDate ? formatDate(comp.eventDate) : ""]
                           .filter(Boolean)
@@ -197,7 +199,7 @@ export default async function CompDashboardPage() {
                                 {comp.applicationDeadline ? <>Late deadline <LocalDateTime date={comp.applicationDeadline} /></> : null}
                                 {!comp.earlyTierDeadline && !comp.earlyApplicationDeadline && !comp.applicationDeadline ? "Teams can still apply." : null}
                               </>
-                            : comp.isPartner && comp._count.moderatorAccess === 0
+                            : usesAssignedModerator(comp) && comp._count.moderatorAccess === 0
                               ? "No moderator assigned yet. Grant access before viewing."
                               : "Open judging when viewing starts."}
                       </p>

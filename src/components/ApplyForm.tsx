@@ -6,11 +6,13 @@ import { applyToCompetitions } from "@/app/actions/team";
 import { CompetitionTypeBadge } from "@/components/CompetitionTypeBadge";
 import { LocalDateTime } from "@/components/LocalDateTime";
 import { ApplicationPeriodSummary } from "@/components/ApplicationPeriodSummary";
+import { COMPETITION_TYPE_GROUPS, competitionType } from "@/lib/competition-type";
 
 type Comp = {
   id: string;
   name: string;
   isPartner: boolean;
+  isAffiliate: boolean;
   dates: string;
   location: string;
   venue: string;
@@ -53,10 +55,7 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
   );
   const open = competitions.filter((c) => c.acceptingApps);
   const closed = competitions.filter((c) => !c.acceptingApps);
-  const types = [
-    { isPartner: true, label: "Partner Competitions" },
-    { isPartner: false, label: "Non-partner Competitions" },
-  ];
+  const types = COMPETITION_TYPE_GROUPS;
 
   return (
     <form action={formAction} className="space-y-6">
@@ -80,8 +79,8 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
           No competitions are accepting applications right now.
         </p>
       ) : (
-        types.map(({ isPartner, label }) => {
-          const group = open.filter((comp) => comp.isPartner === isPartner);
+        types.map(({ type, label }) => {
+          const group = open.filter((comp) => competitionType(comp) === type);
           if (!group.length) return null;
           return (
             <section key={label} className="space-y-2" aria-label={label}>
@@ -103,7 +102,7 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
                             <label htmlFor={`comp-${comp.id}`} className="cursor-pointer font-semibold">{comp.name}</label>
-                            <CompetitionTypeBadge isPartner={comp.isPartner} />
+                            <CompetitionTypeBadge isPartner={comp.isPartner} isAffiliate={comp.isAffiliate} />
                           </div>
                           {comp.alreadyApplied ? <p className="mt-1 text-xs font-semibold text-accent">Already applied</p> : null}
                           {comp.withdrawn && !comp.adminRemoved ? <p className="mt-1 text-xs font-semibold text-accent">Withdrawn before · reapply at the current phase and fee</p> : null}
@@ -126,8 +125,8 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
           <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted">
             Not accepting apps
           </h3>
-          {types.map(({ isPartner, label }) => {
-            const group = closed.filter((comp) => comp.isPartner === isPartner);
+          {types.map(({ type, label }) => {
+            const group = closed.filter((comp) => competitionType(comp) === type);
             if (!group.length) return null;
             return (
               <section key={label} className="mt-5" aria-label={`${label} not accepting applications`}>
@@ -135,7 +134,7 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
                 <ul className="mt-3 space-y-5 text-sm text-muted">
                   {group.map((comp) => (
                     <li key={comp.id} className="leading-relaxed">
-                      {comp.name} <CompetitionTypeBadge isPartner={comp.isPartner} />
+                      {comp.name} <CompetitionTypeBadge isPartner={comp.isPartner} isAffiliate={comp.isAffiliate} />
                       {comp.dates ? ` — ${comp.dates}` : ""}
                       {comp.earlyTierDeadline ? <> · Early deadline <LocalDateTime date={comp.earlyTierDeadline} /></> : null}
                       {comp.earlyDeadline ? <> · Regular deadline <LocalDateTime date={comp.earlyDeadline} /></> : null}

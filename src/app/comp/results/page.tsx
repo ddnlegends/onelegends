@@ -7,6 +7,7 @@ import { LocalDateTime } from "@/components/LocalDateTime";
 import { getActiveCompetitionId } from "@/lib/team-access";
 import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 import { moderatorResultsReady } from "@/lib/judge-panel-completion";
+import { usesTechRelease } from "@/lib/competition-type";
 
 export default async function CompResultsPage() {
   const session = await auth();
@@ -41,9 +42,9 @@ export default async function CompResultsPage() {
   const panelReady = moderatorResultsReady(
     competition.applications,
     competition.judgeAssignments,
-    competition.isPartner ? pendingInvites + pendingRequests : 0,
+    usesTechRelease(competition) ? pendingInvites + pendingRequests : 0,
   );
-  const released = Boolean(competition.resultsReleasedAt) || (!competition.isPartner && panelReady);
+  const released = Boolean(competition.resultsReleasedAt) || (!usesTechRelease(competition) && panelReady);
 
   // Do not calculate or expose rankings until explicit finalization succeeds.
   const ranked = released && panelReady
@@ -55,7 +56,7 @@ export default async function CompResultsPage() {
       <div>
         <h1 className="font-heading text-4xl">Viewing Results</h1>
         <p className="mt-2 max-w-2xl text-muted">
-          {competition.isPartner
+          {usesTechRelease(competition)
             ? "Rankings and scores appear after tech admins release validated results."
             : "Rankings and scores appear when the full judge panel finishes."} Rank is average z-score, then average total.
         </p>
@@ -74,7 +75,7 @@ export default async function CompResultsPage() {
 
       {!released ? (
         <p className="text-muted">
-          {competition.isPartner
+          {usesTechRelease(competition)
             ? "Thank you for judging. Results will be available after tech release."
             : "Thank you for judging. Results will be available when every active judge finishes."}
           Applicant names, dates, and dancer counts are available in Applied Teams.

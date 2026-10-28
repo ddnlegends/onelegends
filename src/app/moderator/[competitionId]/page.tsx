@@ -18,6 +18,7 @@ import { hasModeratorAccess } from "@/lib/moderator";
 import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 import { moderatorResultsReady } from "@/lib/judge-panel-completion";
 import { submittedApplicationAvUrl } from "@/lib/application-av";
+import { usesTechRelease } from "@/lib/competition-type";
 
 export default async function ModeratorCompetitionPage({
   params,
@@ -69,10 +70,10 @@ export default async function ModeratorCompetitionPage({
   );
   const unresolvedJudges = competition.judgeInvites.length +
     competition.judgeAssignments.filter((assignment) => assignment.status === "PENDING").length;
-  const waitingForTech = competition.isPartner && !competition.resultsReleasedAt &&
+  const waitingForTech = usesTechRelease(competition) && !competition.resultsReleasedAt &&
     moderatorResultsReady(competition.applications, activeJudges, unresolvedJudges);
   const resultsReady = Boolean(competition.resultsReleasedAt) ||
-    (!competition.isPartner && moderatorResultsReady(competition.applications, activeJudges, 0));
+    (!usesTechRelease(competition) && moderatorResultsReady(competition.applications, activeJudges, 0));
   const status = competitionStatus(competition);
   const teams = competition.applications.map((app) => ({
     position: app.viewingPosition as number,
@@ -103,7 +104,7 @@ export default async function ModeratorCompetitionPage({
           </div>
           <p className="max-w-2xl text-sm text-muted">
             Teams stay anonymous while judging is open. Rankings unlock after
-            tech release for Partner competitions, or after all active judges submit for Non Partner competitions.
+            tech release for Partner and Affiliate competitions, or after all active judges submit for Non-partner competitions.
           </p>
         </div>
         {open && resultsReady ? (
@@ -136,7 +137,7 @@ export default async function ModeratorCompetitionPage({
               ? "Final rankings are available to moderators and competition admins."
               : resultsReady
                 ? "Every active judge submitted a complete packet. Rankings are ready."
-                : competition.isPartner && activeJudges.every((judge) => judge.submittedAt)
+                : usesTechRelease(competition) && activeJudges.every((judge) => judge.submittedAt)
                   ? "Thank you for moderating. Results will appear after tech release."
               : (lockMessage ?? "Circuit ops opens judging when it is time.")}
           </p>

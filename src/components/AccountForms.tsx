@@ -683,6 +683,7 @@ export function CreateCompForm() {
         <label htmlFor="comp-type">Competition type</label>
         <select id="comp-type" name="type" defaultValue="partner">
           <option value="partner">Partner</option>
+          <option value="affiliate">Affiliate</option>
           <option value="non-partner">Non-partner</option>
         </select>
       </div>
@@ -697,9 +698,11 @@ export function CreateCompForm() {
 export function CompetitionTypeForm({
   competitionId,
   isPartner,
+  isAffiliate,
 }: {
   competitionId: string;
   isPartner: boolean;
+  isAffiliate: boolean;
 }) {
   const [state, formAction, pending] = useActionState(
     setCompetitionPartnerStatus,
@@ -711,8 +714,9 @@ export function CompetitionTypeForm({
       <input type="hidden" name="competitionId" value={competitionId} />
       <div className="field">
         <label htmlFor={`comp-type-${competitionId}`}>Competition type</label>
-        <select id={`comp-type-${competitionId}`} name="type" defaultValue={isPartner ? "partner" : "non-partner"}>
+        <select id={`comp-type-${competitionId}`} name="type" defaultValue={isAffiliate ? "affiliate" : isPartner ? "partner" : "non-partner"}>
           <option value="partner">Partner</option>
+          <option value="affiliate">Affiliate</option>
           <option value="non-partner">Non-partner</option>
         </select>
       </div>

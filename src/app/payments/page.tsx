@@ -32,7 +32,7 @@ export default async function PaymentsPage() {
 
         <section className="rounded-xl border border-line bg-card p-6">
           <h2 className="font-heading text-xl">OneLegends registration fees</h2>
-          <p className="mt-2 text-sm text-muted">Team: {dollars(TEAM_REGISTRATION_FEE_CENTS)} · Partner competition: {dollars(PARTNER_COMP_REGISTRATION_FEE_CENTS)} · Non-partner competition: {dollars(NON_PARTNER_COMP_REGISTRATION_FEE_CENTS)}. Tech admins verify these external payments before AV viewing.</p>
+          <p className="mt-2 text-sm text-muted">Team: {dollars(TEAM_REGISTRATION_FEE_CENTS)} · Partner competition: {dollars(PARTNER_COMP_REGISTRATION_FEE_CENTS)} · Affiliate competition: {dollars(NON_PARTNER_COMP_REGISTRATION_FEE_CENTS)} · Non-partner competition: {dollars(NON_PARTNER_COMP_REGISTRATION_FEE_CENTS)}. Tech admins verify these external payments before AV viewing.</p>
           {team ? (
             <p className="mt-2 text-sm">{team.registrationPaidAt ? "Your team's OneLegends registration is marked paid." : "Your team's OneLegends registration is still unpaid."}</p>
           ) : null}

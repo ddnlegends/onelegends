@@ -65,6 +65,7 @@ export default async function TeamApplyPage() {
             id: c.id,
             name: c.name,
             isPartner: c.isPartner,
+            isAffiliate: c.isAffiliate,
             dates: c.dates,
             location: c.location,
             venue: c.venue,

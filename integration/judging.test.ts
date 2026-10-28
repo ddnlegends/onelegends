@@ -11,6 +11,7 @@ import { saveTeamScores, submitJudgingPacket } from "@/app/actions/judge";
 import { setLiveTeam } from "@/app/actions/moderator";
 import { finalizeCompetitionResults, releaseCompetitionResults, removeJudgeAssignment } from "@/app/actions/comp-judging";
 import { setJudgingOpen } from "@/app/actions/ops-judging";
+import { hasModeratorAccess } from "@/lib/moderator";
 
 let competitionId: string;
 let assignmentId: string;
@@ -216,6 +217,35 @@ describe("judging with real PostgreSQL transactions", () => {
     session.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.judge } })).id;
     expect(await saveTeamScores(undefined, form())).toHaveProperty("error");
     expect(await prisma.judgeScore.findMany({ orderBy: { id: "asc" } })).toEqual(before);
+  });
+  it("Affiliate submissions also require tech validation and release", async () => {
+    await prisma.competitionProfile.update({
+      where: { id: competitionId },
+      data: { isPartner: false, isAffiliate: true },
+    });
+    const host = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.comp } });
+    const moderator = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.moderator } });
+    expect(await hasModeratorAccess(host.id, competitionId)).toBe(false);
+    expect(await hasModeratorAccess(moderator.id, competitionId)).toBe(true);
+    await completePacket();
+    expect(await submitJudgingPacket(undefined, form())).toMatchObject({ ok: true });
+    expect((await prisma.competitionProfile.findUniqueOrThrow({ where: { id: competitionId } })).resultsReleasedAt).toBeNull();
+
+    const tech = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.tech } });
+    session.userId = tech.id;
+    const confirm = new FormData();
+    confirm.set("competitionId", competitionId);
+    confirm.set("confirmation", "FINALIZE");
+    expect(await finalizeCompetitionResults(undefined, confirm)).toMatchObject({ ok: true });
+    const validated = await prisma.competitionProfile.findUniqueOrThrow({ where: { id: competitionId } });
+    expect(validated.resultsFinalizedByEmail).toBe(E2E.emails.tech);
+    expect(validated.resultsReleasedAt).toBeNull();
+
+    const release = new FormData();
+    release.set("competitionId", competitionId);
+    release.set("confirmation", "RELEASE");
+    expect(await releaseCompetitionResults(undefined, release)).toMatchObject({ ok: true });
+    expect((await prisma.competitionProfile.findUniqueOrThrow({ where: { id: competitionId } })).resultsReleasedAt).not.toBeNull();
   });
   it("Non Partner results release automatically after the final packet", async () => {
     await prisma.competitionProfile.update({ where: { id: competitionId }, data: { isPartner: false } });
