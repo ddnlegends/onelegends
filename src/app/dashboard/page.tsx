@@ -325,7 +325,7 @@ export default async function DashboardPage() {
           ) : gaps.length ? (
             <p className="notice notice-error">
               Apply is locked until Team Profile is complete ({gaps.join(", ")}
-              ).
+              ). <Link href="/team/apply" className="font-semibold underline">Browse competitions now</Link>.
             </p>
           ) : (
             <div className="space-y-3">
@@ -382,6 +382,7 @@ export default async function DashboardPage() {
                         Applied {formatDate(app.createdAt)}
                       </p>
                       <p className="text-xs text-muted">{app.appliedPhase ? `${applicationPhaseLabel(app.appliedPhase)} phase · Expected host fee: ${formatApplicationFee(app.expectedFeeCents)}` : "Phase and expected host fee were not recorded for this earlier application."}</p>
+                      <Link href={`/team/applications/${app.id}`} className="mt-2 inline-block text-sm font-medium text-accent underline">Review application</Link>
                     </div>
                     <div className="flex flex-col items-start gap-2">
                       <span className="text-sm">{app.removedAt ? app.removalReason === "Withdrawn by team" ? "Withdrawn" : "Removed" : statusLabel(teamVisibleApplicationStatus(app.status, app.competition.decisionsSubmittedAt))}</span>

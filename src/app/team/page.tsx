@@ -39,7 +39,7 @@ export default async function TeamDashboardPage() {
   if (!team) return null;
 
   const gaps = teamProfileGaps(team);
-  const applyHref = gaps.length ? "/team/profile" : "/team/apply";
+  const applyHref = "/team/apply";
   const now = new Date();
 
   return (
@@ -53,7 +53,7 @@ export default async function TeamDashboardPage() {
               {team.applyBlocked
                 ? "Circuit ops has blocked this team from applying."
                 : gaps.length
-                  ? "Keep one team profile. You cannot apply until every profile field and the dancer roster are filled in."
+                  ? "Browse competitions now. Complete your profile before applying."
                   : "Ready to apply."}
             </p>
           </div>
@@ -67,7 +67,7 @@ export default async function TeamDashboardPage() {
           </Link>
           {team.applyBlocked ? null : (
             <Link href={applyHref} className="btn btn-primary">
-              {gaps.length ? "Finish profile to apply" : "Apply"}
+              {gaps.length ? "Browse competitions" : "Apply"}
             </Link>
           )}
         </div>
@@ -155,6 +155,7 @@ export default async function TeamDashboardPage() {
                     {app.competition.dates ? ` · ${app.competition.dates}` : ""}
                   </p>
                   <p className="text-xs text-muted">{app.appliedPhase ? `${applicationPhaseLabel(app.appliedPhase)} phase · Expected host fee: ${formatApplicationFee(app.expectedFeeCents)}` : "Phase and expected host fee were not recorded for this earlier application."}</p>
+                  <Link href={`/team/applications/${app.id}`} className="mt-2 inline-block text-sm font-medium text-accent underline">Review application</Link>
                   {!app.removedAt ? (
                     <p className="text-xs text-muted">
                       {app.submittedAvDriveUrl ? "This competition's AV link stays fixed. " : "This earlier application uses your current AV link. "}

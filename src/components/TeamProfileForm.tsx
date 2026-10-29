@@ -235,7 +235,8 @@ export function TeamProfileForm({ profile }: { profile: Profile }) {
           </p>
           <p className="text-xs text-muted">
             Use a Google Drive <strong>file</strong> link so judges can watch in-app. Folder links cannot play inline without showing file names.
-            Changing this profile link affects future applications only; AV links already submitted to competitions stay fixed.
+            You can change this link before applying. Once you apply, that competition keeps the submitted link; profile changes affect future applications only.
+            To change an existing application&apos;s AV link, withdraw and reapply while that competition is still accepting applications and withdrawal is available. The current phase and fee will apply.
           </p>
         </div>
         <div className="field sm:col-span-2">

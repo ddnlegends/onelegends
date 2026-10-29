@@ -4,6 +4,7 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Let incomplete teams browse competition deadlines, fees, and packets without an AV while keeping applications locked; add a team-only application review page for the saved AV, phase, fee, and live profile/roster, clarify AV changes through withdrawal and reapplication, and move lighting guidance to the Production notes placeholder.
 - Add Affiliate as a third competition type in public, team, host, and tech-admin views. Affiliates use Partner moderator and tech result-release rules with the $40 registration rate; Rang de Storrs becomes Affiliate without changing its already-paid amount. Apply migration `20261028120000_affiliate_competitions` before deploying.
 - Group team and competition links into one navigation menu for accounts that manage both, keeping the header on one line at desktop widths.
 - Show claimed, complete competitions that are not accepting applications in a separate Partner/Non-partner section of the host All Competitions view.

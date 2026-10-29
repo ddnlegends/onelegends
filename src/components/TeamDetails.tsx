@@ -24,9 +24,11 @@ export type DetailedTeam = {
 export function TeamDetails({
   team,
   hideHeading = false,
+  hideAv = false,
 }: {
   team: DetailedTeam;
   hideHeading?: boolean;
+  hideAv?: boolean;
 }) {
   const wikiUrl = /^https?:\/\//i.test(team.wikiUrl) ? team.wikiUrl : "";
   return (
@@ -58,10 +60,12 @@ export function TeamDetails({
         </div>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="font-heading text-2xl">Audition video</h2>
-        <DriveAvPlayer url={team.avDriveUrl} label={`${team.name} audition video`} />
-      </section>
+      {hideAv ? null : (
+        <section className="space-y-3">
+          <h2 className="font-heading text-2xl">Audition video</h2>
+          <DriveAvPlayer url={team.avDriveUrl} label={`${team.name} audition video`} />
+        </section>
+      )}
 
       <section className="space-y-3">
         <h2 className="font-heading text-2xl">Full roster</h2>

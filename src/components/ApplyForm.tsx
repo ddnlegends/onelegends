@@ -48,7 +48,7 @@ function CompetitionSummary({ comp }: { comp: Comp }) {
   );
 }
 
-export function ApplyForm({ competitions }: { competitions: Comp[] }) {
+export function ApplyForm({ competitions, browseOnly = false }: { competitions: Comp[]; browseOnly?: boolean }) {
   const [state, formAction, pending] = useActionState(
     applyToCompetitions,
     undefined,
@@ -58,8 +58,10 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
   const types = COMPETITION_TYPE_GROUPS;
 
   return (
-    <form action={formAction} className="space-y-6">
-      <p className="text-sm text-muted">
+    <form action={browseOnly ? undefined : formAction} className="space-y-6">
+      {browseOnly ? (
+        <p className="text-sm text-muted">Browse deadlines, fees, and competition details below. Open a competition to review its payment instructions and application packet. Complete your profile before applying.</p>
+      ) : <p className="text-sm text-muted">
         One application, many comps. Check the ones you want — your complete
         team profile and roster stay current for each competition. The AV Drive
         link is saved when you apply and will not change if you edit your profile.{" "}
@@ -72,7 +74,7 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
           payment instructions
         </Link>{" "}
         before sending money. Review each competition’s details for its separate application fees, payment instructions, and application packet.
-      </p>
+      </p>}
 
       {open.length === 0 ? (
         <p className="text-sm text-muted">
@@ -90,7 +92,7 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
                   <li key={comp.id} className="rounded-xl border border-line bg-card p-4 shadow-sm sm:p-5">
                     <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                       <div className="flex items-start gap-3">
-                        <input
+                        {browseOnly ? null : <input
                           type="checkbox"
                           name="competitionId"
                           value={comp.id}
@@ -98,10 +100,10 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
                           defaultChecked={comp.alreadyApplied}
                           disabled={comp.alreadyApplied || comp.adminRemoved}
                           className="mt-1.5 h-4 w-4 shrink-0"
-                        />
+                        />}
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
-                            <label htmlFor={`comp-${comp.id}`} className="cursor-pointer font-semibold">{comp.name}</label>
+                            {browseOnly ? <span className="font-semibold">{comp.name}</span> : <label htmlFor={`comp-${comp.id}`} className="cursor-pointer font-semibold">{comp.name}</label>}
                             <CompetitionTypeBadge isPartner={comp.isPartner} isAffiliate={comp.isAffiliate} />
                           </div>
                           {comp.alreadyApplied ? <p className="mt-1 text-xs font-semibold text-accent">Already applied</p> : null}
@@ -109,7 +111,7 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
                           {comp.adminRemoved ? <p className="mt-1 text-xs font-semibold text-muted">Removed by tech admins · contact them for help</p> : null}
                         </div>
                       </div>
-                      <Link href={`/comps/${comp.id}`} className="text-sm font-medium text-accent underline">Details &amp; payment</Link>
+                      <Link href={`/comps/${comp.id}`} className="text-sm font-medium text-accent underline">Details, payment &amp; packet</Link>
                     </div>
                     <CompetitionSummary comp={comp} />
                   </li>
@@ -134,7 +136,7 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
                 <ul className="mt-3 space-y-5 text-sm text-muted">
                   {group.map((comp) => (
                     <li key={comp.id} className="leading-relaxed">
-                      {comp.name} <CompetitionTypeBadge isPartner={comp.isPartner} isAffiliate={comp.isAffiliate} />
+                      <Link href={`/comps/${comp.id}`} className="underline hover:text-accent">{comp.name}</Link> <CompetitionTypeBadge isPartner={comp.isPartner} isAffiliate={comp.isAffiliate} />
                       {comp.dates ? ` — ${comp.dates}` : ""}
                       {comp.earlyTierDeadline ? <> · Early deadline <LocalDateTime date={comp.earlyTierDeadline} /></> : null}
                       {comp.earlyDeadline ? <> · Regular deadline <LocalDateTime date={comp.earlyDeadline} /></> : null}
@@ -151,10 +153,15 @@ export function ApplyForm({ competitions }: { competitions: Comp[] }) {
       {state?.error ? <p className="notice notice-error">{state.error}</p> : null}
       {state?.ok ? <p className="notice notice-ok">{state.message}</p> : null}
 
-      {open.length > 0 ? (
-        <button className="btn btn-primary" disabled={pending} type="submit">
-          {pending ? "Sending…" : "Apply to selected comps"}
-        </button>
+      {open.length > 0 && !browseOnly ? (
+        <div className="space-y-3">
+          <p className="rounded-lg border border-warning-line bg-warning-soft p-3 text-sm">
+            Applying saves your current AV link for each selected competition. To change that link later, withdraw and reapply while applications are open and withdrawal is available. Your new application uses the current phase and fee.
+          </p>
+          <button className="btn btn-primary" disabled={pending} type="submit">
+            {pending ? "Sending…" : "Apply to selected comps"}
+          </button>
+        </div>
       ) : null}
     </form>
   );

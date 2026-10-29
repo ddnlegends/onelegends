@@ -179,7 +179,7 @@ export function CompProfileForm({ profile }: { profile: Profile }) {
         </div>
         <div className="field sm:col-span-2">
           <label htmlFor="lighting">AV guidelines *</label>
-          <textarea id="lighting" name="lighting" rows={4} defaultValue={profile.lighting} placeholder="Audio/video requirements, file formats, submission instructions, and lighting guidelines" />
+          <textarea id="lighting" name="lighting" rows={4} defaultValue={profile.lighting} placeholder="Audio/video requirements, file formats, and submission instructions" />
         </div>
         <div className="field sm:col-span-2">
           <label htmlFor="productionNotes">Production notes *</label>
@@ -187,6 +187,7 @@ export function CompProfileForm({ profile }: { profile: Profile }) {
             id="productionNotes"
             name="productionNotes"
             defaultValue={profile.productionNotes}
+            placeholder="Lighting cues, stage setup, sound needs, and other production instructions"
           />
         </div>
         <div className="field sm:col-span-2">
