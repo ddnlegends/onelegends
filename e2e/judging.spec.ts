@@ -18,8 +18,8 @@ async function scoreTeam(page: Page, position: number, scores: Record<string, st
   for (const [field, value] of Object.entries(scores)) {
     await page.locator(`#${field}`).selectOption(value);
   }
-  await page.getByRole("button", { name: "Save team scores" }).click();
-  await expect(page.getByRole("status")).toHaveText(`Scores saved for Team ${position}.`);
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByRole("status")).toHaveText(`Saved Team ${position}.`);
 }
 
 test("ops opens judging, moderator drives the screen, a judge scores, and results release", async ({
@@ -54,6 +54,16 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
   await moderator.getByRole("button", { name: "Show Team 1" }).click();
   await expect(moderator.getByRole("heading", { name: "Team 1" })).toBeVisible();
   await expect(moderator.getByTitle("Team 1 audition video")).toHaveAttribute("src", /drive\.google\.com\/file\/.*\/preview/);
+  await expect(moderator.getByTitle("Team 1 audition video")).toHaveAttribute("sandbox", "allow-scripts allow-same-origin allow-forms");
+  await expect(moderator.getByTitle("Team 1 audition video")).toHaveAttribute("allow", "autoplay");
+  await expect(moderator.getByTestId("anonymous-drive-cover")).toBeVisible();
+  await expect(moderator.getByRole("link", { name: "Open In Drive" })).toHaveCount(0);
+  if (await moderator.evaluate(() => document.fullscreenEnabled)) {
+    await moderator.getByRole("button", { name: "Full screen" }).click();
+    await expect(moderator.getByRole("button", { name: "Exit full screen" })).toBeVisible();
+    await expect(moderator.getByTestId("anonymous-drive-cover")).toBeVisible();
+    await moderator.getByRole("button", { name: "Exit full screen" }).click();
+  }
   await expect(moderator.getByRole("button", { name: /Next: Team 2/ })).toBeDisabled();
 
   const judge = await pageAs(browser, "judge");
@@ -68,9 +78,12 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
   await expect(judge.locator("#choreography")).toBeDisabled();
   await judge.goto(`/judge/${id}/team/1`);
   await scoreTeam(judge, 1, SCORES[1]);
+  const liveTeamRow = ops.locator("section").filter({ has: ops.getByRole("heading", { name: "Scores by team" }) })
+    .getByRole("row").filter({ hasText: "Team 1" });
+  await expect(liveTeamRow.getByRole("cell").first()).toHaveText("41");
   await judge.locator("#comment").fill("Strong opener");
-  await judge.getByRole("button", { name: "Save comment" }).click();
-  await expect(judge.getByRole("status")).toHaveText("Comment saved for Team 1.");
+  await judge.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(judge.getByRole("status")).toHaveText("Saved Team 1.");
   await expect.poll(async () => (await savedScore(1))?.comment).toBe("Strong opener");
 
   await expect(async () => {
@@ -91,8 +104,10 @@ test("ops opens judging, moderator drives the screen, a judge scores, and result
   await judge.reload();
   await expect(judge.locator("#choreography")).toBeEnabled();
   await judge.locator("#choreography").selectOption("9");
-  await judge.getByRole("button", { name: "Save team scores" }).click();
+  // An edit without clicking Save reaches the same stored score and live admin view.
   await expect.poll(async () => (await savedScore(1))?.choreography).toBe(9);
+  await expect(liveTeamRow.getByRole("cell").first()).toHaveText("42");
+  await expect(judge.getByRole("status")).toHaveText("Saved Team 1.");
   await expect(judge.getByText("Saving…")).toHaveCount(0);
 
   const comp = await pageAs(browser, "comp");

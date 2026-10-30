@@ -72,7 +72,7 @@ const GUIDES: Guide[] = [
       },
       {
         title: "Score Team 1, Team 2, …",
-        body: "The moderator selects the live team, and your sheet follows. Score choreography, formations, technique, sync & cleanliness, and overall impression from 0–10 each, then click Save team scores. Save comments separately when needed. You may edit earlier teams until submission; future teams stay locked.",
+        body: "The moderator selects the live team, and your sheet follows. Score choreography, formations, technique, sync & cleanliness, and overall impression from 0–10 each. Scores and comments save automatically after a short pause, or you can click Save to save immediately. You may edit earlier teams until submission; future teams stay locked.",
       },
       {
         title: "Review Scores, then Submit Scores",

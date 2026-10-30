@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { JudgeScoreForm } from "@/components/JudgeScoreForm";
 import { LiveTeamFollower, useLiveState, type LiveState } from "@/components/LiveTeam";
 
@@ -38,6 +39,7 @@ export function JudgeLiveScoring({
   initial: LiveState;
 }) {
   const live = useLiveState(competitionId, initial, !submitted);
+  const [dirty, setDirty] = useState(false);
   const scoreAvailable = live.judgingOpen && live.livePosition != null && position <= live.livePosition;
 
   return (
@@ -49,6 +51,7 @@ export function JudgeLiveScoring({
         pinned={pinned}
         live={live}
         locked={locked}
+        dirty={dirty}
       />
       <JudgeScoreForm
         competitionId={competitionId}
@@ -60,6 +63,7 @@ export function JudgeLiveScoring({
         locked={locked}
         scoreAvailable={scoreAvailable}
         livePosition={live.judgingOpen ? live.livePosition : null}
+        onDirtyChange={setDirty}
       />
     </>
   );

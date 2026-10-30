@@ -236,6 +236,14 @@ select {
   color: var(--accent);
 }
 
+.anonymous-drive-frame:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 0;
+}
+
 .notice {
   border-radius: 0.4rem;
   padding: 0.7rem 0.85rem;

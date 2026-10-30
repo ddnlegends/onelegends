@@ -73,6 +73,7 @@ export function LiveTeamFollower({
   pinned,
   live,
   locked,
+  dirty = false,
 }: {
   competitionId: string;
   position: number;
@@ -80,6 +81,7 @@ export function LiveTeamFollower({
   pinned: boolean;
   live: LiveState;
   locked: boolean;
+  dirty?: boolean;
 }) {
   const router = useRouter();
   const livePosition =
@@ -89,7 +91,7 @@ export function LiveTeamFollower({
       ? live.livePosition
       : null;
   const shouldFollow =
-    !pinned && !locked && livePosition != null && livePosition !== position;
+    !pinned && !locked && !dirty && livePosition != null && livePosition !== position;
 
   useEffect(() => {
     if (!shouldFollow || livePosition == null) return;
@@ -131,7 +133,7 @@ export function LiveTeamFollower({
   if (!pinned) {
     return (
       <div className="rounded-xl border border-line bg-blush px-4 py-3 text-sm text-muted">
-        Switching to Team {livePosition}…
+        {dirty ? "Saving this sheet before switching teams…" : `Switching to Team ${livePosition}…`}
       </div>
     );
   }
@@ -148,7 +150,7 @@ export function LiveTeamFollower({
             : `Team ${position} has not been shown yet. Return to the live team to score.`}
         </span>
       </span>
-      <Link
+      {dirty ? <span className="text-sm text-muted">Save this sheet before switching.</span> : <Link
         href={`/judge/${competitionId}/team/${livePosition}`}
         prefetch
         replace
@@ -156,7 +158,7 @@ export function LiveTeamFollower({
         className="btn btn-primary py-1.5"
       >
         Back to live team
-      </Link>
+      </Link>}
     </div>
   );
 }

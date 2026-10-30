@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -73,9 +72,6 @@ export default async function JudgeTeamPage({
             shared screen. Every judge sees the same Team number.
           </p>
         </div>
-        <Link href={`/judge/${competitionId}`} prefetch className="btn btn-ghost">
-          Packet List
-        </Link>
       </div>
       {lockMessage ? (
         <p className="rounded-xl border border-line bg-blush p-4 text-sm">

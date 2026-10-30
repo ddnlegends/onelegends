@@ -1,4 +1,5 @@
 import { parseDriveUrl, drivePreviewSrc, driveViewUrl } from "@/lib/drive";
+import { AnonymousDriveFrame } from "@/components/AnonymousDriveFrame";
 
 export function DriveAvPlayer({
   url,
@@ -27,13 +28,17 @@ export function DriveAvPlayer({
   if (parsed?.kind === "file") {
     return (
       <div className="space-y-2">
-        <iframe
-          title={label}
-          src={drivePreviewSrc(parsed.id)}
-          className="aspect-video w-full rounded-xl border border-line bg-black"
-          allow="autoplay; fullscreen"
-          allowFullScreen
-        />
+        {hideOpenLink ? (
+          <AnonymousDriveFrame src={drivePreviewSrc(parsed.id)} label={label} />
+        ) : (
+          <iframe
+            title={label}
+            src={drivePreviewSrc(parsed.id)}
+            className="aspect-video w-full rounded-xl border border-line bg-black"
+            allow="autoplay; fullscreen"
+            allowFullScreen
+          />
+        )}
         <p className="text-xs text-muted">
           In-site Google Drive player.
           {hideOpenLink ? null : (
