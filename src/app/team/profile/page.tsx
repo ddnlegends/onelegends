@@ -18,6 +18,7 @@ export default async function TeamProfilePage() {
       photoUrl: true,
       blurb: true,
       avDriveUrl: true,
+      idsDriveUrl: true,
       captains: true,
       yearsEstablished: true,
       rosterSize: true,
@@ -33,7 +34,7 @@ export default async function TeamProfilePage() {
         <p className="mt-2 max-w-2xl text-muted">
           Required before you can apply: team logo, blurb, AV Drive file,
           captains, years, roster count, and at least one dancer with a t-shirt
-          size. Competitions see your current profile and roster after results release. Each application keeps the AV link you submitted when you applied.
+          size. The IDs Drive link is optional. Competitions with access to your applicant details can see your current profile and roster; each application keeps the AV link you submitted when you applied.
         </p>
       </div>
       <TeamProfileForm profile={team} />

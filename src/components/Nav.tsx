@@ -37,6 +37,7 @@ export async function Nav() {
               Team Profile
             </NavLink>
           ) : null}
+          {teamAccess && !dualRole ? <NavLink href="/team/decisions" match="prefix">Decisions</NavLink> : null}
           {compAccess && !ops && !dualRole ? (
             <NavLink href="/comp/profile" match="prefix">
               Comp Details

@@ -1,10 +1,12 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { ApplicationStatus } from "@prisma/client";
+import { ApplicationStatus, TeamOfferResponse } from "@prisma/client";
 import { saveCompApplicantDecisions } from "@/app/actions/comp";
 import { CompPaymentCheckbox } from "@/components/PaymentForms";
 import { statusLabel } from "@/lib/utils";
+import { offerStatusLabel } from "@/lib/application-offers";
+import { HostOfferAction } from "@/components/HostOfferAction";
 
 type DecisionRow = {
   applicationId: string;
@@ -12,6 +14,7 @@ type DecisionRow = {
   rank?: number;
   status: ApplicationStatus;
   paymentReceived: boolean;
+  teamOfferResponse: TeamOfferResponse;
 };
 
 const STATUSES: ApplicationStatus[] = [
@@ -29,20 +32,33 @@ export function CompDecisionBoard({ rows, finalized }: { rows: DecisionRow[]; fi
   const undecided = draft.filter((row) => row.status === "PENDING").length;
 
   if (finalized) {
+    const confirmed = rows.filter((row) => row.teamOfferResponse === "CONFIRMED").length;
+    const awaiting = rows.filter((row) => row.status === "ACCEPTED" && row.teamOfferResponse === "NONE").length;
+    const declinedByTeam = rows.filter((row) => row.teamOfferResponse === "DECLINED").length;
+    const waitlisted = rows.filter((row) => row.status === "WAITLISTED" && row.teamOfferResponse === "NONE").length;
     return <section className="space-y-4 rounded-2xl border border-line bg-card p-5 shadow-sm">
       <div>
-        <h2 className="font-heading text-2xl">Final team outcomes</h2>
-        <p className="mt-1 text-sm text-muted">Decisions are locked and visible to teams. Host payments can still be updated.</p>
+        <h2 className="font-heading text-2xl">Team commitments</h2>
+        <p className="mt-1 text-sm text-muted">Host decisions are announced. An offered spot counts only after the team confirms it. You can promote available waitlisted teams as spots open.</p>
       </div>
+      <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {[["Teams confirmed", confirmed], ["Awaiting response", awaiting], ["Declined by teams", declinedByTeam], ["Waitlisted", waitlisted]].map(([label, value]) =>
+          <div key={label} className="rounded-xl border border-line bg-blush p-3"><dt className="text-xs uppercase tracking-wide text-muted">{label}</dt><dd className="mt-1 font-heading text-2xl">{value}</dd></div>)}
+      </dl>
       <div className="overflow-x-auto rounded-xl border border-line">
         <table className="w-full min-w-2xl text-left text-sm">
           <thead className="border-b border-line bg-blush text-xs uppercase tracking-wide text-muted">
-            <tr><th className="px-4 py-3">Team</th><th className="px-4 py-3">Outcome</th><th className="px-4 py-3">Host payment</th></tr>
+            <tr><th className="px-4 py-3">Team</th><th className="px-4 py-3">Host decision</th><th className="px-4 py-3">Team response</th><th className="px-4 py-3">Host payment</th></tr>
           </thead>
           <tbody>
             {rows.map((row) => <tr key={row.applicationId} className="border-b border-line last:border-0">
               <th className="px-4 py-3 text-left font-semibold">{row.rank ? <span className="mr-2 text-accent">#{row.rank}</span> : null}{row.teamName}</th>
               <td className="px-4 py-3">{statusLabel(row.status)}</td>
+              <td className="px-4 py-3">
+                <p>{offerStatusLabel({ status: row.status, teamOfferResponse: row.teamOfferResponse, decisionsSubmittedAt: new Date() })}</p>
+                {row.status === "WAITLISTED" && row.teamOfferResponse === "NONE" ? <HostOfferAction applicationId={row.applicationId} teamName={row.teamName} intent="promote" /> : null}
+                {(row.status === "ACCEPTED" || row.status === "WAITLISTED") && (row.teamOfferResponse === "DECLINED" || row.teamOfferResponse === "CAP_CLOSED") ? <HostOfferAction applicationId={row.applicationId} teamName={row.teamName} intent="reoffer" /> : null}
+              </td>
               <td className="px-4 py-3">{row.status === "ACCEPTED"
                 ? <CompPaymentCheckbox applicationId={row.applicationId} received={row.paymentReceived} />
                 : row.paymentReceived ? "Received" : "Not marked paid"}</td>
@@ -69,7 +85,7 @@ export function CompDecisionBoard({ rows, finalized }: { rows: DecisionRow[]; fi
             Application decisions
           </p>
           <h2 className="font-heading text-2xl">Team outcomes</h2>
-          <p className="mt-1 max-w-2xl text-sm text-muted">Save drafts privately. Choose an outcome for every team, then submit final decisions to reveal them to teams.</p>
+          <p className="mt-1 max-w-2xl text-sm text-muted">Save drafts privately. Choose an outcome for every team, then submit final decisions to send offers and reveal outcomes to teams. An offer is not a confirmed spot.</p>
         </div>
         <div className="rounded-full bg-blush px-3 py-1 text-xs font-semibold text-muted">
           {draft.filter((row) => row.status === "ACCEPTED").length} accepted · {undecided} undecided
@@ -121,7 +137,7 @@ export function CompDecisionBoard({ rows, finalized }: { rows: DecisionRow[]; fi
         </div>
         <label className="flex items-start gap-2 text-sm">
           <input type="checkbox" name="acknowledgeFinal" checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} />
-          <span>I have reviewed an outcome for every team. I understand submitting final decisions makes them visible to teams and locks the outcomes.</span>
+          <span>I have reviewed an outcome for every team. I understand submitting final decisions makes them visible to teams and sends accepted teams an offer they must confirm.</span>
         </label>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-sm">

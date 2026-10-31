@@ -19,7 +19,7 @@ const steps = [
   {
     number: "04",
     title: "Turn scores into decisions",
-    body: "After judging is complete, competition hosts finalize results to review rankings, scores, comments, and applicant details, then accept, waitlist, or decline teams. Teams can track where their applications stand.",
+    body: "After judging is complete, competition hosts review released results and announce offers, waitlists, and declines. Teams confirm or decline offered spots. Each team can confirm up to three Partner competitions, with no limit on Affiliate or Non-partner competitions.",
   },
 ];
 

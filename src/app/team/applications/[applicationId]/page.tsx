@@ -5,12 +5,11 @@ import { prisma } from "@/lib/prisma";
 import { getActiveTeamId } from "@/lib/team-access";
 import { applicationPhaseLabel } from "@/lib/application-schedule";
 import { formatApplicationFee } from "@/lib/competition-details";
-import { teamVisibleApplicationStatus } from "@/lib/application-decisions";
-import { statusLabel } from "@/lib/utils";
 import { submittedApplicationAvUrl } from "@/lib/application-av";
 import { LocalDateTime } from "@/components/LocalDateTime";
 import { DriveAvPlayer } from "@/components/DriveAvPlayer";
 import { TeamDetails } from "@/components/TeamDetails";
+import { offerStatusLabel } from "@/lib/application-offers";
 
 export default async function TeamApplicationReviewPage({
   params,
@@ -34,7 +33,7 @@ export default async function TeamApplicationReviewPage({
 
   const status = application.removedAt
     ? application.removalReason === "Withdrawn by team" ? "Withdrawn" : "Removed"
-    : statusLabel(teamVisibleApplicationStatus(application.status, application.competition.decisionsSubmittedAt));
+    : offerStatusLabel({ ...application, decisionsSubmittedAt: application.competition.decisionsSubmittedAt });
 
   return (
     <div className="space-y-7">

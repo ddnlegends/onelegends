@@ -14,8 +14,9 @@ import { Chip, InfoGrid, PanelSection } from "@/components/OpsListParts";
 import { TeamDetails } from "@/components/TeamDetails";
 import { TeamPhoto } from "@/components/TeamPhoto";
 import { prisma } from "@/lib/prisma";
-import { formatDate, statusLabel } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import { currentApplicationWhere } from "@/lib/payment-eligibility";
+import { offerStatusLabel } from "@/lib/application-offers";
 
 export default async function OpsTeamsPage() {
   await requirePlatformAdminPage();
@@ -30,7 +31,7 @@ export default async function OpsTeamsPage() {
       invites: { orderBy: { createdAt: "desc" } },
       applications: {
         where: currentApplicationWhere,
-        include: { competition: { select: { id: true, name: true } } },
+        include: { competition: { select: { id: true, name: true, decisionsSubmittedAt: true } } },
         orderBy: { createdAt: "desc" },
       },
       _count: { select: { applications: true, dancers: true } },
@@ -232,7 +233,7 @@ export default async function OpsTeamsPage() {
                         >
                           <span>{application.competition.name}</span>
                           <span className="text-muted">
-                            {statusLabel(application.status)} · applied{" "}
+                            {offerStatusLabel({ ...application, decisionsSubmittedAt: application.competition.decisionsSubmittedAt })} · applied{" "}
                             {formatDate(application.createdAt)}
                           </span>
                         </li>

@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPendingInvites } from "@/lib/invites";
-import { formatDate, statusLabel } from "@/lib/utils";
-import { teamVisibleApplicationStatus } from "@/lib/application-decisions";
+import { formatDate } from "@/lib/utils";
+import { offerStatusLabel } from "@/lib/application-offers";
 import { applicationPhaseLabel } from "@/lib/application-schedule";
 import { formatApplicationFee } from "@/lib/competition-details";
 import { isCompetitionOpen, isJudgingOpen } from "@/lib/judging";
@@ -136,6 +136,10 @@ export default async function DashboardPage() {
   const withdrawn = new Set(team?.applications.filter((a) => a.removedAt && a.removalReason === "Withdrawn by team").map((a) => a.competitionId) ?? []);
   const adminRemoved = new Set(team?.applications.filter((a) => a.removedAt && a.removalReason !== "Withdrawn by team").map((a) => a.competitionId) ?? []);
   const now = new Date();
+  const activeTeamApplications = team?.applications.filter((app) => !app.removedAt) ?? [];
+  const partnerConfirmed = activeTeamApplications.filter((app) => app.competition.isPartner && !app.competition.isAffiliate && app.competition.decisionsSubmittedAt && app.teamOfferResponse === "CONFIRMED").length;
+  const totalConfirmed = activeTeamApplications.filter((app) => app.competition.decisionsSubmittedAt && app.teamOfferResponse === "CONFIRMED").length;
+  const teamOffersWaiting = activeTeamApplications.filter((app) => app.competition.decisionsSubmittedAt && app.status === "ACCEPTED" && app.teamOfferResponse === "NONE").length;
 
   return (
     <div className="space-y-10">
@@ -288,6 +292,7 @@ export default async function DashboardPage() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
+              <Link href="/team/decisions" className="btn btn-primary">Decisions</Link>
               <Link href="/team/profile" className="btn btn-ghost">
                 Team Profile
               </Link>
@@ -295,6 +300,12 @@ export default async function DashboardPage() {
                 Admins
               </Link>
             </div>
+          </div>
+
+          <div className="grid gap-3 rounded-xl border border-line bg-card p-5 sm:grid-cols-3">
+            <div><p className="text-xs uppercase text-muted">Partner spots confirmed</p><p className="mt-1 font-heading text-2xl">{partnerConfirmed} / 3</p></div>
+            <div><p className="text-xs uppercase text-muted">Total confirmed</p><p className="mt-1 font-heading text-2xl">{totalConfirmed}</p></div>
+            <div><p className="text-xs uppercase text-muted">Offers to answer</p><p className="mt-1 font-heading text-2xl">{teamOffersWaiting}</p></div>
           </div>
 
           {teamMemberships.length > 1 ? (
@@ -385,7 +396,7 @@ export default async function DashboardPage() {
                       <Link href={`/team/applications/${app.id}`} className="mt-2 inline-block text-sm font-medium text-accent underline">Review application</Link>
                     </div>
                     <div className="flex flex-col items-start gap-2">
-                      <span className="text-sm">{app.removedAt ? app.removalReason === "Withdrawn by team" ? "Withdrawn" : "Removed" : statusLabel(teamVisibleApplicationStatus(app.status, app.competition.decisionsSubmittedAt))}</span>
+                      <span className="text-sm">{app.removedAt ? app.removalReason === "Withdrawn by team" ? "Withdrawn" : "Removed" : offerStatusLabel({ ...app, decisionsSubmittedAt: app.competition.decisionsSubmittedAt })}</span>
                       {canTeamWithdrawApplication(app, now) ? (
                         <WithdrawApplicationForm applicationId={app.id} competitionName={app.competition.name} />
                       ) : null}
@@ -442,6 +453,11 @@ export default async function DashboardPage() {
               </Link>
             </div>
           </div>
+          {competition.decisionsSubmittedAt ? <div className="grid gap-3 rounded-xl border border-line bg-card p-5 sm:grid-cols-3">
+            <div><p className="text-xs uppercase text-muted">Teams confirmed</p><p className="mt-1 font-heading text-2xl">{competition.applications.filter((app) => app.teamOfferResponse === "CONFIRMED").length}</p></div>
+            <div><p className="text-xs uppercase text-muted">Awaiting response</p><p className="mt-1 font-heading text-2xl">{competition.applications.filter((app) => app.status === "ACCEPTED" && app.teamOfferResponse === "NONE").length}</p></div>
+            <div><p className="text-xs uppercase text-muted">Waitlisted</p><p className="mt-1 font-heading text-2xl">{competition.applications.filter((app) => app.status === "WAITLISTED" && app.teamOfferResponse === "NONE").length}</p></div>
+          </div> : null}
           {compMemberships.length > 1 ? (
             <form action={setActiveCompAction} className="flex flex-wrap items-end gap-3">
               <div className="field">

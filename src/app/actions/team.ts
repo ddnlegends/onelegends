@@ -17,6 +17,7 @@ import { applicationPhaseAt, expectedApplicationFee } from "@/lib/application-sc
 import { isCompetitionVisibleToTeams } from "@/lib/competition-profile";
 import { canTeamWithdrawApplication } from "@/lib/application-withdrawal";
 import { parseDriveUrl } from "@/lib/drive";
+import { normalizeTeamIdsDriveUrl } from "@/lib/team-ids-link";
 import {
   teamProfileGaps,
   teamProfileBlockedMessage,
@@ -35,6 +36,7 @@ const profileSchema = z.object({
       message:
         "Paste a Google Drive file link (not a folder) and share it so anyone with the link can view.",
     }),
+  idsDriveUrl: z.string(),
   captains: z.string().min(1, "Captains are required."),
   yearsEstablished: z.string().min(1, "Years established is required."),
   rosterSize: z.string().min(1, "Rostered dancers is required."),
@@ -105,6 +107,7 @@ export async function saveTeamProfile(
     name: String(formData.get("name") ?? "").trim(),
     blurb: String(formData.get("blurb") ?? "").trim(),
     avDriveUrl: String(formData.get("avDriveUrl") ?? "").trim(),
+    idsDriveUrl: String(formData.get("idsDriveUrl") ?? "").trim(),
     captains: String(formData.get("captains") ?? "").trim(),
     yearsEstablished: String(formData.get("yearsEstablished") ?? "").trim(),
     rosterSize: String(formData.get("rosterSize") ?? "").trim(),
@@ -112,6 +115,12 @@ export async function saveTeamProfile(
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid profile." };
+  }
+  const idsDriveUrl = parsed.data.idsDriveUrl
+    ? normalizeTeamIdsDriveUrl(parsed.data.idsDriveUrl)
+    : "";
+  if (idsDriveUrl === null) {
+    return { error: "Use a Google Drive file or folder link for IDs, or leave the field blank." };
   }
 
   const years = Number(parsed.data.yearsEstablished);
@@ -171,6 +180,7 @@ export async function saveTeamProfile(
       photoUrl,
       blurb: parsed.data.blurb,
       avDriveUrl: parsed.data.avDriveUrl,
+      idsDriveUrl,
       captains: parsed.data.captains,
       yearsEstablished: years,
       rosterSize: roster,

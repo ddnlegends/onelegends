@@ -14,6 +14,7 @@ export function DualRoleNavMenu() {
       </summary>
       <div className="absolute right-0 top-full z-40 mt-3 flex min-w-52 flex-col gap-3 rounded-xl border border-line bg-card p-4 shadow-lg">
         <NavLink href="/team/profile" match="prefix">Team Profile</NavLink>
+        <NavLink href="/team/decisions" match="prefix">Team Decisions</NavLink>
         <NavLink href="/comp/profile" match="prefix">Comp Details</NavLink>
         <NavLink href="/comp/competitions" match="prefix">All Competitions</NavLink>
         <NavLink href="/claim">Code Claim</NavLink>

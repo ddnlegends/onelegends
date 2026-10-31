@@ -1,0 +1,1 @@
+ALTER TABLE "TeamProfile" ADD COLUMN "idsDriveUrl" TEXT NOT NULL DEFAULT '';

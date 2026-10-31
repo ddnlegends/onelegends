@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getActiveCompetitionId, isCompAdmin } from "@/lib/team-access";
-import { formatDate, statusLabel } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import { visibleApplicationWhere } from "@/lib/payment-eligibility";
 import { CompDecisionBoard } from "@/components/CompDecisionBoard";
 import { CompPaymentCheckbox } from "@/components/PaymentForms";
@@ -12,6 +12,7 @@ import { formatApplicationFee } from "@/lib/competition-details";
 import { HostPaymentReview } from "@/components/HostPaymentReview";
 import { isCompetitionOpen } from "@/lib/judging-rules";
 import { hostCanViewApplicantDetails } from "@/lib/competition-type";
+import { offerStatusLabel } from "@/lib/application-offers";
 
 export default async function CompApplicantsPage() {
   const session = await auth();
@@ -38,6 +39,7 @@ export default async function CompApplicantsPage() {
           id: true,
           createdAt: true,
           status: true,
+          teamOfferResponse: true,
           appliedPhase: true,
           expectedFeeCents: true,
           compPaymentReceivedAt: true,
@@ -63,6 +65,7 @@ export default async function CompApplicantsPage() {
     applicationId: application.id,
     teamName: application.team.name,
     status: application.status,
+    teamOfferResponse: application.teamOfferResponse,
     paymentReceived: Boolean(application.compPaymentReceivedAt),
   }));
   return (
@@ -105,7 +108,7 @@ export default async function CompApplicantsPage() {
               <div className="space-y-2">
                 {released ? (
                   <>
-                  <span className="text-sm text-muted">{statusLabel(application.status)}</span>
+                  <span className="text-sm text-muted">{offerStatusLabel({ ...application, decisionsSubmittedAt: competition.decisionsSubmittedAt })}</span>
                   {application.compPaymentReceivedAt ? " · Host payment received" : ""}
                   </>
                 ) : (

@@ -16,6 +16,7 @@ type Profile = {
   photoUrl: string;
   blurb: string;
   avDriveUrl: string;
+  idsDriveUrl: string;
   captains: string;
   yearsEstablished: number | null;
   rosterSize: number | null;
@@ -136,7 +137,7 @@ export function TeamProfileForm({ profile }: { profile: Profile }) {
       className="space-y-4 rounded-xl border border-line bg-card p-6"
     >
       <p className="text-sm text-muted">
-        Every field is required. You cannot apply to competitions until this
+        Every field except the IDs Drive link is required. You cannot apply to competitions until this
         profile and the dancer roster below are complete.
       </p>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -237,6 +238,19 @@ export function TeamProfileForm({ profile }: { profile: Profile }) {
             Use a Google Drive <strong>file</strong> link so judges can watch in-app. Folder links cannot play inline without showing file names.
             You can change this link before applying. Once you apply, that competition keeps the submitted link; profile changes affect future applications only.
             To change an existing application&apos;s AV link, withdraw and reapply while that competition is still accepting applications and withdrawal is available. The current phase and fee will apply.
+          </p>
+        </div>
+        <div className="field sm:col-span-2">
+          <label htmlFor="idsDriveUrl">Dancer IDs Google Drive link (optional)</label>
+          <input
+            id="idsDriveUrl"
+            name="idsDriveUrl"
+            type="url"
+            defaultValue={profile.idsDriveUrl}
+            placeholder="https://drive.google.com/drive/folders/..."
+          />
+          <p className="text-xs text-muted">
+            Link a Drive folder or file containing your team&apos;s IDs. Share it with the competition admins who need access; Google Drive permissions still control who can open it. It is visible only to competitions that can view your applicant details, never to judges or moderators.
           </p>
         </div>
         <div className="field sm:col-span-2">

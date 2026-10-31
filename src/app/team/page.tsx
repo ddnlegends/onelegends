@@ -2,8 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { formatDate, statusLabel } from "@/lib/utils";
-import { teamVisibleApplicationStatus } from "@/lib/application-decisions";
+import { formatDate } from "@/lib/utils";
 import { applicationPhaseLabel } from "@/lib/application-schedule";
 import { formatApplicationFee } from "@/lib/competition-details";
 import { teamProfileGaps, TEAM_APPLY_OPS_BLOCKED_MESSAGE } from "@/lib/team-profile";
@@ -16,6 +15,7 @@ import { InstantSelect } from "@/components/InstantSelect";
 import { TeamPhoto } from "@/components/TeamPhoto";
 import { WithdrawApplicationForm } from "@/components/WithdrawApplicationForm";
 import { canTeamWithdrawApplication } from "@/lib/application-withdrawal";
+import { offerStatusLabel, PARTNER_CONFIRMATION_LIMIT } from "@/lib/application-offers";
 
 export default async function TeamDashboardPage() {
   const session = await auth();
@@ -41,6 +41,10 @@ export default async function TeamDashboardPage() {
   const gaps = teamProfileGaps(team);
   const applyHref = "/team/apply";
   const now = new Date();
+  const currentApplications = team.applications.filter((app) => !app.removedAt);
+  const partnerConfirmed = currentApplications.filter((app) => app.competition.isPartner && !app.competition.isAffiliate && app.competition.decisionsSubmittedAt && app.teamOfferResponse === "CONFIRMED").length;
+  const totalConfirmed = currentApplications.filter((app) => app.competition.decisionsSubmittedAt && app.teamOfferResponse === "CONFIRMED").length;
+  const awaitingResponse = currentApplications.filter((app) => app.competition.decisionsSubmittedAt && app.status === "ACCEPTED" && app.teamOfferResponse === "NONE").length;
 
   return (
     <div className="space-y-8">
@@ -59,6 +63,7 @@ export default async function TeamDashboardPage() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Link href="/team/decisions" className="btn btn-ghost">Decisions</Link>
           <Link href="/team/profile" className="btn btn-ghost">
             Edit Team Profile
           </Link>
@@ -103,6 +108,18 @@ export default async function TeamDashboardPage() {
           Apply is locked until Team Profile is complete ({gaps.join(", ")}).
         </p>
       ) : null}
+
+      <section className="rounded-xl border border-line bg-card p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div><h2 className="font-heading text-2xl">Competition decisions</h2><p className="mt-1 text-sm text-muted">Offers require your team to confirm a spot.</p></div>
+          <Link href="/team/decisions" className="btn btn-primary">Review decisions</Link>
+        </div>
+        <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div><dt className="text-xs uppercase text-muted">Partner spots confirmed</dt><dd className="font-heading text-2xl">{partnerConfirmed} / {PARTNER_CONFIRMATION_LIMIT}</dd></div>
+          <div><dt className="text-xs uppercase text-muted">Total confirmed</dt><dd className="font-heading text-2xl">{totalConfirmed}</dd></div>
+          <div><dt className="text-xs uppercase text-muted">Offers to answer</dt><dd className="font-heading text-2xl">{awaitingResponse}</dd></div>
+        </dl>
+      </section>
 
       <section className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-line bg-blush p-5">
         <div>
@@ -165,7 +182,7 @@ export default async function TeamDashboardPage() {
                   ) : null}
                 </div>
                 <div className="flex flex-col items-start gap-2">
-                  <span className="text-sm">{app.removedAt ? app.removalReason === "Withdrawn by team" ? "Withdrawn" : "Removed" : statusLabel(teamVisibleApplicationStatus(app.status, app.competition.decisionsSubmittedAt))}</span>
+                  <span className="text-sm">{app.removedAt ? app.removalReason === "Withdrawn by team" ? "Withdrawn" : "Removed" : offerStatusLabel({ ...app, decisionsSubmittedAt: app.competition.decisionsSubmittedAt })}</span>
                   {canTeamWithdrawApplication(app, now) ? (
                     <WithdrawApplicationForm applicationId={app.id} competitionName={app.competition.name} />
                   ) : null}

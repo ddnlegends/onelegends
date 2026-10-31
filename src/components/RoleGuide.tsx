@@ -46,6 +46,10 @@ const GUIDES: Guide[] = [
         title: "Apply with checkboxes",
         body: "Select every open competition you want and submit once. Check its regular and late deadlines; the late deadline closes applications. Pay the $25 OneLegends registration fee outside the app; you can apply while it is pending, but tech admins must verify it before your AV enters viewing. Check each competition's separate payment instructions; its host tracks whether it received your payment.",
       },
+      {
+        title: "Respond to competition decisions",
+        body: "Open Decisions after a competition announces its final outcomes. An accepted decision is an offer: confirm or decline it after reviewing the confirmation screen. You can confirm up to three Partner competitions. Affiliate and Non-partner confirmations have no limit. A waitlist position is not a confirmed spot.",
+      },
     ],
     cta: { href: "/register", label: "Create an account" },
     signedInCta: { href: "/claim", label: "Code Claim" },
@@ -141,6 +145,10 @@ const GUIDES: Guide[] = [
       {
         title: "Review released results",
         body: "Circuit ops opens judging after applications close. Once every active judge submits and pending invitations are resolved, a tech admin validates and releases Partner and Affiliate results; Non-partner results release when judging finishes. Rankings, comments, full applicant rosters, and decisions then unlock for the competition account. Non-partner admins can run live viewing; Partner and Affiliate competitions use assigned moderators.",
+      },
+      {
+        title: "Announce offers and manage the waitlist",
+        body: "Save draft outcomes privately, then submit one final outcome for every applicant. Accepted teams receive an offer and must confirm their spot. Applied Teams tracks confirmed, awaiting response, declined, and waitlisted teams. When a spot opens, offer it manually to an available waitlisted team.",
       },
     ],
     cta: { href: "/register", label: "Create an account" },

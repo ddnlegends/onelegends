@@ -8,6 +8,7 @@ export type DetailedTeam = {
   blurb: string;
   wikiUrl: string;
   avDriveUrl: string;
+  idsDriveUrl?: string;
   captains: string;
   yearsEstablished: number | null;
   rosterSize: number | null;
@@ -25,10 +26,12 @@ export function TeamDetails({
   team,
   hideHeading = false,
   hideAv = false,
+  showIdsLink = false,
 }: {
   team: DetailedTeam;
   hideHeading?: boolean;
   hideAv?: boolean;
+  showIdsLink?: boolean;
 }) {
   const wikiUrl = /^https?:\/\//i.test(team.wikiUrl) ? team.wikiUrl : "";
   return (
@@ -66,6 +69,11 @@ export function TeamDetails({
           <DriveAvPlayer url={team.avDriveUrl} label={`${team.name} audition video`} />
         </section>
       )}
+
+      {showIdsLink ? <section className="space-y-2 rounded-xl border border-line bg-card p-6">
+        <h2 className="font-heading text-2xl">Dancer IDs</h2>
+        {team.idsDriveUrl ? <a href={team.idsDriveUrl} target="_blank" rel="noopener noreferrer" className="text-accent underline">Open team IDs in Google Drive</a> : <p className="text-sm text-muted">No IDs link provided.</p>}
+      </section> : null}
 
       <section className="space-y-3">
         <h2 className="font-heading text-2xl">Full roster</h2>

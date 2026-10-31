@@ -75,6 +75,11 @@ export default async function CompDashboardPage() {
     0,
   );
   const pending = apps.filter((app) => app.status === "PENDING").length;
+  const hostAccepted = competition.decisionsSubmittedAt ? apps.filter((app) => app.status === "ACCEPTED").length : 0;
+  const teamsConfirmed = competition.decisionsSubmittedAt ? apps.filter((app) => app.teamOfferResponse === "CONFIRMED").length : 0;
+  const awaitingResponse = competition.decisionsSubmittedAt ? apps.filter((app) => app.status === "ACCEPTED" && app.teamOfferResponse === "NONE").length : 0;
+  const declinedByTeam = competition.decisionsSubmittedAt ? apps.filter((app) => app.teamOfferResponse === "DECLINED").length : 0;
+  const waitlisted = competition.decisionsSubmittedAt ? apps.filter((app) => app.status === "WAITLISTED" && app.teamOfferResponse === "NONE").length : 0;
   const avgRoster =
     rosterSizes.length === 0
       ? 0
@@ -177,6 +182,12 @@ export default async function CompDashboardPage() {
           <p className="mt-4 text-sm text-muted">No applications yet.</p>
         ) : null}
       </section>
+      {competition.decisionsSubmittedAt ? <section className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-heading text-2xl">Team commitments</h2><Link href="/comp/applicants" className="btn btn-primary">Manage offers and waitlist</Link></div>
+        <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {[["Host accepted", hostAccepted], ["Teams confirmed", teamsConfirmed], ["Awaiting response", awaitingResponse], ["Declined by teams", declinedByTeam], ["Waitlisted", waitlisted]].map(([label, value]) => <div key={label} className="rounded-xl border border-line bg-card p-4"><dt className="text-xs uppercase text-muted">{label}</dt><dd className="mt-1 font-heading text-2xl">{value}</dd></div>)}
+        </dl>
+      </section> : null}
     </div>
   );
 }

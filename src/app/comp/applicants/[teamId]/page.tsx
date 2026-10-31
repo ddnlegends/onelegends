@@ -27,7 +27,7 @@ export default async function CompApplicantDetailsPage({ params }: { params: Pro
   return (
     <div className="space-y-7">
       <Link href="/comp/applicants" className="text-sm underline">← Applied teams</Link>
-      <TeamDetails team={{ ...application.team, avDriveUrl: submittedApplicationAvUrl(application) }} />
+      <TeamDetails team={{ ...application.team, avDriveUrl: submittedApplicationAvUrl(application) }} showIdsLink />
     </div>
   );
 }

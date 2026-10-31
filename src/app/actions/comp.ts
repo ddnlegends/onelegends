@@ -9,7 +9,7 @@
  */
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { ApplicationStatus } from "@prisma/client";
+import { ApplicationStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
 import { isPlatformAdmin, requireActiveCompetition } from "@/lib/team-access";
@@ -264,17 +264,42 @@ export async function saveCompApplicantDecisions(
     if (current.decisionsSubmittedAt) return { error: "Final decisions have already been submitted." };
     const applications = await tx.application.findMany({
       where: { competitionId: competition.id, ...visibleApplicationWhere },
-      select: { id: true },
+      select: { id: true, teamId: true },
     });
     const submittedIds = new Set(decisions.map((decision) => decision.applicationId));
     if (applications.length !== decisions.length || applications.some((app) => !submittedIds.has(app.id))) {
       return { error: "The applicant list changed. Refresh and review every team before saving." };
     }
+    let atPartnerLimit = new Set<string>();
+    if (final && competition.isPartner && !competition.isAffiliate) {
+      const teamIds = [...new Set(applications.map((app) => app.teamId))].sort();
+      await tx.$queryRaw`SELECT id FROM "TeamProfile" WHERE id IN (${Prisma.join(teamIds)}) ORDER BY id FOR UPDATE`;
+      const confirmed = await tx.application.groupBy({
+        by: ["teamId"],
+        where: {
+          teamId: { in: teamIds }, removedAt: null, teamOfferResponse: "CONFIRMED",
+          competition: { isPartner: true, isAffiliate: false, decisionsSubmittedAt: { not: null } },
+        },
+        _count: { _all: true },
+      });
+      atPartnerLimit = new Set(confirmed.filter((row) => row._count._all >= 3).map((row) => row.teamId));
+    }
+    const teamByApp = new Map(applications.map((app) => [app.id, app.teamId]));
     for (const decision of decisions) {
+      const capClosed = final && atPartnerLimit.has(teamByApp.get(decision.applicationId) ?? "") &&
+        (decision.status === "ACCEPTED" || decision.status === "WAITLISTED");
       await tx.application.update({
         where: { id: decision.applicationId },
-        data: { status: decision.status },
+        data: {
+          status: decision.status,
+          ...(final ? { teamOfferResponse: capClosed ? "CAP_CLOSED" : "NONE", teamOfferRespondedAt: capClosed ? new Date() : null } : {}),
+        },
       });
+      if (final && (decision.status === "ACCEPTED" || capClosed)) {
+        await tx.applicationOfferEvent.create({
+          data: { applicationId: decision.applicationId, actorUserId: capClosed ? null : user.id, type: capClosed ? "CAP_CLOSED" : "OFFER_PUBLISHED" },
+        });
+      }
     }
     if (final) {
       await tx.competitionProfile.update({
@@ -297,4 +322,65 @@ export async function saveCompApplicantDecisions(
   return { ok: true, message: final
     ? `${decisions.length} final team decisions submitted. Teams can now see their outcomes.`
     : `${decisions.length} draft decisions saved. Teams still see Pending.` };
+}
+
+export async function updateFinalCompetitionOffer(
+  _prev: { error?: string; ok?: boolean; message?: string } | undefined,
+  formData: FormData,
+): Promise<{ error?: string; ok?: boolean; message?: string }> {
+  const user = await requireUser();
+  if (!user) return { error: "Unauthorized." };
+  const competition = await requireActiveCompetition(user.id);
+  if (!competition?.decisionsSubmittedAt || !competition.resultsReleasedAt) {
+    return { error: "Final decisions must be announced first." };
+  }
+  const applicationId = String(formData.get("applicationId") ?? "");
+  const intent = String(formData.get("intent") ?? "");
+  if (!applicationId || !["promote", "reoffer"].includes(intent) || formData.get("acknowledge") !== "on") {
+    return { error: "Confirm the offer before sending it." };
+  }
+  const result = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${competition.id}))`;
+    const target = await tx.application.findFirst({
+      where: { id: applicationId, competitionId: competition.id, ...visibleApplicationWhere },
+      select: { id: true, teamId: true },
+    });
+    if (!target) return { error: "Application not found." };
+    await tx.$queryRaw`SELECT id FROM "TeamProfile" WHERE id = ${target.teamId} FOR UPDATE`;
+    const application = await tx.application.findFirst({
+      where: { id: applicationId, competitionId: competition.id, ...visibleApplicationWhere },
+      select: { id: true, teamId: true, status: true, teamOfferResponse: true },
+    });
+    if (!application) return { error: "Application not found." };
+    if (intent === "promote" && (application.status !== "WAITLISTED" || application.teamOfferResponse !== "NONE")) {
+      return { error: "Only an available waitlisted team can be promoted." };
+    }
+    if (intent === "reoffer" && (!["ACCEPTED", "WAITLISTED"].includes(application.status) || !["DECLINED", "CAP_CLOSED"].includes(application.teamOfferResponse))) {
+      return { error: "Only a previously declined offer can be sent again." };
+    }
+    if (competition.isPartner && !competition.isAffiliate) {
+      const count = await tx.application.count({
+        where: {
+          teamId: application.teamId, removedAt: null, teamOfferResponse: "CONFIRMED",
+          competition: { isPartner: true, isAffiliate: false, decisionsSubmittedAt: { not: null } },
+        },
+      });
+      if (count >= 3) return { error: "This team has already confirmed three Partner competitions." };
+    }
+    await tx.application.update({
+      where: { id: application.id },
+      data: { status: "ACCEPTED", teamOfferResponse: "NONE", teamOfferRespondedAt: null },
+    });
+    await tx.applicationOfferEvent.create({
+      data: { applicationId: application.id, actorUserId: user.id, type: intent === "promote" ? "WAITLIST_PROMOTED" : "OFFER_REOPENED" },
+    });
+    return { ok: true, message: intent === "promote" ? "Waitlisted team offered a spot." : "Offer sent again." };
+  });
+  if (result.ok) {
+    revalidatePath("/comp");
+    revalidatePath("/comp/applicants");
+    revalidatePath("/team", "layout");
+    revalidatePath("/dashboard");
+  }
+  return result;
 }

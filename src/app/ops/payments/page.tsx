@@ -5,7 +5,8 @@ import { requirePlatformAdminPage } from "@/lib/page-guards";
 import { currentApplicationWhere, dollars } from "@/lib/payment-eligibility";
 import { competitionTypeLabel } from "@/lib/competition-type";
 import { prisma } from "@/lib/prisma";
-import { formatDate, statusLabel } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
+import { offerStatusLabel } from "@/lib/application-offers";
 
 export default async function OpsPaymentsPage() {
   await requirePlatformAdminPage();
@@ -17,9 +18,10 @@ export default async function OpsPaymentsPage() {
       select: {
         id: true,
         status: true,
+        teamOfferResponse: true,
         compPaymentReceivedAt: true,
         team: { select: { name: true } },
-        competition: { select: { name: true } },
+        competition: { select: { name: true, decisionsSubmittedAt: true } },
       },
       orderBy: { createdAt: "desc" },
     }),
@@ -70,7 +72,7 @@ export default async function OpsPaymentsPage() {
           <ul className="divide-y divide-line rounded-xl border border-line bg-card">
             {applications.map((application) => (
               <li key={application.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
-                <span>{application.team.name} · {application.competition.name} · {statusLabel(application.status)}</span>
+                <span>{application.team.name} · {application.competition.name} · {offerStatusLabel({ ...application, decisionsSubmittedAt: application.competition.decisionsSubmittedAt })}</span>
                 <span className="text-muted">{application.compPaymentReceivedAt ? `Received ${formatDate(application.compPaymentReceivedAt)}` : "Not marked paid"}</span>
               </li>
             ))}

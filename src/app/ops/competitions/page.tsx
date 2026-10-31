@@ -16,11 +16,12 @@ import { Chip, InfoGrid, PanelSection } from "@/components/OpsListParts";
 import { LocalDateTime } from "@/components/LocalDateTime";
 import { prisma } from "@/lib/prisma";
 import { competitionStatus } from "@/lib/judging";
-import { formatDate, statusLabel } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import { formatApplicationFee } from "@/lib/competition-details";
 import { competitionApplicationClosureReasons } from "@/lib/competition-profile";
 import { currentApplicationWhere } from "@/lib/payment-eligibility";
 import { COMPETITION_TYPE_GROUPS, competitionType, usesAssignedModerator } from "@/lib/competition-type";
+import { offerStatusLabel } from "@/lib/application-offers";
 
 const JUDGE_STATUS: Record<string, string> = {
   APPROVED: "Approved",
@@ -116,6 +117,7 @@ export default async function OpsCompetitionsPage() {
             const declined = competition.applications.filter(
               (application) => application.status === "DECLINED",
             ).length;
+            const confirmed = competition.applications.filter((application) => application.teamOfferResponse === "CONFIRMED").length;
             const paymentsReceived = competition.applications.filter(
               (application) => application.compPaymentReceivedAt,
             ).length;
@@ -262,7 +264,7 @@ export default async function OpsCompetitionsPage() {
                       },
                       {
                         label: "Applications",
-                        value: `${competition.applications.length} total · ${accepted} accepted · ${waitlisted} waitlisted · ${declined} declined`,
+                        value: `${competition.applications.length} total · ${accepted} host accepted · ${confirmed} team confirmed · ${waitlisted} waitlisted · ${declined} host declined`,
                       },
                       { label: "Host payments", value: `${paymentsReceived} received of ${accepted} accepted` },
                       { label: "Host payment review", value: viewingOrderLocked ? "Viewing order already locked" : "Review before opening judging" },
@@ -438,7 +440,7 @@ export default async function OpsCompetitionsPage() {
                             {application.team.name}
                           </Link>
                           <span className="text-muted">
-                            {statusLabel(application.status)} · applied{" "}
+                            {offerStatusLabel({ ...application, decisionsSubmittedAt: competition.decisionsSubmittedAt })} · applied{" "}
                             {formatDate(application.createdAt)} · Host payment: <strong className={application.compPaymentReceivedAt ? "text-success" : "text-warning"}>{application.compPaymentReceivedAt ? "Paid for comp" : "Unpaid for comp"}</strong>{application.compPaymentReceivedAt ? ` (${formatDate(application.compPaymentReceivedAt)})` : ""}
                           </span>
                         </li>

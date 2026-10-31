@@ -21,6 +21,22 @@ enum ApplicationStatus {
   DECLINED
 }
 
+enum TeamOfferResponse {
+  NONE
+  CONFIRMED
+  DECLINED
+  CAP_CLOSED
+}
+
+enum OfferEventType {
+  OFFER_PUBLISHED
+  OFFER_CONFIRMED
+  OFFER_DECLINED
+  CAP_CLOSED
+  WAITLIST_PROMOTED
+  OFFER_REOPENED
+}
+
 enum ApplicationPhase {
   EARLY
   REGULAR
@@ -112,6 +128,7 @@ model TeamProfile {
   blurb                   String    @default("")
   wikiUrl                 String    @default("")
   avDriveUrl              String    @default("")
+  idsDriveUrl             String    @default("")
   captains                String    @default("")
   yearsEstablished        Int?
   rosterSize              Int?
@@ -316,6 +333,8 @@ model Application {
   teamId                     String
   competitionId              String
   status                     ApplicationStatus @default(PENDING)
+  teamOfferResponse          TeamOfferResponse @default(NONE)
+  teamOfferRespondedAt       DateTime?
   submittedAvDriveUrl        String?
   appliedPhase               ApplicationPhase?
   expectedFeeCents           Int?
@@ -331,11 +350,23 @@ model Application {
   team         TeamProfile        @relation(fields: [teamId], references: [id], onDelete: Cascade)
   competition  CompetitionProfile @relation(fields: [competitionId], references: [id], onDelete: Cascade)
   viewingSlots JudgeViewingSlot[]
+  offerEvents  ApplicationOfferEvent[]
 
   // A database partial unique index permits withdrawn history, but only one active application per team and competition.
   @@unique([competitionId, viewingPosition])
   @@index([competitionId])
   @@index([teamId])
+}
+
+model ApplicationOfferEvent {
+  id            String         @id @default(cuid())
+  applicationId String
+  application   Application    @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  actorUserId   String?
+  type          OfferEventType
+  createdAt     DateTime       @default(now())
+
+  @@index([applicationId, createdAt])
 }
 
 model JudgeProfile {
