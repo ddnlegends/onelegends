@@ -20,6 +20,7 @@ import { blurEmail, normalizeClaimCode } from "@/lib/claim-code";
 import { hasModeratorAccess } from "@/lib/moderator";
 import { competitionRegistrationFeeCents } from "@/lib/payment-eligibility";
 import { usesAssignedModerator } from "@/lib/competition-type";
+import { maybeReleaseNonPartnerResults } from "@/lib/release";
 import { getCompetitionResetPlan, getTeamResetPlan } from "@/lib/reset-plans";
 import {
   isCompAdmin,
@@ -443,8 +444,17 @@ export async function cancelJudgeInvite(
   if (!(await isCompAdmin(user.id, invite.competitionId))) {
     return { error: "Only competition admins can cancel judge invites." };
   }
-  await prisma.judgeInvite.delete({ where: { id: invite.id } });
+  const removed = await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "CompetitionProfile" WHERE id = ${invite.competitionId} FOR UPDATE`;
+    const current = await tx.judgeInvite.findUnique({ where: { id: invite.id }, select: { id: true } });
+    if (!current) return false;
+    await tx.judgeInvite.delete({ where: { id: invite.id } });
+    await maybeReleaseNonPartnerResults(tx, invite.competitionId);
+    return true;
+  });
+  if (!removed) return { error: "Invite was already cancelled." };
   revalidateAccessPaths();
+  revalidatePath("/moderator", "layout");
   return { ok: true };
 }
 

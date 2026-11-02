@@ -6,7 +6,7 @@ import { rankTeams } from "@/lib/results";
 import { LocalDateTime } from "@/components/LocalDateTime";
 import { getActiveCompetitionId } from "@/lib/team-access";
 import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
-import { moderatorResultsReady } from "@/lib/judge-panel-completion";
+import { judgePanelCompletion } from "@/lib/judge-panel-completion";
 import { usesTechRelease } from "@/lib/competition-type";
 
 export default async function CompResultsPage() {
@@ -39,15 +39,10 @@ export default async function CompResultsPage() {
       where: { competitionId, status: "PENDING" },
     }),
   ]);
-  const panelReady = moderatorResultsReady(
-    competition.applications,
-    competition.judgeAssignments,
-    usesTechRelease(competition) ? pendingInvites + pendingRequests : 0,
-  );
-  const released = Boolean(competition.resultsReleasedAt) || (!usesTechRelease(competition) && panelReady);
+  const released = Boolean(competition.resultsReleasedAt);
 
   // Do not calculate or expose rankings until explicit finalization succeeds.
-  const ranked = released && panelReady
+  const ranked = released && judgePanelCompletion(competition.applications, competition.judgeAssignments).ready
     ? rankTeams(competition.applications, submitted)
     : [];
 

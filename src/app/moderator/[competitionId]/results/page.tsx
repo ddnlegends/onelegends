@@ -68,12 +68,12 @@ export default async function ModeratorResultsPage({
   );
   const unresolvedJudges = competition.judgeInvites.length +
     competition.judgeAssignments.filter((assignment) => assignment.status === "PENDING").length;
-  if (!moderatorResultsReady(competition.applications, activeJudges, usesTechRelease(competition) ? unresolvedJudges : 0)) notFound();
-  if (usesTechRelease(competition) && !competition.resultsReleasedAt) {
+  if (!competition.resultsReleasedAt && !moderatorResultsReady(competition.applications, activeJudges, unresolvedJudges)) notFound();
+  if (!competition.resultsReleasedAt) {
     return (
       <div className="rounded-xl border border-line bg-card p-6">
         <h1 className="font-heading text-3xl">Thank you for moderating</h1>
-        <p className="mt-2 text-muted">Results will appear after tech release.</p>
+        <p className="mt-2 text-muted">Results will appear after {usesTechRelease(competition) ? "tech release" : "the full judge panel finishes"}.</p>
       </div>
     );
   }

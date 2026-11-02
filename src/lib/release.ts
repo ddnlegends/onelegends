@@ -3,6 +3,32 @@ import { prisma } from "@/lib/prisma";
 import { judgePanelCompletion, moderatorResultsReady } from "@/lib/judge-panel-completion";
 import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 import { usesTechRelease } from "@/lib/competition-type";
+import type { Prisma } from "@prisma/client";
+
+/** Caller must hold the competition row lock while changing the judge panel. */
+export async function maybeReleaseNonPartnerResults(tx: Prisma.TransactionClient, competitionId: string) {
+  const competition = await tx.competitionProfile.findUnique({
+    where: { id: competitionId },
+    select: {
+      isPartner: true, isAffiliate: true, judgingOpen: true, resultsReleasedAt: true,
+      applications: { where: viewingEligibleApplicationWhere, select: { id: true } },
+      judgeInvites: { select: { id: true }, take: 1 },
+      judgeAssignments: {
+        where: { status: { in: ["APPROVED", "PENDING"] } },
+        select: { status: true, submittedAt: true, slots: { where: { application: viewingEligibleApplicationWhere }, select: { applicationId: true, score: true } } },
+      },
+    },
+  });
+  if (!competition || usesTechRelease(competition) || !competition.judgingOpen || competition.resultsReleasedAt) return false;
+  const active = competition.judgeAssignments.filter((row) => row.status === "APPROVED");
+  const unresolved = competition.judgeInvites.length + competition.judgeAssignments.length - active.length;
+  if (!moderatorResultsReady(competition.applications, active, unresolved)) return false;
+  await tx.competitionProfile.update({
+    where: { id: competitionId },
+    data: { resultsReleasedAt: new Date(), judgingOpen: false, livePosition: null, liveUpdatedAt: null },
+  });
+  return true;
+}
 
 export async function finalizeResults(competitionId: string, actorEmail: string) {
   return prisma.$transaction(async (tx) => {

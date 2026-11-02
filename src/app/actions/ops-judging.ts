@@ -21,6 +21,8 @@ import { isPlatformAdmin } from "@/lib/team-access";
 import { describePanelBlockers, judgePanelCompletion } from "@/lib/judge-panel-completion";
 import { viewingEligibleApplicationWhere, visibleApplicationWhere } from "@/lib/payment-eligibility";
 import { hostPaymentFingerprint } from "@/lib/host-payment-review";
+import { usesAssignedModerator } from "@/lib/competition-type";
+import { maybeReleaseNonPartnerResults } from "@/lib/release";
 
 function revalidateJudging(competitionId: string) {
   revalidatePath("/dashboard");
@@ -93,6 +95,16 @@ export async function setJudgingOpen(
     if (approvedJudges === 0) {
       return { error: "Approve at least one judge before opening viewing." };
     }
+    if (usesAssignedModerator(competition)) {
+      const [moderators, judges] = await Promise.all([
+        prisma.moderatorAccess.findMany({ where: { competitionId: competition.id }, select: { userId: true } }),
+        prisma.judgeAssignment.findMany({ where: { competitionId: competition.id, status: "APPROVED" }, select: { judge: { select: { userId: true } } } }),
+      ]);
+      const judgeUserIds = new Set(judges.map((row) => row.judge.userId));
+      if (!moderators.some((row) => !judgeUserIds.has(row.userId))) {
+        return { error: "Assign an accepted, non-judge moderator before opening viewing." };
+      }
+    }
     await ensureCompetitionJudgeSlots(competition.id);
     const ordered = await prisma.application.count({
       where: { competitionId: competition.id, viewingPosition: { not: null }, ...viewingEligibleApplicationWhere },
@@ -117,7 +129,10 @@ export async function setJudgingOpen(
       where: { id: competition.id },
       select: {
         judgingOpen: true,
+        isPartner: true,
+        isAffiliate: true,
         resultsReleasedAt: true,
+        judgeInvites: { select: { id: true }, take: 1 },
         applications: { where: viewingEligibleApplicationWhere, select: { id: true } },
         judgeAssignments: {
           where: { status: "APPROVED" },
@@ -140,6 +155,16 @@ export async function setJudgingOpen(
       return {
         error: `Judging cannot close yet: ${describePanelBlockers(progress)}. Remove an unavailable judge from the panel if needed.`,
       };
+    }
+    if (!usesAssignedModerator(current)) {
+      const pendingRequests = await tx.judgeAssignment.count({ where: { competitionId: competition.id, status: "PENDING" } });
+      if (current.judgeInvites.length || pendingRequests) {
+        return { error: "Resolve pending judge invitations and requests before closing Non-partner judging." };
+      }
+      if (!(await maybeReleaseNonPartnerResults(tx, competition.id))) {
+        return { error: "The judge panel changed. Refresh and review it before closing judging." };
+      }
+      return { ok: true, message: "The full judge panel is complete. Results are released." };
     }
     await tx.competitionProfile.update({
       where: { id: competition.id },

@@ -72,8 +72,7 @@ export default async function ModeratorCompetitionPage({
     competition.judgeAssignments.filter((assignment) => assignment.status === "PENDING").length;
   const waitingForTech = usesTechRelease(competition) && !competition.resultsReleasedAt &&
     moderatorResultsReady(competition.applications, activeJudges, unresolvedJudges);
-  const resultsReady = Boolean(competition.resultsReleasedAt) ||
-    (!usesTechRelease(competition) && moderatorResultsReady(competition.applications, activeJudges, 0));
+  const resultsReady = Boolean(competition.resultsReleasedAt);
   const status = competitionStatus(competition);
   const teams = competition.applications.map((app) => ({
     position: app.viewingPosition as number,

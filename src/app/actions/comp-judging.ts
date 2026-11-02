@@ -9,7 +9,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
-import { finalizeResults, releaseResults } from "@/lib/release";
+import { finalizeResults, maybeReleaseNonPartnerResults, releaseResults } from "@/lib/release";
 import { hasModeratorAccess } from "@/lib/moderator";
 import { usesTechRelease } from "@/lib/competition-type";
 import { isPlatformAdmin, requireActiveCompetition } from "@/lib/team-access";
@@ -70,6 +70,7 @@ export async function decideJudgeRequest(
     const pending = await tx.judgeAssignment.findFirst({ where: { id: assignmentId, competitionId: competition.id, status: "PENDING" }, select: { id: true } });
     if (!pending) return { error: "That request was already decided." };
     await tx.judgeAssignment.update({ where: { id: assignmentId }, data: { status: decision, decidedAt: new Date() } });
+    await maybeReleaseNonPartnerResults(tx, competition.id);
     return {};
   });
   if (!result.error) refreshJudgeViews(competition.id);
@@ -135,6 +136,8 @@ export async function removeJudgeAssignment(
     const remaining = await tx.judgeAssignment.count({ where: { competitionId: assignment.competitionId, status: "APPROVED" } });
     if (remaining === 0 && competition.judgingOpen) {
       await tx.competitionProfile.update({ where: { id: assignment.competitionId }, data: { judgingOpen: false, livePosition: null, liveUpdatedAt: null } });
+    } else if (remaining > 0) {
+      await maybeReleaseNonPartnerResults(tx, assignment.competitionId);
     }
     return { ok: true, message: remaining === 0 ? "Judge removed. Judging is paused until a replacement is approved." : "Judge removed from the active panel. Their scores are excluded." };
   });

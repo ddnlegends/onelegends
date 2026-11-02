@@ -22,7 +22,7 @@ import {
   type RubricKey,
 } from "@/lib/judging";
 import { viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
-import { usesTechRelease } from "@/lib/competition-type";
+import { maybeReleaseNonPartnerResults } from "@/lib/release";
 
 export async function saveJudgeProfile(
   _prev: { error?: string; ok?: boolean } | undefined,
@@ -205,17 +205,7 @@ export async function submitJudgingPacket(
       where: { id: assignment.id },
       data: { submittedAt: new Date() },
     });
-    if (!usesTechRelease(fresh.competition)) {
-      const remaining = await tx.judgeAssignment.count({
-        where: { competitionId: assignment.competitionId, status: "APPROVED", submittedAt: null },
-      });
-      if (remaining === 0) {
-        await tx.competitionProfile.update({
-          where: { id: assignment.competitionId },
-          data: { resultsReleasedAt: new Date(), judgingOpen: false, livePosition: null, liveUpdatedAt: null },
-        });
-      }
-    }
+    await maybeReleaseNonPartnerResults(tx, assignment.competitionId);
     return null;
   });
   if (failed) return { error: failed };

@@ -2,11 +2,8 @@ import { cache } from "react";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
-  viewingEligibleApplicationWhere,
   visibleApplicationWhere,
 } from "@/lib/payment-eligibility";
-import { moderatorResultsReady } from "@/lib/judge-panel-completion";
-import { usesTechRelease } from "@/lib/competition-type";
 
 /** Non-partner competition admins run the same live console as assigned moderators. */
 function moderatorCompetitionWhere(userId: string): Prisma.CompetitionProfileWhereInput {
@@ -114,34 +111,11 @@ export const getModeratorCompetitions = cache(async (userId: string) => {
       livePosition: true,
       resultsReleasedAt: true,
       _count: { select: { applications: { where: visibleApplicationWhere } } },
-      applications: {
-        where: viewingEligibleApplicationWhere,
-        select: { id: true },
-      },
-      judgeAssignments: {
-        where: { status: { in: ["APPROVED", "PENDING"] } },
-        select: {
-          status: true,
-          submittedAt: true,
-          slots: {
-            where: { application: viewingEligibleApplicationWhere },
-            select: { applicationId: true, score: true },
-          },
-        },
-      },
     },
     orderBy: { name: "asc" },
   });
-  return competitions.map(({
-    applications,
-    judgeAssignments,
-    ...competition
-  }) => {
-    const active = judgeAssignments.filter((row) => row.status === "APPROVED");
-    return {
-      ...competition,
-      moderatorResultsReady: Boolean(competition.resultsReleasedAt) ||
-        (!usesTechRelease(competition) && moderatorResultsReady(applications, active, 0)),
-    };
-  });
+  return competitions.map((competition) => ({
+    ...competition,
+    moderatorResultsReady: Boolean(competition.resultsReleasedAt),
+  }));
 });
