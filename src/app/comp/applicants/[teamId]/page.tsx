@@ -21,12 +21,33 @@ export default async function CompApplicantDetailsPage({ params }: { params: Pro
   const { teamId } = await params;
   const application = await prisma.application.findFirst({
     where: { teamId, competitionId, ...visibleApplicationWhere },
-    include: { team: { include: { dancers: { orderBy: { name: "asc" } } } } },
+    include: {
+      team: {
+        include: {
+          dancers: { orderBy: { name: "asc" } },
+          memberships: {
+            where: { status: "APPROVED", isAdmin: true },
+            orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+            take: 1,
+            select: { user: { select: { email: true } } },
+          },
+        },
+      },
+    },
   });
   if (!application) notFound();
+  const contactEmail = application.team.memberships[0]?.user.email;
   return (
     <div className="space-y-7">
       <Link href="/comp/applicants" className="text-sm underline">← Applied teams</Link>
+      <section className="rounded-xl border border-line bg-card p-6">
+        <h2 className="font-heading text-2xl">Team contact</h2>
+        {contactEmail ? (
+          <a href={`mailto:${contactEmail}`} className="mt-2 inline-block text-accent underline">{contactEmail}</a>
+        ) : (
+          <p className="mt-2 text-sm text-muted">No approved team admin email is available.</p>
+        )}
+      </section>
       <TeamDetails team={{ ...application.team, avDriveUrl: submittedApplicationAvUrl(application) }} showIdsLink />
     </div>
   );
