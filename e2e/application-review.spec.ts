@@ -43,7 +43,7 @@ test("teams review their saved application AV and current profile without exposi
   await expect(team.getByRole("heading", { name: "Review application" })).toBeVisible();
   await expect(team.getByText("Early", { exact: true })).toBeVisible();
   await expect(team.getByText("$50.00", { exact: true })).toBeVisible();
-  await expect(team.getByText("Pending", { exact: true })).toBeVisible();
+  await expect(team.getByText("Decision not announced", { exact: true })).toBeVisible();
   await expect(team.getByText("Accepted", { exact: true })).toHaveCount(0);
   await expect(team.getByRole("link", { name: "Open In Drive" })).toHaveAttribute("href", submittedAvDriveUrl);
 
