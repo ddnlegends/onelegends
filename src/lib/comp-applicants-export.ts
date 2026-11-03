@@ -5,6 +5,7 @@ import { statusLabel } from "@/lib/utils";
 import { applicationPhaseLabel } from "@/lib/application-schedule";
 import { formatApplicationFee } from "@/lib/competition-details";
 import { submittedApplicationAvUrl } from "@/lib/application-av";
+import { captainContactsFromJson } from "@/lib/captain-contacts";
 
 export type DirectorApplicant = {
   id: string;
@@ -23,6 +24,7 @@ export type DirectorApplicant = {
     wikiUrl: string;
     avDriveUrl: string;
     captains: string;
+    captainContacts?: unknown;
     yearsEstablished: number | null;
     rosterSize: number | null;
     registrationPaidAt: Date | null;
@@ -79,7 +81,7 @@ export function buildDirectorApplicantWorkbook(
 
   const overview: ExportCell[][] = [[
     "Rank", "Team", "Application status", "Average z-score", "Average total (/50)",
-    "Judges scored", "Captains", "Roster size", "AV link", "Applied (UTC)", "Applied phase", "Expected host fee (USD)",
+    "Judges scored", "Captains", "Captain phone contacts", "Roster size", "AV link", "Applied (UTC)", "Applied phase", "Expected host fee (USD)",
   ]];
   const judgeScores: ExportCell[][] = [[
     "Rank", "Team", "Judge", "Choreography", "Formations", "Technique",
@@ -95,6 +97,7 @@ export function buildDirectorApplicantWorkbook(
     const rank = result?.rank;
     const rankLabel = rank ?? "Unranked";
     const rosterSize = team.rosterSize ?? team.dancers.length;
+    const captainContacts = captainContactsFromJson(team.captainContacts);
     overview.push([
       rankLabel,
       team.name,
@@ -103,6 +106,7 @@ export function buildDirectorApplicantWorkbook(
       result ? number(result.row.avgTotal, 2) : "",
       result?.row.judges.length ?? 0,
       team.captains,
+      captainContacts.map((contact) => `${contact.name}: ${contact.phone}`).join("; "),
       rosterSize,
       avDriveUrl,
       date(application.createdAt),
@@ -134,6 +138,7 @@ export function buildDirectorApplicantWorkbook(
       ["Profile", "Host payment received", application.compPaymentReceivedAt ? "Yes" : "No"],
       ["Profile", "OneLegends registration paid", team.registrationPaidAt ? "Yes" : "No"],
       ["Profile", "Captains", team.captains],
+      ...captainContacts.map((contact, index): ExportCell[] => ["Profile", `Captain ${index + 1} phone`, `${contact.name}: ${contact.phone}`]),
       ["Profile", "Years established", team.yearsEstablished ?? ""],
       ["Profile", "Roster size", rosterSize],
       ["Profile", "AV dancers", team.dancers.filter((dancer) => dancer.inAV).map((dancer) => dancer.name).join(", ")],

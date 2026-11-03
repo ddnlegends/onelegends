@@ -130,6 +130,7 @@ model TeamProfile {
   avDriveUrl              String    @default("")
   idsDriveUrl             String    @default("")
   captains                String    @default("")
+  captainContacts         Json      @default("[]")
   yearsEstablished        Int?
   rosterSize              Int?
   applyBlocked            Boolean   @default(false)

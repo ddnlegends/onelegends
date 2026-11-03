@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { TeamProfileForm } from "@/components/TeamProfileForm";
 import { DancerRoster } from "@/components/DancerRoster";
 import { getActiveTeamId } from "@/lib/team-access";
+import { captainContactsFromJson } from "@/lib/captain-contacts";
 
 export default async function TeamProfilePage() {
   const session = await auth();
@@ -20,6 +21,7 @@ export default async function TeamProfilePage() {
       avDriveUrl: true,
       idsDriveUrl: true,
       captains: true,
+      captainContacts: true,
       yearsEstablished: true,
       rosterSize: true,
       dancers: { orderBy: { name: "asc" } },
@@ -34,10 +36,10 @@ export default async function TeamProfilePage() {
         <p className="mt-2 max-w-2xl text-muted">
           Required before you can apply: team logo, blurb, AV Drive file,
           captains, years, roster count, and at least one dancer with a t-shirt
-          size. The IDs Drive link is optional. Competitions you apply to can see the email of your primary approved team admin (or another approved admin if there is no primary) before AV viewing. Your current profile and roster become available to a competition when applicant details unlock. Each application keeps the AV link you submitted when you applied.
+          size. The IDs Drive link and up to three captain phone contacts are optional. Competitions you apply to can see your saved captain names and phone numbers and the email of your primary approved team admin (or another approved admin if there is no primary) before AV viewing. Your current profile and roster become available to a competition when applicant details unlock. Each application keeps the AV link you submitted when you applied.
         </p>
       </div>
-      <TeamProfileForm profile={team} />
+      <TeamProfileForm profile={{ ...team, captainContacts: captainContactsFromJson(team.captainContacts) }} />
       <div>
         <h2 className="mb-3 font-heading text-2xl">Dancers</h2>
         <DancerRoster

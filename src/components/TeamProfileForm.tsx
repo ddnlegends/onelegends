@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { saveTeamProfile } from "@/app/actions/team";
 import { TeamPhoto } from "@/components/TeamPhoto";
 import { SaveNotice } from "@/components/SaveNotice";
+import type { CaptainContact } from "@/lib/captain-contacts";
 import {
   TEAM_PHOTO_TOO_LARGE,
   hasTeamPhoto,
@@ -18,6 +19,7 @@ type Profile = {
   avDriveUrl: string;
   idsDriveUrl: string;
   captains: string;
+  captainContacts: CaptainContact[];
   yearsEstablished: number | null;
   rosterSize: number | null;
 };
@@ -137,7 +139,7 @@ export function TeamProfileForm({ profile }: { profile: Profile }) {
       className="space-y-4 rounded-xl border border-line bg-card p-6"
     >
       <p className="text-sm text-muted">
-        Every field except the IDs Drive link is required. You cannot apply to competitions until this
+        Every field except the IDs Drive link and captain phone contacts is required. You cannot apply to competitions until this
         profile and the dancer roster below are complete.
       </p>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -165,6 +167,24 @@ export function TeamProfileForm({ profile }: { profile: Profile }) {
             required
             defaultValue={profile.yearsEstablished ?? ""}
           />
+        </div>
+        <div className="sm:col-span-2 space-y-3 rounded-lg border border-line p-4">
+          <div>
+            <h2 className="font-semibold">Captain phone contacts (optional)</h2>
+            <p className="text-xs text-muted">Add up to three captain names and phone numbers. Use the same names listed above. Competitions you apply to can see these contacts before AV viewing.</p>
+          </div>
+          {[1, 2, 3].map((position) => (
+            <div key={position} className="grid gap-3 sm:grid-cols-2">
+              <div className="field">
+                <label htmlFor={`captainContact${position}Name`}>Captain {position} name</label>
+                <input id={`captainContact${position}Name`} name={`captainContact${position}Name`} maxLength={80} defaultValue={profile.captainContacts[position - 1]?.name ?? ""} placeholder="Captain name" />
+              </div>
+              <div className="field">
+                <label htmlFor={`captainContact${position}Phone`}>Captain {position} phone</label>
+                <input id={`captainContact${position}Phone`} name={`captainContact${position}Phone`} type="tel" maxLength={30} defaultValue={profile.captainContacts[position - 1]?.phone ?? ""} placeholder="(555) 123-4567" />
+              </div>
+            </div>
+          ))}
         </div>
         <div className="field">
           <label htmlFor="rosterSize">Rostered dancers</label>

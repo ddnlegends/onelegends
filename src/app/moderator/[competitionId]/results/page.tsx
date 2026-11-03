@@ -68,7 +68,9 @@ export default async function ModeratorResultsPage({
   );
   const unresolvedJudges = competition.judgeInvites.length +
     competition.judgeAssignments.filter((assignment) => assignment.status === "PENDING").length;
-  if (!competition.resultsReleasedAt && !moderatorResultsReady(competition.applications, activeJudges, unresolvedJudges)) notFound();
+  // A release flag alone is not enough if the scored panel is incomplete.
+  // Older released rows may still have unresolved invitations; those do not invalidate completed scores.
+  if (!moderatorResultsReady(competition.applications, activeJudges, competition.resultsReleasedAt ? 0 : unresolvedJudges)) notFound();
   if (!competition.resultsReleasedAt) {
     return (
       <div className="rounded-xl border border-line bg-card p-6">

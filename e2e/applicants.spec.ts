@@ -71,6 +71,36 @@ test("affiliate hosts cannot open applicant details before release", async ({ br
   await expect(comp.getByText("404", { exact: true })).toBeVisible();
 });
 
+test("optional captain phone contacts stay paired with names and are visible before viewing", async ({ browser }) => {
+  const teamPage = await pageAs(browser, "team");
+  await teamPage.goto("/team/profile");
+  await teamPage.getByLabel("Captain 1 name").fill("Test Captain");
+  await teamPage.getByLabel("Captain 1 phone").fill("+1 (555) 123-4567");
+  await teamPage.getByRole("button", { name: "Save Team Profile" }).click();
+  await expect(teamPage.getByText("Changes saved.")).toBeVisible();
+  const saved = await db.teamProfile.findUniqueOrThrow({ where: { slug: E2E.teams.mine.slug } });
+  expect(saved.captainContacts).toEqual([{ name: "Test Captain", phone: "+1 (555) 123-4567" }]);
+
+  const competition = await db.competitionProfile.findUniqueOrThrow({ where: { slug: E2E.comps.showcase.slug } });
+  const application = await db.application.findFirstOrThrow({ where: { competitionId: competition.id } });
+  await db.teamProfile.update({
+    where: { id: application.teamId },
+    data: { captainContacts: [{ name: "Captain One", phone: "555-123-4567" }] },
+  });
+  const host = await pageAs(browser, "comp");
+  for (const type of [
+    { isPartner: true, isAffiliate: false },
+    { isPartner: false, isAffiliate: true },
+    { isPartner: false, isAffiliate: false },
+  ]) {
+    await db.competitionProfile.update({ where: { id: competition.id }, data: type });
+    await host.goto("/comp/applicants");
+    const row = host.getByRole("listitem").filter({ hasText: "Captain One" });
+    await expect(row).toContainText("Captain One · 555-123-4567");
+    await expect(row).not.toContainText("drive.google.com");
+  }
+});
+
 test("non-partner hosts can see applicant profiles and submitted AVs before release", async ({ browser }) => {
   const competition = await db.competitionProfile.update({
     where: { slug: E2E.comps.showcase.slug },

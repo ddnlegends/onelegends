@@ -45,6 +45,7 @@ export async function GET(request: Request) {
               wikiUrl: true,
               avDriveUrl: true,
               captains: true,
+              captainContacts: true,
               yearsEstablished: true,
               rosterSize: true,
               registrationPaidAt: true,

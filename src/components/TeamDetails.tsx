@@ -1,5 +1,6 @@
 import { DriveAvPlayer } from "@/components/DriveAvPlayer";
 import { TeamPhoto } from "@/components/TeamPhoto";
+import { captainContactsFromJson } from "@/lib/captain-contacts";
 
 export type DetailedTeam = {
   name: string;
@@ -10,6 +11,7 @@ export type DetailedTeam = {
   avDriveUrl: string;
   idsDriveUrl?: string;
   captains: string;
+  captainContacts?: unknown;
   yearsEstablished: number | null;
   rosterSize: number | null;
   dancers: Array<{
@@ -34,6 +36,7 @@ export function TeamDetails({
   showIdsLink?: boolean;
 }) {
   const wikiUrl = /^https?:\/\//i.test(team.wikiUrl) ? team.wikiUrl : "";
+  const captainContacts = captainContactsFromJson(team.captainContacts);
   return (
     <div className="space-y-8">
       <section
@@ -51,6 +54,7 @@ export function TeamDetails({
           ) : null}
           <dl className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
             <div><dt className="text-muted">Captains</dt><dd>{team.captains || "—"}</dd></div>
+            {captainContacts.length ? <div><dt className="text-muted">Captain phone contacts</dt><dd>{captainContacts.map((contact, index) => <span key={index} className="block">{contact.name}: {contact.phone}</span>)}</dd></div> : null}
             <div><dt className="text-muted">Years established</dt><dd>{team.yearsEstablished ?? "—"}</dd></div>
             <div><dt className="text-muted">Roster size</dt><dd>{team.rosterSize ?? team.dancers.length}</dd></div>
             <div><dt className="text-muted">AV dancers</dt><dd>{team.dancers.filter((d) => d.inAV).map((d) => d.name).join(", ") || "—"}</dd></div>

@@ -25,6 +25,7 @@ import {
 } from "@/lib/team-profile";
 import { getActiveTeamId } from "@/lib/team-access";
 import { storeTeamPhoto, hasTeamPhoto } from "@/lib/team-photo";
+import type { CaptainContact } from "@/lib/captain-contacts";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Team name is required."),
@@ -116,6 +117,18 @@ export async function saveTeamProfile(
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid profile." };
   }
+  const captainContacts: CaptainContact[] = [];
+  for (const position of [1, 2, 3]) {
+    const name = String(formData.get(`captainContact${position}Name`) ?? "").trim();
+    const phone = String(formData.get(`captainContact${position}Phone`) ?? "").trim();
+    if (!name && !phone) continue;
+    if (!name || !phone) return { error: `Enter both the captain name and phone number for contact ${position}, or leave both blank.` };
+    if (name.length > 80) return { error: `Captain contact ${position} name is too long.` };
+    if (phone.length > 30 || !/^[+0-9()\s.xX-]+$/.test(phone) || phone.replace(/\D/g, "").length < 7) {
+      return { error: `Enter a valid phone number for captain contact ${position}.` };
+    }
+    captainContacts.push({ name, phone });
+  }
   const idsDriveUrl = parsed.data.idsDriveUrl
     ? normalizeTeamIdsDriveUrl(parsed.data.idsDriveUrl)
     : "";
@@ -182,6 +195,7 @@ export async function saveTeamProfile(
       avDriveUrl: parsed.data.avDriveUrl,
       idsDriveUrl,
       captains: parsed.data.captains,
+      captainContacts,
       yearsEstablished: years,
       rosterSize: roster,
     },

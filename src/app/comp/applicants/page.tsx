@@ -13,6 +13,7 @@ import { HostPaymentReview } from "@/components/HostPaymentReview";
 import { isCompetitionOpen } from "@/lib/judging-rules";
 import { hostCanViewApplicantDetails } from "@/lib/competition-type";
 import { offerStatusLabel } from "@/lib/application-offers";
+import { captainContactsFromJson } from "@/lib/captain-contacts";
 
 export default async function CompApplicantsPage() {
   const session = await auth();
@@ -49,6 +50,7 @@ export default async function CompApplicantsPage() {
               id: true,
               name: true,
               captains: true,
+              captainContacts: true,
               memberships: {
                 where: { status: "APPROVED", isAdmin: true },
                 orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
@@ -79,7 +81,7 @@ export default async function CompApplicantsPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-heading text-4xl">Applied teams</h1>
-          <p className="mt-2 text-muted">{competition.name} · Review applicant names, contact emails, application dates, dancer counts, phases, and expected host fees. {canViewApplicantDetails ? "Open a team to see its profile, roster, and submitted AV." : "Full team profiles, rosters, and AVs unlock after results release."}</p>
+          <p className="mt-2 text-muted">{competition.name} · Review applicant names, captain phone contacts, contact emails, application dates, dancer counts, phases, and expected host fees. {canViewApplicantDetails ? "Open a team to see its profile, roster, and submitted AV." : "Full team profiles, rosters, and AVs unlock after results release."}</p>
         </div>
         {released ? (
           <a href="/api/comp/applicants/export" className="btn btn-primary">
@@ -110,6 +112,9 @@ export default async function CompApplicantsPage() {
                     <a className="underline hover:text-foreground" href={`mailto:${application.team.memberships[0].user.email}`}>{application.team.memberships[0].user.email}</a>
                   ) : "No approved team admin email available"}
                 </p>
+                {captainContactsFromJson(application.team.captainContacts).map((contact, index) => (
+                  <p key={index} className="text-sm text-muted">Captain: <span className="font-medium text-foreground">{contact.name}</span> · {contact.phone}</p>
+                ))}
                 <p className="text-sm text-muted">
                   Applied {formatDate(application.createdAt)} · {application.team._count.dancers} {application.team._count.dancers === 1 ? "dancer" : "dancers"}
                   {released ? ` · ${application.team.captains || "Captains TBA"}` : null}
