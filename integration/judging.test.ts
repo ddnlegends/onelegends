@@ -11,6 +11,8 @@ import { saveTeamScores, submitJudgingPacket } from "@/app/actions/judge";
 import { setLiveTeam } from "@/app/actions/moderator";
 import { finalizeCompetitionResults, releaseCompetitionResults, removeJudgeAssignment } from "@/app/actions/comp-judging";
 import { setJudgingOpen } from "@/app/actions/ops-judging";
+import { grantModeratorAccess, removeModeratorAccess } from "@/app/actions/ops-admin";
+import { setCompetitionPartnerStatus } from "@/app/actions/team-access";
 import { hasModeratorAccess } from "@/lib/moderator";
 
 let competitionId: string;
@@ -57,6 +59,45 @@ function closeForm() {
 }
 
 describe("judging with real PostgreSQL transactions", () => {
+  it.each([
+    ["Partner", true, false],
+    ["Affiliate", false, true],
+  ])("keeps a registered moderator through live %s viewing", async (_label, isPartner, isAffiliate) => {
+    await prisma.competitionProfile.update({ where: { id: competitionId }, data: { isPartner, isAffiliate } });
+    session.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.tech } })).id;
+    const original = await prisma.moderatorAccess.findFirstOrThrow({ where: { competitionId } });
+    const remove = new FormData(); remove.set("accessId", original.id);
+    expect(await removeModeratorAccess(undefined, remove)).toHaveProperty("error");
+    expect(await prisma.moderatorAccess.findUnique({ where: { id: original.id } })).not.toBeNull();
+
+    const invite = new FormData(); invite.set("competitionId", competitionId); invite.set("email", "new-moderator@example.com");
+    expect(await grantModeratorAccess(undefined, invite)).toHaveProperty("error");
+    expect(await prisma.moderatorAccess.findUnique({ where: { id: original.id } })).not.toBeNull();
+    expect(await prisma.moderatorInvite.count({ where: { competitionId } })).toBe(0);
+
+    const replacement = new FormData(); replacement.set("competitionId", competitionId); replacement.set("email", E2E.emails.team);
+    expect(await grantModeratorAccess(undefined, replacement)).toMatchObject({ ok: true });
+    const newAccess = await prisma.moderatorAccess.findFirstOrThrow({ where: { competitionId } });
+    expect(newAccess.userId).toBe((await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.team } })).id);
+    expect(await prisma.moderatorAccess.count({ where: { competitionId } })).toBe(1);
+    const removeNew = new FormData(); removeNew.set("accessId", newAccess.id);
+    expect(await removeModeratorAccess(undefined, removeNew)).toHaveProperty("error");
+
+    await prisma.competitionProfile.update({ where: { id: competitionId }, data: { judgingOpen: false } });
+    const removeReplacement = new FormData(); removeReplacement.set("accessId", newAccess.id);
+    expect(await removeModeratorAccess(undefined, removeReplacement)).toMatchObject({ ok: true });
+    expect(await prisma.moderatorAccess.count({ where: { competitionId } })).toBe(0);
+  });
+  it("does not switch a live Non-partner competition into assigned-moderator viewing", async () => {
+    await prisma.competitionProfile.update({ where: { id: competitionId }, data: { isPartner: false } });
+    session.userId = (await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.tech } })).id;
+    const access = await prisma.moderatorAccess.findFirstOrThrow({ where: { competitionId } });
+    const remove = new FormData(); remove.set("accessId", access.id);
+    expect(await removeModeratorAccess(undefined, remove)).toMatchObject({ ok: true });
+    const change = new FormData(); change.set("competitionId", competitionId); change.set("type", "partner");
+    expect(await setCompetitionPartnerStatus(undefined, change)).toHaveProperty("error");
+    expect((await prisma.competitionProfile.findUniqueOrThrow({ where: { id: competitionId } })).isPartner).toBe(false);
+  });
   it("blocks future scores, allows earlier score edits, and preserves late comments", async () => {
     expect(await saveTeamScores(undefined, form(2))).toHaveProperty("error");
     expect(await prisma.judgeScore.count()).toBe(0);

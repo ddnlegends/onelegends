@@ -110,11 +110,35 @@ export async function setJudgingOpen(
       where: { competitionId: competition.id, viewingPosition: { not: null }, ...viewingEligibleApplicationWhere },
     });
     if (ordered === 0) return { error: "No paid, unblocked teams are in the viewing order." };
-    const updated = await prisma.competitionProfile.updateMany({
-      where: { id: competition.id, resultsReleasedAt: null, resultsFinalizedByEmail: null },
-      data: { judgingOpen: true, acceptingApps: false },
+    const opened = await prisma.$transaction(async (tx) => {
+      // Prevent a moderator removal or replacement between the preflight check and opening.
+      await tx.$queryRaw`SELECT id FROM "CompetitionProfile" WHERE id = ${competition.id} FOR UPDATE`;
+      const current = await tx.competitionProfile.findUnique({
+        where: { id: competition.id },
+        select: { isPartner: true, isAffiliate: true },
+      });
+      if (!current) return { error: "Competition not found." };
+      if (usesAssignedModerator(current)) {
+        const [moderators, judges] = await Promise.all([
+          tx.moderatorAccess.findMany({ where: { competitionId: competition.id }, select: { userId: true } }),
+          tx.judgeAssignment.findMany({
+            where: { competitionId: competition.id, status: "APPROVED" },
+            select: { judge: { select: { userId: true } } },
+          }),
+        ]);
+        const judgeUserIds = new Set(judges.map((row) => row.judge.userId));
+        if (!moderators.some((row) => !judgeUserIds.has(row.userId))) {
+          return { error: "Assign an accepted, non-judge moderator before opening viewing." };
+        }
+      }
+      const updated = await tx.competitionProfile.updateMany({
+        where: { id: competition.id, resultsReleasedAt: null, resultsFinalizedByEmail: null },
+        data: { judgingOpen: true, acceptingApps: false },
+      });
+      if (updated.count === 0) return { error: "Judging cannot reopen after results are validated or released." };
+      return { ok: true };
     });
-    if (updated.count === 0) return { error: "Judging cannot reopen after results are validated or released." };
+    if (opened.error) return opened;
     revalidateJudging(competition.id);
     return {
       ok: true,

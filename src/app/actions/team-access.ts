@@ -1254,13 +1254,17 @@ export async function setCompetitionPartnerStatus(
   }
 
   const currentFee = await prisma.competitionProfile.findUnique({
-    where: { id: parsed.data.competitionId }, select: { registrationPaidAt: true, resultsFinalizedByEmail: true, resultsReleasedAt: true },
+    where: { id: parsed.data.competitionId }, select: { registrationPaidAt: true, resultsFinalizedByEmail: true, resultsReleasedAt: true, judgingOpen: true },
   });
+  if (!currentFee) return { error: "Competition not found." };
+  if (currentFee.judgingOpen) {
+    return { error: "Close judging before changing this competition's type." };
+  }
   if (currentFee?.resultsFinalizedByEmail || currentFee?.resultsReleasedAt) {
     return { error: "Competition type is locked after results validation or release." };
   }
   const updated = await prisma.competitionProfile.updateMany({
-    where: { id: parsed.data.competitionId, resultsFinalizedByEmail: null, resultsReleasedAt: null },
+    where: { id: parsed.data.competitionId, judgingOpen: false, resultsFinalizedByEmail: null, resultsReleasedAt: null },
     data: {
       isPartner: parsed.data.type === "partner",
       isAffiliate: parsed.data.type === "affiliate",
@@ -1269,7 +1273,7 @@ export async function setCompetitionPartnerStatus(
         : {}),
     },
   });
-  if (!updated.count) return { error: "Competition not found." };
+  if (!updated.count) return { error: "Competition changed while saving. Refresh and try again after judging is closed." };
 
   revalidateAccessPaths();
   revalidatePath("/");

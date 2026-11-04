@@ -12,6 +12,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
 import { isCompAdmin, isPlatformAdmin } from "@/lib/team-access";
+import { usesAssignedModerator } from "@/lib/competition-type";
 
 function revalidateOps() {
   revalidatePath("/dashboard");
@@ -90,6 +91,13 @@ export async function grantModeratorAccess(
       SELECT id FROM "CompetitionProfile" WHERE id = ${competitionId} FOR UPDATE
     `;
     if (!locked.length) return { error: "Competition not found." };
+    const current = await tx.competitionProfile.findUniqueOrThrow({
+      where: { id: competitionId },
+      select: { judgingOpen: true, isPartner: true, isAffiliate: true },
+    });
+    if (current.judgingOpen && usesAssignedModerator(current) && !account) {
+      return { error: "Viewing is open. Assign a registered moderator before replacing the current moderator." };
+    }
     const [access, invites] = await Promise.all([
       tx.moderatorAccess.findMany({
         where: { competitionId },
@@ -138,7 +146,24 @@ export async function removeModeratorAccess(
   if (!(await isCompAdmin(user.id, row.competitionId))) {
     return { error: "Only this competition's admins or circuit tech admins can remove its moderator." };
   }
-  await prisma.moderatorAccess.delete({ where: { id: row.id } });
+  const result = await prisma.$transaction(async (tx) => {
+    // Share the competition lock with moderator replacement and opening judging.
+    await tx.$queryRaw`SELECT id FROM "CompetitionProfile" WHERE id = ${row.competitionId} FOR UPDATE`;
+    const [current, access] = await Promise.all([
+      tx.competitionProfile.findUnique({
+        where: { id: row.competitionId },
+        select: { judgingOpen: true, isPartner: true, isAffiliate: true },
+      }),
+      tx.moderatorAccess.findUnique({ where: { id: row.id }, select: { id: true } }),
+    ]);
+    if (!current || !access) return { error: "Moderator access not found." };
+    if (current.judgingOpen && usesAssignedModerator(current)) {
+      return { error: "Viewing is open. Assign another registered moderator or close judging before removing this moderator." };
+    }
+    await tx.moderatorAccess.delete({ where: { id: row.id } });
+    return { ok: true };
+  });
+  if (result.error) return result;
   revalidateOps();
   return { ok: true };
 }
