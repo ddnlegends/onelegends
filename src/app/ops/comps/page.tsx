@@ -12,7 +12,7 @@ import {
   competitionStatus,
   type CompStatus,
 } from "@/lib/judging";
-import { formatDate } from "@/lib/utils";
+import { formatEventDate } from "@/lib/competition-details";
 import { isPlatformAdmin } from "@/lib/team-access";
 import { currentApplicationWhere } from "@/lib/payment-eligibility";
 import { usesAssignedModerator } from "@/lib/competition-type";
@@ -145,7 +145,7 @@ export default async function CompDashboardPage() {
                       </h2>
                       <CompetitionTypeBadge isPartner={comp.isPartner} isAffiliate={comp.isAffiliate} />
                       <p className="truncate text-xs text-muted">
-                        {[comp.location, comp.eventDate ? formatDate(comp.eventDate) : ""]
+                        {[comp.location, comp.eventDate ? formatEventDate(comp.eventDate) : ""]
                           .filter(Boolean)
                           .join(" · ") || "—"}
                       </p>

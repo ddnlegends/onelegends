@@ -16,8 +16,7 @@ import { Chip, InfoGrid, PanelSection } from "@/components/OpsListParts";
 import { LocalDateTime } from "@/components/LocalDateTime";
 import { prisma } from "@/lib/prisma";
 import { competitionStatus } from "@/lib/judging";
-import { formatDate } from "@/lib/utils";
-import { formatApplicationFee } from "@/lib/competition-details";
+import { formatApplicationFee, formatEventDate } from "@/lib/competition-details";
 import { competitionApplicationClosureReasons } from "@/lib/competition-profile";
 import { currentApplicationWhere } from "@/lib/payment-eligibility";
 import { COMPETITION_TYPE_GROUPS, competitionType, usesAssignedModerator } from "@/lib/competition-type";
@@ -209,7 +208,7 @@ export default async function OpsCompetitionsPage() {
                   <InfoGrid
                     items={[
                       { label: "Event dates", value: competition.dates },
-                      { label: "Event date", value: competition.eventDate ? formatDate(competition.eventDate) : "" },
+                      { label: "Event date", value: competition.eventDate ? formatEventDate(competition.eventDate) : "" },
                       { label: "Location (city)", value: competition.location },
                       { label: "Venue", value: competition.venue },
                       { label: "Venue address", value: competition.venueAddress },
@@ -282,7 +281,7 @@ export default async function OpsCompetitionsPage() {
                       },
                       {
                         label: "Listing",
-                        value: `Created ${formatDate(competition.createdAt)}${competition.claimedAt ? ` · claimed ${formatDate(competition.claimedAt)}` : " · unclaimed"}`,
+                        value: <>Created <LocalDateTime date={competition.createdAt} />{competition.claimedAt ? <> · claimed <LocalDateTime date={competition.claimedAt} /></> : " · unclaimed"}</>,
                       },
                     ]}
                   />

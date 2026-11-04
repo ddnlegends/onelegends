@@ -82,3 +82,27 @@ test("competition admin sets ordered early, regular, and late deadlines", async 
     });
   }
 });
+
+test("deadlines entered across daylight saving changes save as exact instants", async ({ browser }) => {
+  const context = await browser.newContext({ timezoneId: "America/New_York" });
+  try {
+    const page = await context.newPage();
+    await login(page, "comp");
+    await page.goto("/comp/profile");
+    await page.getByLabel("Early application deadline").fill("2027-01-15T23:59");
+    await page.getByLabel("Regular application deadline").fill("2027-03-15T23:59");
+    await page.getByLabel("Late application deadline").fill("2027-04-01T23:59");
+    await page.getByRole("button", { name: "Save Details" }).click();
+    await expect(page.locator(".notice-ok")).toContainText("Competition details saved");
+
+    const saved = await db.competitionProfile.findUniqueOrThrow({ where: { slug: E2E.comps.showcase.slug } });
+    expect(saved.earlyTierDeadline?.toISOString()).toBe("2027-01-16T04:59:00.000Z");
+    expect(saved.earlyApplicationDeadline?.toISOString()).toBe("2027-03-16T03:59:00.000Z");
+    expect(saved.applicationDeadline?.toISOString()).toBe("2027-04-02T03:59:00.000Z");
+    expect(saved.applicationClosesAt?.toISOString()).toBe("2027-04-02T03:59:00.000Z");
+    await page.reload();
+    await expect(page.getByLabel("Regular application deadline")).toHaveValue("2027-03-15T23:59");
+  } finally {
+    await context.close();
+  }
+});

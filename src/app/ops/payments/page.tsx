@@ -5,7 +5,7 @@ import { requirePlatformAdminPage } from "@/lib/page-guards";
 import { currentApplicationWhere, dollars } from "@/lib/payment-eligibility";
 import { competitionTypeLabel } from "@/lib/competition-type";
 import { prisma } from "@/lib/prisma";
-import { formatDate } from "@/lib/utils";
+import { LocalDateTime } from "@/components/LocalDateTime";
 import { offerStatusLabel } from "@/lib/application-offers";
 
 export default async function OpsPaymentsPage() {
@@ -45,7 +45,7 @@ export default async function OpsPaymentsPage() {
               <li key={team.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
                 <div>
                   <Link href={`/ops/teams/${team.id}`} className="font-semibold hover:underline">{team.name}</Link>
-                  <p className="text-sm text-muted">{dollars(team.registrationFeeCents)} · {team.registrationPaidAt ? `Paid ${formatDate(team.registrationPaidAt)}` : "Unpaid"}{team.applyBlocked ? " · Blocked" : ""}</p>
+                  <p className="text-sm text-muted">{dollars(team.registrationFeeCents)} · {team.registrationPaidAt ? <>Paid <LocalDateTime date={team.registrationPaidAt} /></> : "Unpaid"}{team.applyBlocked ? " · Blocked" : ""}</p>
                 </div>
                 <RegistrationPaymentForm kind="team" id={team.id} paid={Boolean(team.registrationPaidAt)} />
               </li>
@@ -59,7 +59,7 @@ export default async function OpsPaymentsPage() {
               <li key={competition.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
                 <div>
                   <Link href={`/ops/competitions`} className="font-semibold hover:underline">{competition.name}</Link>
-                  <p className="text-sm text-muted">{competitionTypeLabel(competition)} · {dollars(competition.registrationFeeCents)} · {competition.registrationPaidAt ? `Paid ${formatDate(competition.registrationPaidAt)}` : "Unpaid"}</p>
+                  <p className="text-sm text-muted">{competitionTypeLabel(competition)} · {dollars(competition.registrationFeeCents)} · {competition.registrationPaidAt ? <>Paid <LocalDateTime date={competition.registrationPaidAt} /></> : "Unpaid"}</p>
                 </div>
                 <RegistrationPaymentForm kind="competition" id={competition.id} paid={Boolean(competition.registrationPaidAt)} />
               </li>
@@ -73,7 +73,7 @@ export default async function OpsPaymentsPage() {
             {applications.map((application) => (
               <li key={application.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
                 <span>{application.team.name} · {application.competition.name} · {offerStatusLabel({ ...application, decisionsSubmittedAt: application.competition.decisionsSubmittedAt })}</span>
-                <span className="text-muted">{application.compPaymentReceivedAt ? `Received ${formatDate(application.compPaymentReceivedAt)}` : "Not marked paid"}</span>
+                <span className="text-muted">{application.compPaymentReceivedAt ? <>Received <LocalDateTime date={application.compPaymentReceivedAt} /></> : "Not marked paid"}</span>
               </li>
             ))}
           </ul>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatApplicationFee, formatEventDateRange, parseApplicationFee, parseEventDate } from "./competition-details";
+import { formatApplicationFee, formatEventDate, formatEventDateRange, parseApplicationFee, parseEventDate } from "./competition-details";
 import { normalizePacketDriveUrl } from "./competition-packet";
 
 describe("competition dates and fees", () => {
@@ -7,6 +7,7 @@ describe("competition dates and fees", () => {
     for (const raw of ["2027-02-29", "2026-02-31", "2026-13-01", "0000-01-01", "2026-1-01", "hello"]) expect(parseEventDate(raw)).toBeNull();
     expect(parseEventDate("2028-02-29")?.toISOString()).toBe("2028-02-29T00:00:00.000Z");
     expect(formatEventDateRange(parseEventDate("2026-10-15")!, parseEventDate("2026-10-15")!)).toBe("Oct 15, 2026");
+    expect(formatEventDate(parseEventDate("2026-11-02")!)).toBe("Nov 2, 2026");
     expect(formatEventDateRange(parseEventDate("2026-12-31")!, parseEventDate("2027-01-02")!)).toContain("2027");
   });
   it("keeps unknown fees distinct from free and stores exact cents", () => {

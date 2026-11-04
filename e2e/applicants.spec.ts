@@ -47,23 +47,32 @@ test("competition admins see only applicant basics before results release", asyn
   await expect(comp.getByText("404", { exact: true })).toBeVisible();
 });
 
-test("host sees an application just before midnight on its local calendar date", async ({ browser }) => {
+test("hosts across time zones see the same application at their local date and time", async ({ browser }) => {
   const application = await db.application.findFirstOrThrow({
     where: { competition: { slug: E2E.comps.showcase.slug } },
     include: { team: true },
   });
   const submittedAt = new Date("2026-11-02T04:35:00.000Z");
   await db.application.update({ where: { id: application.id }, data: { createdAt: submittedAt } });
-  const context = await browser.newContext({ timezoneId: "America/New_York" });
-  try {
-    const page = await context.newPage();
-    await login(page, "comp");
-    await page.goto("/comp/applicants");
-    const row = page.getByRole("listitem").filter({ hasText: application.team.name });
-    await expect(row.locator("time")).toHaveAttribute("datetime", submittedAt.toISOString());
-    await expect(row.locator("time")).toHaveText(/Nov 1, 2026.*11:35 PM Eastern Time/);
-  } finally {
-    await context.close();
+  const cases = [
+    { zone: "America/Los_Angeles", expected: /Nov 1, 2026.*8:35 PM Pacific Time/ },
+    { zone: "America/New_York", expected: /Nov 1, 2026.*11:35 PM Eastern Time/ },
+    { zone: "Europe/London", expected: /Nov 2, 2026.*4:35 AM/ },
+    { zone: "Asia/Kolkata", expected: /Nov 2, 2026.*10:05 AM/ },
+    { zone: "Pacific/Auckland", expected: /Nov 2, 2026.*5:35 PM/ },
+  ];
+  for (const { zone, expected } of cases) {
+    const context = await browser.newContext({ timezoneId: zone });
+    try {
+      const page = await context.newPage();
+      await login(page, "comp");
+      await page.goto("/comp/applicants");
+      const row = page.getByRole("listitem").filter({ hasText: application.team.name });
+      await expect(row.locator("time")).toHaveAttribute("datetime", submittedAt.toISOString());
+      await expect(row.locator("time")).toHaveText(expected);
+    } finally {
+      await context.close();
+    }
   }
 });
 

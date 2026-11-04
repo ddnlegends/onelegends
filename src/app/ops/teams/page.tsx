@@ -15,7 +15,6 @@ import { TeamDetails } from "@/components/TeamDetails";
 import { TeamPhoto } from "@/components/TeamPhoto";
 import { LocalDateTime } from "@/components/LocalDateTime";
 import { prisma } from "@/lib/prisma";
-import { formatDate } from "@/lib/utils";
 import { currentApplicationWhere } from "@/lib/payment-eligibility";
 import { offerStatusLabel } from "@/lib/application-offers";
 
@@ -144,9 +143,9 @@ export default async function OpsTeamsPage() {
 
                 <InfoGrid
                   items={[
-                    { label: "Status", value: team.claimedAt ? `Claimed ${formatDate(team.claimedAt)}` : "Unclaimed" },
-                    { label: "Listing created", value: formatDate(team.createdAt) },
-                    { label: "Last updated", value: formatDate(team.updatedAt) },
+                    { label: "Status", value: team.claimedAt ? <>Claimed <LocalDateTime date={team.claimedAt} /></> : "Unclaimed" },
+                    { label: "Listing created", value: <LocalDateTime date={team.createdAt} /> },
+                    { label: "Last updated", value: <LocalDateTime date={team.updatedAt} /> },
                     { label: "Public page", value: <Link href={`/teams/${team.id}`} prefetch={false} className="text-accent underline">View public profile</Link> },
                     {
                       label: "Applications",

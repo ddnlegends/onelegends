@@ -12,6 +12,11 @@ export function formatEventDateRange(start: Date, end: Date): string {
   return start.getTime() === end.getTime() ? formatter.format(start) : formatter.formatRange(start, end);
 }
 
+/** Event dates are calendar dates; never shift them into a viewer time zone. */
+export function formatEventDate(date: Date): string {
+  return formatEventDateRange(date, date);
+}
+
 export function parseApplicationFee(value: string): number | null | "invalid" {
   if (!value) return null;
   if (!/^\d{1,5}(\.\d{1,2})?$/.test(value)) return "invalid";
