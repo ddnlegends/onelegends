@@ -13,6 +13,7 @@ import { ExpandableRow } from "@/components/ExpandableRow";
 import { Chip, InfoGrid, PanelSection } from "@/components/OpsListParts";
 import { TeamDetails } from "@/components/TeamDetails";
 import { TeamPhoto } from "@/components/TeamPhoto";
+import { LocalDateTime } from "@/components/LocalDateTime";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { currentApplicationWhere } from "@/lib/payment-eligibility";
@@ -234,7 +235,7 @@ export default async function OpsTeamsPage() {
                           <span>{application.competition.name}</span>
                           <span className="text-muted">
                             {offerStatusLabel({ ...application, decisionsSubmittedAt: application.competition.decisionsSubmittedAt })} · applied{" "}
-                            {formatDate(application.createdAt)}
+                            <LocalDateTime date={application.createdAt} />
                           </span>
                         </li>
                       ))}

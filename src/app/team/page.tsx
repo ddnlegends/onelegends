@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { formatDate } from "@/lib/utils";
+import { LocalDateTime } from "@/components/LocalDateTime";
 import { applicationPhaseLabel } from "@/lib/application-schedule";
 import { formatApplicationFee } from "@/lib/competition-details";
 import { teamProfileGaps, TEAM_APPLY_OPS_BLOCKED_MESSAGE } from "@/lib/team-profile";
@@ -168,7 +168,7 @@ export default async function TeamDashboardPage() {
                     {app.competition.name}
                   </Link>
                   <p className="text-sm text-muted">
-                    Applied {formatDate(app.createdAt)}
+                    Applied <LocalDateTime date={app.createdAt} />
                     {app.competition.dates ? ` · ${app.competition.dates}` : ""}
                   </p>
                   <p className="text-xs text-muted">{app.appliedPhase ? `${applicationPhaseLabel(app.appliedPhase)} phase · Expected host fee: ${formatApplicationFee(app.expectedFeeCents)}` : "Phase and expected host fee were not recorded for this earlier application."}</p>

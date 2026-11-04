@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getActiveCompetitionId, isCompAdmin } from "@/lib/team-access";
-import { formatDate } from "@/lib/utils";
+import { LocalDateTime } from "@/components/LocalDateTime";
 import { visibleApplicationWhere } from "@/lib/payment-eligibility";
 import { CompDecisionBoard } from "@/components/CompDecisionBoard";
 import { CompPaymentCheckbox } from "@/components/PaymentForms";
@@ -116,7 +116,7 @@ export default async function CompApplicantsPage() {
                   <p key={index} className="text-sm text-muted">Captain: <span className="font-medium text-foreground">{contact.name}</span> · {contact.phone}</p>
                 ))}
                 <p className="text-sm text-muted">
-                  Applied {formatDate(application.createdAt)} · {application.team._count.dancers} {application.team._count.dancers === 1 ? "dancer" : "dancers"}
+                  Applied <LocalDateTime date={application.createdAt} /> · {application.team._count.dancers} {application.team._count.dancers === 1 ? "dancer" : "dancers"}
                   {released ? ` · ${application.team.captains || "Captains TBA"}` : null}
                 </p>
                 <p className="mt-1 text-sm font-medium">{application.appliedPhase ? `${applicationPhaseLabel(application.appliedPhase)} phase · Expected host fee: ${formatApplicationFee(application.expectedFeeCents)}` : "Phase and expected host fee were not recorded for this earlier application."}</p>

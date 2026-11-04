@@ -1,6 +1,5 @@
 import { expect } from "@playwright/test";
-import { db, E2E, pageAs, SEALED_NAMES, test } from "./helpers";
-import { formatDate } from "../src/lib/utils";
+import { db, E2E, login, pageAs, SEALED_NAMES, test } from "./helpers";
 
 test("competition admins see only applicant basics before results release", async ({ browser }) => {
   const comp = await pageAs(browser, "comp");
@@ -19,7 +18,8 @@ test("competition admins see only applicant basics before results release", asyn
   for (const application of applications) {
     const row = comp.getByRole("listitem").filter({ hasText: application.team.name });
     await expect(row).toContainText("2 dancers");
-    await expect(row).toContainText(`Applied ${formatDate(application.createdAt)}`);
+    await expect(row).toContainText("Applied");
+    await expect(row.locator("time")).toHaveAttribute("datetime", application.createdAt.toISOString());
     await expect(comp.getByRole("link", { name: application.team.name })).toHaveCount(0);
   }
   await expect(comp.getByText("Dancer One")).toHaveCount(0);
@@ -45,6 +45,26 @@ test("competition admins see only applicant basics before results release", asyn
   });
   await comp.goto(`/comp/applicants/${nonApplicant.id}`);
   await expect(comp.getByText("404", { exact: true })).toBeVisible();
+});
+
+test("host sees an application just before midnight on its local calendar date", async ({ browser }) => {
+  const application = await db.application.findFirstOrThrow({
+    where: { competition: { slug: E2E.comps.showcase.slug } },
+    include: { team: true },
+  });
+  const submittedAt = new Date("2026-11-02T04:35:00.000Z");
+  await db.application.update({ where: { id: application.id }, data: { createdAt: submittedAt } });
+  const context = await browser.newContext({ timezoneId: "America/New_York" });
+  try {
+    const page = await context.newPage();
+    await login(page, "comp");
+    await page.goto("/comp/applicants");
+    const row = page.getByRole("listitem").filter({ hasText: application.team.name });
+    await expect(row.locator("time")).toHaveAttribute("datetime", submittedAt.toISOString());
+    await expect(row.locator("time")).toHaveText(/Nov 1, 2026.*11:35 PM Eastern Time/);
+  } finally {
+    await context.close();
+  }
 });
 
 test("moderator-only and judge accounts cannot see applicant names", async ({ browser }) => {

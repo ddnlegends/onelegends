@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPendingInvites } from "@/lib/invites";
-import { formatDate } from "@/lib/utils";
+import { LocalDateTime } from "@/components/LocalDateTime";
 import { offerStatusLabel } from "@/lib/application-offers";
 import { applicationPhaseLabel } from "@/lib/application-schedule";
 import { formatApplicationFee } from "@/lib/competition-details";
@@ -390,7 +390,7 @@ export default async function DashboardPage() {
                     <div>
                       <p className="font-medium">{app.competition.name}</p>
                       <p className="text-sm text-muted">
-                        Applied {formatDate(app.createdAt)}
+                        Applied <LocalDateTime date={app.createdAt} />
                       </p>
                       <p className="text-xs text-muted">{app.appliedPhase ? `${applicationPhaseLabel(app.appliedPhase)} phase · Expected host fee: ${formatApplicationFee(app.expectedFeeCents)}` : "Phase and expected host fee were not recorded for this earlier application."}</p>
                       <Link href={`/team/applications/${app.id}`} className="mt-2 inline-block text-sm font-medium text-accent underline">Review application</Link>
