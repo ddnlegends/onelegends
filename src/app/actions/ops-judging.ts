@@ -19,7 +19,7 @@ import {
 } from "@/lib/judging";
 import { isPlatformAdmin } from "@/lib/team-access";
 import { describePanelBlockers, judgePanelCompletion } from "@/lib/judge-panel-completion";
-import { viewingEligibleApplicationWhere, visibleApplicationWhere } from "@/lib/payment-eligibility";
+import { currentApplicationWhere, viewingEligibleApplicationWhere } from "@/lib/payment-eligibility";
 import { hostPaymentFingerprint } from "@/lib/host-payment-review";
 import { usesAssignedModerator } from "@/lib/competition-type";
 import { maybeReleaseNonPartnerResults } from "@/lib/release";
@@ -65,11 +65,16 @@ export async function setJudgingOpen(
       return { error: "Review the competition's host payments before opening judging." };
     }
     const paymentRows = await prisma.application.findMany({
-      where: { competitionId: competition.id, ...visibleApplicationWhere },
-      select: { id: true, compPaymentReceivedAt: true },
+      where: { competitionId: competition.id, ...currentApplicationWhere },
+      select: {
+        id: true,
+        compPaymentReceivedAt: true,
+        viewingPosition: true,
+        team: { select: { registrationPaidAt: true, applyBlocked: true } },
+      },
     });
-    if (formData.get("paymentFingerprint") !== hostPaymentFingerprint(paymentRows)) {
-      return { error: "The host payment list changed. Refresh and review the latest statuses before opening judging." };
+    if (formData.get("paymentFingerprint") !== hostPaymentFingerprint(paymentRows, competition.registrationPaidAt)) {
+      return { error: "A payment or applicant status changed. Refresh and review the latest statuses before opening judging." };
     }
     if (competition.resultsReleasedAt || competition.resultsFinalizedByEmail) {
       return { error: "Judging cannot reopen after results are validated or released." };

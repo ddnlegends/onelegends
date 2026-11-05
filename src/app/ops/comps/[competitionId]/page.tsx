@@ -26,6 +26,7 @@ import { isPlatformAdmin } from "@/lib/team-access";
 import { judgePanelCompletion } from "@/lib/judge-panel-completion";
 import { currentApplicationWhere, isViewingEligibleApplication } from "@/lib/payment-eligibility";
 import { hostPaymentFingerprint } from "@/lib/host-payment-review";
+import { formatApplicationFee } from "@/lib/competition-details";
 import { usesAssignedModerator, usesTechRelease } from "@/lib/competition-type";
 
 export default async function CompDashboardDetailPage({
@@ -55,8 +56,9 @@ export default async function CompDashboardDetailPage({
           status: true,
           viewingPosition: true,
           compPaymentReceivedAt: true,
+          expectedFeeCents: true,
           removedAt: true,
-          team: { select: { name: true, applyBlocked: true, registrationPaidAt: true } },
+          team: { select: { name: true, applyBlocked: true, registrationPaidAt: true, registrationFeeCents: true } },
         },
       },
       judgeAssignments: {
@@ -93,9 +95,16 @@ export default async function CompDashboardDetailPage({
 
   const orderExists = competition.applications.some((app) => app.viewingPosition != null);
   const eligibleApplications = competition.applications.filter((app) => isViewingEligibleApplication(app, orderExists));
-  const paymentRows = competition.applications
-    .filter((app) => !app.team.applyBlocked)
-    .map((app) => ({ id: app.id, name: app.team.name, paid: Boolean(app.compPaymentReceivedAt), compPaymentReceivedAt: app.compPaymentReceivedAt }));
+  const paymentRows = competition.applications.map((app) => ({
+    id: app.id,
+    name: app.team.name,
+    hostPaid: Boolean(app.compPaymentReceivedAt),
+    teamPaid: Boolean(app.team.registrationPaidAt),
+    blocked: app.team.applyBlocked,
+    expectedHostFee: formatApplicationFee(app.expectedFeeCents),
+    teamFee: formatApplicationFee(app.team.registrationFeeCents),
+    included: isViewingEligibleApplication(app, orderExists),
+  }));
   const ordered = eligibleApplications
     .filter((app) => app.viewingPosition != null)
     .sort((a, b) => (a.viewingPosition as number) - (b.viewingPosition as number));
@@ -256,8 +265,11 @@ export default async function CompDashboardDetailPage({
         claimed={claimed}
         released={released}
         closeProgress={closeProgress}
-        paymentRows={paymentRows.map(({ id, name, paid }) => ({ id, name, paid }))}
-        paymentFingerprint={hostPaymentFingerprint(paymentRows)}
+        competitionPaid={Boolean(competition.registrationPaidAt)}
+        competitionFee={formatApplicationFee(competition.registrationFeeCents)}
+        orderLocked={orderExists}
+        paymentRows={paymentRows}
+        paymentFingerprint={hostPaymentFingerprint(competition.applications, competition.registrationPaidAt)}
       />
 
       <section className="space-y-3 rounded-xl border border-line bg-card p-5">

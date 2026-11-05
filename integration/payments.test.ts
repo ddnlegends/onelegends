@@ -205,8 +205,8 @@ it("requires the tech admin's current payment check and excludes host-unpaid tea
   expect(await prisma.application.count({ where: { competitionId: competition.id, viewingPosition: { not: null } } })).toBe(0);
 
   const fingerprint = hostPaymentFingerprint(await prisma.application.findMany({
-    where: { competitionId: competition.id }, select: { id: true, compPaymentReceivedAt: true },
-  }));
+    where: { competitionId: competition.id }, select: { id: true, compPaymentReceivedAt: true, viewingPosition: true, team: { select: { registrationPaidAt: true, applyBlocked: true } } },
+  }), competition.registrationPaidAt);
   expect(await setJudgingOpen(undefined, form({ competitionId: competition.id, open: "1", confirmation: "HOST_PAYMENTS_REVIEWED", paymentFingerprint: fingerprint }))).toMatchObject({ ok: true });
   expect(await prisma.application.findUniqueOrThrow({ where: { id: applications[0].id } })).toMatchObject({ viewingPosition: null, compPaymentReceivedAt: null });
   expect((await prisma.application.findUniqueOrThrow({ where: { id: applications[1].id } })).viewingPosition).toBe(1);
@@ -227,8 +227,8 @@ it("keeps existing viewing slots when a historical host receipt is missing", asy
 it("refuses a stale payment check if the applicant list changes", async () => {
   const competition = await prisma.competitionProfile.findUniqueOrThrow({ where: { slug: E2E.comps.showcase.slug } });
   const priorFingerprint = hostPaymentFingerprint(await prisma.application.findMany({
-    where: { competitionId: competition.id }, select: { id: true, compPaymentReceivedAt: true },
-  }));
+    where: { competitionId: competition.id }, select: { id: true, compPaymentReceivedAt: true, viewingPosition: true, team: { select: { registrationPaidAt: true, applyBlocked: true } } },
+  }), competition.registrationPaidAt);
   const team = await prisma.teamProfile.findUniqueOrThrow({ where: { slug: E2E.teams.mine.slug } });
   await prisma.application.create({ data: { competitionId: competition.id, teamId: team.id } });
   const tech = await prisma.user.findUniqueOrThrow({ where: { email: E2E.emails.tech } });
@@ -237,8 +237,8 @@ it("refuses a stale payment check if the applicant list changes", async () => {
   expect(await prisma.application.count({ where: { competitionId: competition.id, viewingPosition: { not: null } } })).toBe(0);
 
   const currentFingerprint = hostPaymentFingerprint(await prisma.application.findMany({
-    where: { competitionId: competition.id }, select: { id: true, compPaymentReceivedAt: true },
-  }));
+    where: { competitionId: competition.id }, select: { id: true, compPaymentReceivedAt: true, viewingPosition: true, team: { select: { registrationPaidAt: true, applyBlocked: true } } },
+  }), competition.registrationPaidAt);
   expect(await setJudgingOpen(undefined, form({ competitionId: competition.id, open: "1", confirmation: "HOST_PAYMENTS_REVIEWED", paymentFingerprint: currentFingerprint }))).toMatchObject({ ok: true });
   expect(await prisma.application.findFirstOrThrow({ where: { competitionId: competition.id, teamId: team.id } })).toMatchObject({ viewingPosition: null });
 });

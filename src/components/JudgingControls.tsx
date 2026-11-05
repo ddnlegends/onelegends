@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import { setJudgingOpen } from "@/app/actions/ops-judging";
 import { SaveNotice } from "@/components/SaveNotice";
@@ -12,6 +13,9 @@ export function JudgingControls({
   claimed,
   released,
   closeProgress,
+  competitionPaid,
+  competitionFee,
+  orderLocked,
   paymentRows,
   paymentFingerprint,
 }: {
@@ -21,11 +25,24 @@ export function JudgingControls({
   claimed: boolean;
   released: boolean;
   closeProgress: { ready: boolean; missingScores: number; unsubmittedJudges: number; invalidPackets: number };
-  paymentRows: { id: string; name: string; paid: boolean }[];
+  competitionPaid: boolean;
+  competitionFee: string;
+  orderLocked: boolean;
+  paymentRows: {
+    id: string;
+    name: string;
+    hostPaid: boolean;
+    teamPaid: boolean;
+    blocked: boolean;
+    expectedHostFee: string;
+    teamFee: string;
+    included: boolean;
+  }[];
   paymentFingerprint: string;
 }) {
   const [state, formAction, pending] = useActionState(setJudgingOpen, undefined);
   const [reviewingPayments, setReviewingPayments] = useState(false);
+  const includedCount = paymentRows.filter((row) => row.included).length;
 
   return (
     <div className="space-y-3 rounded-xl border border-line bg-card p-5">
@@ -67,26 +84,39 @@ export function JudgingControls({
         </div>
       ) : null}
       {reviewingPayments && !judgingOpen ? <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="presentation">
-        <div role="dialog" aria-modal="true" aria-label="Verify host payments before viewing" className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-card p-6 shadow-xl">
+        <div role="dialog" aria-modal="true" aria-label="Verify host payments before viewing" className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-xl bg-card p-6 shadow-xl">
           <div className="flex items-start justify-between gap-4">
-            <h2 className="font-heading text-2xl">Check host payments before AV viewing</h2>
+            <h2 className="font-heading text-2xl">Check all payments before AV viewing</h2>
             <button type="button" className="btn btn-ghost py-1" aria-label="Close payment verification" onClick={() => setReviewingPayments(false)}>×</button>
           </div>
-          <p className="mt-2 text-sm text-muted">Competition admins mark who paid their competition. Review this list with them before opening judging. Teams not marked paid will not appear in AV viewing. You can close this window and return after they update it.</p>
+          <p className="mt-2 text-sm text-muted">Review the competition and every active applicant before opening judging. {orderLocked ? "The existing viewing order is frozen; later host payment changes do not add or remove teams." : "Only unblocked teams marked paid to both OneLegends and the host enter AV viewing."} Host payments are recorded as received or unpaid; compare the expected amount with your outside payment records.</p>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-blush px-4 py-3 text-sm">
+            <span>Competition OneLegends fee: <strong>{competitionFee}</strong> · <strong className={competitionPaid ? "text-success" : "text-warning"}>{competitionPaid ? "Paid" : "Unpaid"}</strong></span>
+            <span className="font-semibold">{includedCount} of {paymentRows.length} teams in viewing</span>
+          </div>
           <ul className="mt-4 divide-y divide-line rounded-lg border border-line">
-            {paymentRows.map((row) => <li key={row.id} className="flex justify-between gap-3 px-4 py-3 text-sm">
-              <span>{row.name}</span><span className={row.paid ? "font-semibold text-success" : "font-semibold text-warning"}>{row.paid ? "Paid for comp" : "Unpaid for comp"}</span>
+            {paymentRows.map((row) => <li key={row.id} className="space-y-2 px-4 py-3 text-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-semibold">{row.name}</span>
+                <span className={row.included ? "font-semibold text-success" : "font-semibold text-warning"}>{row.included ? "In viewing" : row.blocked ? "Excluded · blocked" : "Excluded from viewing"}</span>
+              </div>
+              <div className="grid gap-1 text-muted sm:grid-cols-2">
+                <span>OneLegends team fee {row.teamFee}: <strong className={row.teamPaid ? "text-success" : "text-warning"}>{row.teamPaid ? "Paid" : "Unpaid"}</strong></span>
+                <span>Host fee expected {row.expectedHostFee}: <strong className={row.hostPaid ? "text-success" : "text-warning"}>{row.hostPaid ? "Paid for comp" : "Unpaid for comp"}</strong></span>
+              </div>
             </li>)}
           </ul>
+          {!paymentRows.length ? <p className="mt-3 text-sm text-muted">No active applications.</p> : null}
           <form action={formAction} className="mt-5 space-y-3">
             <input type="hidden" name="competitionId" value={competitionId} />
             <input type="hidden" name="open" value="1" />
             <input type="hidden" name="confirmation" value="HOST_PAYMENTS_REVIEWED" />
             <input type="hidden" name="paymentFingerprint" value={paymentFingerprint} />
-            <p className="text-sm font-medium">I checked the host payment list and understand unpaid teams will be excluded.</p>
+            <p className="text-sm font-medium">I checked the OneLegends and host payment statuses and understand excluded teams will not enter this viewing order.</p>
             <div className="flex flex-wrap gap-2">
-              <button type="submit" className="btn btn-primary" disabled={pending || !paymentRows.length}>{pending ? "Opening…" : "Confirm and open judging"}</button>
+              <button type="submit" className="btn btn-primary" disabled={pending || !competitionPaid || !includedCount}>{pending ? "Opening…" : "Confirm and open judging"}</button>
               <button type="button" className="btn btn-ghost" onClick={() => setReviewingPayments(false)}>Go back and verify</button>
+              <Link href="/ops/payments" className="btn btn-ghost">Review OneLegends payments</Link>
             </div>
           </form>
         </div>

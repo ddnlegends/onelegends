@@ -51,6 +51,7 @@ test("host and tech admins can close the payment review and return before viewin
 
   await host.getByRole("listitem").filter({ hasText: application.team.name }).getByRole("checkbox", { name: "Payment received" }).uncheck();
   await expect.poll(async () => (await db.application.findUniqueOrThrow({ where: { id: application.id } })).compPaymentReceivedAt).toBeNull();
+  await db.teamProfile.update({ where: { id: application.teamId }, data: { registrationPaidAt: null } });
   await host.getByRole("button", { name: "Review host payments" }).click();
   const dialog = host.getByRole("dialog", { name: "Verify host payments" });
   await expect(dialog.getByRole("listitem").filter({ hasText: application.team.name })).toContainText("Unpaid for comp");
@@ -64,8 +65,17 @@ test("host and tech admins can close the payment review and return before viewin
   await tech.getByRole("button", { name: "Open judging" }).click();
   const techReview = tech.getByRole("dialog", { name: "Verify host payments before viewing" });
   await expect(techReview.getByRole("listitem").filter({ hasText: application.team.name })).toContainText("Unpaid for comp");
+  await expect(techReview.getByRole("listitem").filter({ hasText: application.team.name })).toContainText("OneLegends team fee $25.00: Unpaid");
+  await expect(techReview.getByRole("listitem").filter({ hasText: application.team.name })).toContainText("Excluded from viewing");
+  await expect(techReview).toContainText("Competition OneLegends fee: $25.00 · Paid");
   await techReview.getByRole("button", { name: "Close payment verification" }).click();
   expect((await db.competitionProfile.findUniqueOrThrow({ where: { id: competition.id } })).judgingOpen).toBe(false);
+  await tech.getByRole("button", { name: "Open judging" }).click();
+  await db.teamProfile.update({ where: { id: application.teamId }, data: { registrationPaidAt: new Date() } });
+  await tech.getByRole("button", { name: "Confirm and open judging" }).click();
+  await expect(tech.getByText("A payment or applicant status changed. Refresh and review the latest statuses before opening judging.")).toBeVisible();
+  expect((await db.competitionProfile.findUniqueOrThrow({ where: { id: competition.id } })).judgingOpen).toBe(false);
+  await tech.reload();
   await tech.getByRole("button", { name: "Open judging" }).click();
   await tech.getByRole("button", { name: "Confirm and open judging" }).click();
   await expect.poll(async () => (await db.competitionProfile.findUniqueOrThrow({ where: { id: competition.id } })).judgingOpen).toBe(true);
