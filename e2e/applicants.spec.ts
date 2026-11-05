@@ -132,7 +132,7 @@ test("optional captain phone contacts stay paired with names and are visible bef
   }
 });
 
-test("non-partner hosts can see applicant profiles but not AVs before release", async ({ browser }) => {
+test("non-partner hosts can see submitted AVs before release", async ({ browser }) => {
   const competition = await db.competitionProfile.update({
     where: { slug: E2E.comps.showcase.slug },
     data: { isPartner: false, isAffiliate: false },
@@ -152,9 +152,9 @@ test("non-partner hosts can see applicant profiles but not AVs before release", 
   expect((await comp.request.get("/api/comp/applicants/export")).status()).toBe(403);
   await comp.getByRole("link", { name: application.team.name }).click();
   await expect(comp.getByRole("rowheader", { name: "Dancer One" })).toBeVisible();
-  await expect(comp.getByRole("heading", { name: "Audition video" })).toHaveCount(0);
-  await expect(comp.getByRole("link", { name: "Open In Drive" })).toHaveCount(0);
-  expect(await comp.content()).not.toContain("1E2ESubmittedSnapshotAAAAAAAAAAAA");
+  await expect(comp.getByRole("heading", { name: "Audition video" })).toBeVisible();
+  await expect(comp.getByTitle(`${application.team.name} audition video`)).toHaveAttribute("src", /1E2ESubmittedSnapshotAAAAAAAAAAAA/);
+  await expect(comp.getByRole("link", { name: "Open In Drive" })).toHaveAttribute("href", submittedAvDriveUrl);
   expect(await comp.content()).not.toContain(application.team.avDriveUrl);
 
   for (const role of ["team", "moderator", "judge"] as const) {

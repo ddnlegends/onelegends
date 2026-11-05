@@ -40,6 +40,14 @@ describe("director applicant workbook", () => {
     expect(sheets[1].rows).not.toContainEqual(expect.arrayContaining(["Profile", "AV link"]));
     expect(sheets[1].rows).toContainEqual(["Profile", "Dancer IDs link", "https://drive.google.com/drive/folders/r"]);
     expect(sheets[1].rows).toContainEqual(["Profile", "Contact email", "captain@example.com"]);
+    const nonPartnerSheets = buildDirectorApplicantWorkbook(
+      [{ ...applications[1], avDriveUrl: "https://drive.google.com/file/d/submitted/view" }],
+      ranked,
+      "https://onelegends.org",
+      true,
+    );
+    expect(nonPartnerSheets[0].rows[0]).toContain("AV link");
+    expect(nonPartnerSheets[1].rows).toContainEqual(["Profile", "AV link", "https://drive.google.com/file/d/submitted/view"]);
     expect(sheets[1].rows).toContainEqual(["Profile", "Applied phase", "Early"]);
     expect(sheets[1].rows).toContainEqual(["Profile", "Expected host fee (USD)", "$25.00"]);
     expect(sheets[1].rows).toContainEqual(["Profile", "Team logo", "https://onelegends.org/api/teams/r/photo"]);

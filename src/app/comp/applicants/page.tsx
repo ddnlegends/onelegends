@@ -40,6 +40,7 @@ export default async function CompApplicantsPage() {
           id: true,
           createdAt: true,
           status: true,
+          decisionPublishedAt: true,
           teamOfferResponse: true,
           appliedPhase: true,
           expectedFeeCents: true,
@@ -81,22 +82,23 @@ export default async function CompApplicantsPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-heading text-4xl">Applied teams</h1>
-          <p className="mt-2 text-muted">{competition.name} · Review applicant names, captain phone contacts, contact emails, application dates, dancer counts, phases, and expected host fees. {canViewApplicantDetails ? "Open a team to see its profile and roster. AVs are only available during anonymous viewing." : "Full team profiles and rosters unlock after results release. AVs are only available during anonymous viewing."}</p>
+          <p className="mt-2 text-muted">{competition.name} · Review applicant names, captain phone contacts, contact emails, application dates, dancer counts, phases, and expected host fees. {canViewApplicantDetails ? `Open a team to see its profile and roster.${!competition.isPartner && !competition.isAffiliate ? " Non-partner hosts can also see submitted AVs." : " AVs are only available during anonymous viewing."}` : "Full team profiles and rosters unlock after results release. AVs are only available during anonymous viewing."}</p>
         </div>
         {released ? (
           <a href="/api/comp/applicants/export" className="btn btn-primary">
             Download final team workbook
           </a>
         ) : null}
+        {!competition.isPartner && !competition.isAffiliate ? <Link href="/comp/decisions" className="btn btn-ghost">Rolling decisions</Link> : null}
       </div>
       {!released ? (
-        <p className="rounded-xl border border-line bg-blush p-5 text-sm">Tech admins verify OneLegends registration payments before AV viewing. Record payments made to your competition for each applicant below. <strong>Teams not marked paid to your competition will be excluded from AV viewing.</strong> {canViewApplicantDetails ? "Applicant profiles and rosters are available below. AVs are only available during anonymous viewing; viewing order, scores, and results remain hidden until release." : "Viewing order, scores, and full team details remain hidden until results release. AVs are only available during anonymous viewing."}</p>
+        <p className="rounded-xl border border-line bg-blush p-5 text-sm">Tech admins verify OneLegends registration payments before AV viewing. Record payments made to your competition for each applicant below. <strong>Teams not marked paid to your competition will be excluded from AV viewing.</strong> {canViewApplicantDetails ? `Applicant profiles and rosters are available below. ${!competition.isPartner && !competition.isAffiliate ? "Non-partner hosts can also see submitted AVs and publish rolling decisions." : "AVs are only available during anonymous viewing."} Viewing order, scores, and results remain hidden until release.` : "Viewing order, scores, and full team details remain hidden until results release. AVs are only available during anonymous viewing."}</p>
       ) : null}
       {hasOrder && !released ? <p className="rounded-xl border border-warning-line bg-warning-soft p-5 text-sm text-warning">The AV viewing order is already locked. Updating a host payment now will not add or remove teams from that order.</p> : null}
       {canReview ? <HostPaymentReview
         teams={competition.applications.map((application) => ({ id: application.id, name: application.team.name, paid: Boolean(application.compPaymentReceivedAt) }))}
       /> : null}
-      {released ? <CompDecisionBoard key={`${competition.decisionsSubmittedAt?.toISOString() ?? "draft"}-${decisionRows.map((row) => row.status).join("-")}`} rows={decisionRows} finalized={Boolean(competition.decisionsSubmittedAt)} /> : null}
+      {released && (competition.isPartner || competition.isAffiliate) ? <CompDecisionBoard key={`${competition.decisionsSubmittedAt?.toISOString() ?? "draft"}-${decisionRows.map((row) => row.status).join("-")}`} rows={decisionRows} finalized={Boolean(competition.decisionsSubmittedAt)} /> : null}
       {competition.applications.length ? (
         <ul className="divide-y divide-line rounded-xl border border-line bg-card">
           {competition.applications.map((application) => (
@@ -122,14 +124,9 @@ export default async function CompApplicantsPage() {
                 <p className="mt-1 text-sm font-medium">{application.appliedPhase ? `${applicationPhaseLabel(application.appliedPhase)} phase · Expected host fee: ${formatApplicationFee(application.expectedFeeCents)}` : "Phase and expected host fee were not recorded for this earlier application."}</p>
               </div>
               <div className="space-y-2">
-                {released ? (
-                  <>
-                  <span className="text-sm text-muted">{offerStatusLabel({ ...application, decisionsSubmittedAt: competition.decisionsSubmittedAt })}</span>
-                  {application.compPaymentReceivedAt ? " · Host payment received" : ""}
-                  </>
-                ) : (
-                  <CompPaymentCheckbox applicationId={application.id} received={Boolean(application.compPaymentReceivedAt)} />
-                )}
+                {application.decisionPublishedAt || competition.decisionsSubmittedAt ? <p className="text-sm text-muted">{offerStatusLabel({ ...application, decisionsSubmittedAt: application.decisionPublishedAt ?? competition.decisionsSubmittedAt })}</p> : null}
+                {!released ? <CompPaymentCheckbox applicationId={application.id} received={Boolean(application.compPaymentReceivedAt)} />
+                  : <p className="text-sm text-muted">{application.compPaymentReceivedAt ? "Host payment received" : "Host payment not marked"}</p>}
               </div>
             </li>
           ))}

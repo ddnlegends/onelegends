@@ -5,6 +5,8 @@ import { NavLink } from "@/components/NavLink";
 import { SignOutButton } from "@/components/SignOutButton";
 import { DualRoleNavMenu } from "@/components/DualRoleNavMenu";
 import { getNavAccess } from "@/lib/team-access";
+import { getActiveCompetitionId } from "@/lib/team-access";
+import { prisma } from "@/lib/prisma";
 
 export async function Nav() {
   const session = await auth();
@@ -15,6 +17,11 @@ export async function Nav() {
   const compAccess = access?.compAccess ?? false;
   const judgeAccess = access?.judgeAccess ?? false;
   const dualRole = teamAccess && compAccess && !ops;
+  const activeCompetitionId = userId && compAccess && !ops ? await getActiveCompetitionId(userId) : null;
+  const activeCompetition = activeCompetitionId ? await prisma.competitionProfile.findUnique({
+    where: { id: activeCompetitionId }, select: { isPartner: true, isAffiliate: true },
+  }) : null;
+  const nonPartnerComp = activeCompetition && !activeCompetition.isPartner && !activeCompetition.isAffiliate;
   const homeHref = session ? "/dashboard" : "/";
 
   return (
@@ -48,7 +55,8 @@ export async function Nav() {
               All Competitions
             </NavLink>
           ) : null}
-          {dualRole ? <DualRoleNavMenu /> : null}
+          {nonPartnerComp && !dualRole ? <NavLink href="/comp/decisions" match="prefix">Decisions</NavLink> : null}
+          {dualRole ? <DualRoleNavMenu nonPartnerComp={Boolean(nonPartnerComp)} /> : null}
           {ops ? (
             <NavLink href="/ops/comps" match="prefix">
               Comp Dashboard

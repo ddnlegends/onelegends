@@ -336,6 +336,7 @@ model Application {
   status                     ApplicationStatus @default(PENDING)
   teamOfferResponse          TeamOfferResponse @default(NONE)
   teamOfferRespondedAt       DateTime?
+  decisionPublishedAt        DateTime?
   submittedAvDriveUrl        String?
   appliedPhase               ApplicationPhase?
   expectedFeeCents           Int?

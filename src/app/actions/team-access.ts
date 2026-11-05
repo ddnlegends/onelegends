@@ -1263,8 +1263,11 @@ export async function setCompetitionPartnerStatus(
   if (currentFee?.resultsFinalizedByEmail || currentFee?.resultsReleasedAt) {
     return { error: "Competition type is locked after results validation or release." };
   }
+  if (await prisma.application.count({ where: { competitionId: parsed.data.competitionId, decisionPublishedAt: { not: null } } })) {
+    return { error: "Competition type is locked after a rolling decision is published." };
+  }
   const updated = await prisma.competitionProfile.updateMany({
-    where: { id: parsed.data.competitionId, judgingOpen: false, resultsFinalizedByEmail: null, resultsReleasedAt: null },
+    where: { id: parsed.data.competitionId, judgingOpen: false, resultsFinalizedByEmail: null, resultsReleasedAt: null, applications: { none: { decisionPublishedAt: { not: null } } } },
     data: {
       isPartner: parsed.data.type === "partner",
       isAffiliate: parsed.data.type === "affiliate",

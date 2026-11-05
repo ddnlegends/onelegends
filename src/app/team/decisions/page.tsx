@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getActiveTeamId } from "@/lib/team-access";
 import { TeamDecisionBoard, type TeamDecisionItem } from "@/components/TeamDecisionBoard";
-import { offerStatusLabel, PARTNER_CONFIRMATION_LIMIT } from "@/lib/application-offers";
+import { applicationDecisionAnnouncedAt, offerStatusLabel, PARTNER_CONFIRMATION_LIMIT } from "@/lib/application-offers";
 
 export default async function TeamDecisionsPage() {
   const session = await auth();
@@ -18,7 +18,7 @@ export default async function TeamDecisionsPage() {
         where: { removedAt: null },
         orderBy: { createdAt: "desc" },
         select: {
-          id: true, status: true, teamOfferResponse: true,
+          id: true, status: true, teamOfferResponse: true, decisionPublishedAt: true,
           competition: { select: { name: true, isPartner: true, isAffiliate: true, decisionsSubmittedAt: true } },
         },
       },
@@ -30,14 +30,15 @@ export default async function TeamDecisionsPage() {
     app.competition.decisionsSubmittedAt && app.teamOfferResponse === "CONFIRMED",
   ).length;
   const items: TeamDecisionItem[] = team.applications.map((app) => {
-    const announced = Boolean(app.competition.decisionsSubmittedAt);
+    const announcedAt = applicationDecisionAnnouncedAt(app);
+    const announced = Boolean(announcedAt);
     const open = announced && app.teamOfferResponse === "NONE";
     const partner = app.competition.isPartner && !app.competition.isAffiliate;
     return {
       id: app.id,
       name: app.competition.name,
       category: app.competition.isAffiliate ? "Affiliate" : app.competition.isPartner ? "Partner" : "Non-partner",
-      status: offerStatusLabel({ ...app, decisionsSubmittedAt: app.competition.decisionsSubmittedAt }),
+      status: offerStatusLabel({ ...app, decisionsSubmittedAt: announcedAt }),
       canConfirm: open && app.status === "ACCEPTED" && (!partner || partnerConfirmed < PARTNER_CONFIRMATION_LIMIT),
       canDecline: open && (app.status === "ACCEPTED" || app.status === "WAITLISTED"),
       confirmed: announced && app.teamOfferResponse === "CONFIRMED",
@@ -46,7 +47,7 @@ export default async function TeamDecisionsPage() {
   return <div className="space-y-6">
     <div>
       <h1 className="font-heading text-4xl">Your competition decisions</h1>
-      <p className="mt-2 text-muted">{team.name} · Review offers and choose where your team will compete. Decisions appear only after each host submits its final outcomes.</p>
+      <p className="mt-2 text-muted">{team.name} · Review offers and choose where your team will compete. Non-partner hosts may publish individual rolling decisions; Partner and Affiliate outcomes appear after final submission.</p>
     </div>
     <TeamDecisionBoard items={items} partnerConfirmed={partnerConfirmed} />
   </div>;

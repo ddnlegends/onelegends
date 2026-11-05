@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { offerStatusLabel, PARTNER_CONFIRMATION_LIMIT } from "@/lib/application-offers";
+import { applicationDecisionAnnouncedAt, offerStatusLabel, PARTNER_CONFIRMATION_LIMIT } from "@/lib/application-offers";
 
 describe("application offer labels", () => {
   const announced = new Date("2026-10-30T12:00:00Z");
@@ -7,6 +7,11 @@ describe("application offer labels", () => {
   it("does not disclose a saved host decision before final submission", () => {
     expect(offerStatusLabel({ status: "ACCEPTED", teamOfferResponse: "NONE", decisionsSubmittedAt: null }))
       .toBe("Decision not announced");
+  });
+
+  it("announces only individually published rolling decisions", () => {
+    expect(applicationDecisionAnnouncedAt({ decisionPublishedAt: null, competition: { decisionsSubmittedAt: null } })).toBeNull();
+    expect(applicationDecisionAnnouncedAt({ decisionPublishedAt: announced, competition: { decisionsSubmittedAt: null } })).toEqual(announced);
   });
 
   it("distinguishes an offer from a team-confirmed spot", () => {

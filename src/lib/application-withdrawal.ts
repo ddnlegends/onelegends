@@ -3,6 +3,7 @@ import { isCompetitionVisibleToTeams, type CompetitionDetails } from "@/lib/comp
 
 export function canTeamWithdrawApplication(application: {
   removedAt: Date | null;
+  decisionPublishedAt?: Date | null;
   viewingPosition: number | null;
   competition: CompetitionDetails & {
     claimedAt?: Date | null;
@@ -16,6 +17,7 @@ export function canTeamWithdrawApplication(application: {
   };
 }, now = new Date()): boolean {
   return application.removedAt === null &&
+    !application.decisionPublishedAt &&
     application.viewingPosition === null &&
     !application.competition.judgingOpen &&
     !application.competition.resultsReleasedAt &&

@@ -75,11 +75,12 @@ export default async function CompDashboardPage() {
     0,
   );
   const pending = apps.filter((app) => app.status === "PENDING").length;
-  const hostAccepted = competition.decisionsSubmittedAt ? apps.filter((app) => app.status === "ACCEPTED").length : 0;
-  const teamsConfirmed = competition.decisionsSubmittedAt ? apps.filter((app) => app.teamOfferResponse === "CONFIRMED").length : 0;
-  const awaitingResponse = competition.decisionsSubmittedAt ? apps.filter((app) => app.status === "ACCEPTED" && app.teamOfferResponse === "NONE").length : 0;
-  const declinedByTeam = competition.decisionsSubmittedAt ? apps.filter((app) => app.teamOfferResponse === "DECLINED").length : 0;
-  const waitlisted = competition.decisionsSubmittedAt ? apps.filter((app) => app.status === "WAITLISTED" && app.teamOfferResponse === "NONE").length : 0;
+  const announcedApps = apps.filter((app) => app.decisionPublishedAt || competition.decisionsSubmittedAt);
+  const hostAccepted = announcedApps.filter((app) => app.status === "ACCEPTED").length;
+  const teamsConfirmed = announcedApps.filter((app) => app.teamOfferResponse === "CONFIRMED").length;
+  const awaitingResponse = announcedApps.filter((app) => app.status === "ACCEPTED" && app.teamOfferResponse === "NONE").length;
+  const declinedByTeam = announcedApps.filter((app) => app.teamOfferResponse === "DECLINED").length;
+  const waitlisted = announcedApps.filter((app) => app.status === "WAITLISTED" && app.teamOfferResponse === "NONE").length;
   const avgRoster =
     rosterSizes.length === 0
       ? 0
@@ -128,6 +129,7 @@ export default async function CompDashboardPage() {
           <Link href="/comp/applicants" className="btn btn-ghost">
             Applied Teams
           </Link>
+          {!competition.isPartner && !competition.isAffiliate ? <Link href="/comp/decisions" className="btn btn-ghost">Rolling Decisions</Link> : null}
           <Link href="/comp/access" className="btn btn-ghost">
             Admins
           </Link>
@@ -157,7 +159,7 @@ export default async function CompDashboardPage() {
         <p className="text-sm text-ink/80">
           Applied Teams shows applicant names, application dates, dancer counts,
           application phases, and expected host fees so you can check payments manually. Partner and Affiliate team
-          profiles and ranked results unlock after results release. AVs are available only during anonymous viewing.
+          profiles and ranked results unlock after results release. Non-partner hosts can review submitted AVs and publish individual rolling decisions; Partner and Affiliate AVs are available only during anonymous viewing.
           Manage judges and read ranked results from the Judges and Viewing
           Results pages.
         </p>
@@ -182,8 +184,8 @@ export default async function CompDashboardPage() {
           <p className="mt-4 text-sm text-muted">No applications yet.</p>
         ) : null}
       </section>
-      {competition.decisionsSubmittedAt ? <section className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-heading text-2xl">Team commitments</h2><Link href="/comp/applicants" className="btn btn-primary">Manage offers and waitlist</Link></div>
+      {announcedApps.length ? <section className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-heading text-2xl">Team commitments</h2><Link href={!competition.isPartner && !competition.isAffiliate ? "/comp/decisions" : "/comp/applicants"} className="btn btn-primary">Manage offers and waitlist</Link></div>
         <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {[["Host accepted", hostAccepted], ["Teams confirmed", teamsConfirmed], ["Awaiting response", awaitingResponse], ["Declined by teams", declinedByTeam], ["Waitlisted", waitlisted]].map(([label, value]) => <div key={label} className="rounded-xl border border-line bg-card p-4"><dt className="text-xs uppercase text-muted">{label}</dt><dd className="mt-1 font-heading text-2xl">{value}</dd></div>)}
         </dl>

@@ -9,6 +9,7 @@ import { captainContactsFromJson } from "@/lib/captain-contacts";
 export type DirectorApplicant = {
   id: string;
   status: ApplicationStatus;
+  avDriveUrl?: string;
   appliedPhase?: ApplicationPhase | null;
   expectedFeeCents?: number | null;
   createdAt: Date;
@@ -70,6 +71,7 @@ export function buildDirectorApplicantWorkbook(
   applications: DirectorApplicant[],
   ranked: RankedTeam[],
   origin: string,
+  includeAv = false,
 ): WorkbookSheet[] {
   const ranking = new Map(ranked.map((row, index) => [row.applicationId, { row, rank: index + 1 }]));
   const ordered = [...applications].sort((left, right) => {
@@ -80,7 +82,7 @@ export function buildDirectorApplicantWorkbook(
 
   const overview: ExportCell[][] = [[
     "Rank", "Team", "Application status", "Average z-score", "Average total (/50)",
-    "Judges scored", "Captains", "Captain phone contacts", "Roster size", "Applied (UTC)", "Applied phase", "Expected host fee (USD)",
+    "Judges scored", "Captains", "Captain phone contacts", "Roster size", ...(includeAv ? ["AV link"] : []), "Applied (UTC)", "Applied phase", "Expected host fee (USD)",
   ]];
   const judgeScores: ExportCell[][] = [[
     "Rank", "Team", "Judge", "Choreography", "Formations", "Technique",
@@ -106,6 +108,7 @@ export function buildDirectorApplicantWorkbook(
       team.captains,
       captainContacts.map((contact) => `${contact.name}: ${contact.phone}`).join("; "),
       rosterSize,
+      ...(includeAv ? [application.avDriveUrl ?? ""] : []),
       date(application.createdAt),
       applicationPhaseLabel(application.appliedPhase ?? null),
       formatApplicationFee(application.expectedFeeCents ?? null),
@@ -140,6 +143,7 @@ export function buildDirectorApplicantWorkbook(
       ["Profile", "Years established", team.yearsEstablished ?? ""],
       ["Profile", "Roster size", rosterSize],
       ["Profile", "AV dancers", team.dancers.filter((dancer) => dancer.inAV).map((dancer) => dancer.name).join(", ")],
+      ...(includeAv ? [["Profile", "AV link", application.avDriveUrl ?? ""] as ExportCell[]] : []),
       ["Profile", "Dancer IDs link", team.idsDriveUrl ?? ""],
       ["Profile", "Team wiki", team.wikiUrl],
       ["Profile", "Team logo", logoLink(team.photoUrl, origin)],

@@ -6,6 +6,7 @@ import { getActiveCompetitionId, isCompAdmin } from "@/lib/team-access";
 import { TeamDetails } from "@/components/TeamDetails";
 import { visibleApplicationWhere } from "@/lib/payment-eligibility";
 import { hostCanViewApplicantDetails } from "@/lib/competition-type";
+import { submittedApplicationAvUrl } from "@/lib/application-av";
 
 export default async function CompApplicantDetailsPage({ params }: { params: Promise<{ teamId: string }> }) {
   const session = await auth();
@@ -17,10 +18,12 @@ export default async function CompApplicantDetailsPage({ params }: { params: Pro
     select: { resultsReleasedAt: true, isPartner: true, isAffiliate: true },
   });
   if (!competition || !hostCanViewApplicantDetails(competition)) notFound();
+  const nonPartner = !competition.isPartner && !competition.isAffiliate;
   const { teamId } = await params;
   const application = await prisma.application.findFirst({
     where: { teamId, competitionId, ...visibleApplicationWhere },
     select: {
+      submittedAvDriveUrl: nonPartner,
       team: {
         select: {
           name: true,
@@ -28,6 +31,7 @@ export default async function CompApplicantDetailsPage({ params }: { params: Pro
           photoUrl: true,
           blurb: true,
           wikiUrl: true,
+          avDriveUrl: nonPartner,
           idsDriveUrl: true,
           captains: true,
           captainContacts: true,
@@ -57,7 +61,11 @@ export default async function CompApplicantDetailsPage({ params }: { params: Pro
           <p className="mt-2 text-sm text-muted">No approved team admin email is available.</p>
         )}
       </section>
-      <TeamDetails team={application.team} hideAv showIdsLink />
+      <TeamDetails
+        team={{ ...application.team, avDriveUrl: nonPartner ? submittedApplicationAvUrl(application) : undefined }}
+        hideAv={!nonPartner}
+        showIdsLink
+      />
     </div>
   );
 }

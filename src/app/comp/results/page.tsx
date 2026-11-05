@@ -83,7 +83,9 @@ export default async function CompResultsPage() {
       ) : (
         <div className="space-y-6">
           <Link href="/comp/applicants" className="btn btn-primary inline-flex">View applied teams and full rosters</Link>
-          <p className="text-sm text-muted">Set and submit every team outcome on Applied Teams.</p>
+          <p className="text-sm text-muted">{usesTechRelease(competition)
+            ? "Set and submit every team outcome on Applied Teams."
+            : "Publish individual team outcomes on Rolling Decisions."}</p>
           <div className="overflow-x-auto rounded-xl border border-line bg-card">
             <table className="w-full min-w-[48rem] text-left text-sm">
               <thead className="border-b border-line bg-blush text-xs uppercase tracking-wide text-muted">

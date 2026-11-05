@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/app/actions/auth";
 import { getActiveTeamId } from "@/lib/team-access";
-import { PARTNER_CONFIRMATION_LIMIT } from "@/lib/application-offers";
+import { applicationDecisionAnnouncedAt, PARTNER_CONFIRMATION_LIMIT } from "@/lib/application-offers";
 
 type ActionState = { error?: string; ok?: boolean; message?: string };
 
@@ -36,11 +36,11 @@ export async function respondToCompetitionOffer(
     const application = await tx.application.findFirst({
       where: { id: applicationId, teamId, removedAt: null },
       select: {
-        id: true, status: true, teamOfferResponse: true,
+        id: true, status: true, teamOfferResponse: true, decisionPublishedAt: true,
         competition: { select: { name: true, isPartner: true, isAffiliate: true, decisionsSubmittedAt: true } },
       },
     });
-    if (!application?.competition.decisionsSubmittedAt) return { error: "This decision has not been announced." };
+    if (!application || !applicationDecisionAnnouncedAt(application)) return { error: "This decision has not been announced." };
     if (application.teamOfferResponse !== "NONE") return { error: "This offer is no longer awaiting a response. Refresh the page." };
     if (intent === "confirm" && application.status !== "ACCEPTED") return { error: "Only an offered spot can be confirmed." };
     if (intent === "decline" && application.status !== "ACCEPTED" && application.status !== "WAITLISTED") {

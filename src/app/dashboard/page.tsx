@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPendingInvites } from "@/lib/invites";
 import { LocalDateTime } from "@/components/LocalDateTime";
-import { offerStatusLabel } from "@/lib/application-offers";
+import { applicationDecisionAnnouncedAt, offerStatusLabel } from "@/lib/application-offers";
 import { applicationPhaseLabel } from "@/lib/application-schedule";
 import { formatApplicationFee } from "@/lib/competition-details";
 import { isCompetitionOpen, isJudgingOpen } from "@/lib/judging";
@@ -138,8 +138,8 @@ export default async function DashboardPage() {
   const now = new Date();
   const activeTeamApplications = team?.applications.filter((app) => !app.removedAt) ?? [];
   const partnerConfirmed = activeTeamApplications.filter((app) => app.competition.isPartner && !app.competition.isAffiliate && app.competition.decisionsSubmittedAt && app.teamOfferResponse === "CONFIRMED").length;
-  const totalConfirmed = activeTeamApplications.filter((app) => app.competition.decisionsSubmittedAt && app.teamOfferResponse === "CONFIRMED").length;
-  const teamOffersWaiting = activeTeamApplications.filter((app) => app.competition.decisionsSubmittedAt && app.status === "ACCEPTED" && app.teamOfferResponse === "NONE").length;
+  const totalConfirmed = activeTeamApplications.filter((app) => applicationDecisionAnnouncedAt(app) && app.teamOfferResponse === "CONFIRMED").length;
+  const teamOffersWaiting = activeTeamApplications.filter((app) => applicationDecisionAnnouncedAt(app) && app.status === "ACCEPTED" && app.teamOfferResponse === "NONE").length;
 
   return (
     <div className="space-y-10">
@@ -396,7 +396,7 @@ export default async function DashboardPage() {
                       <Link href={`/team/applications/${app.id}`} className="mt-2 inline-block text-sm font-medium text-accent underline">Review application</Link>
                     </div>
                     <div className="flex flex-col items-start gap-2">
-                      <span className="text-sm">{app.removedAt ? app.removalReason === "Withdrawn by team" ? "Withdrawn" : "Removed" : offerStatusLabel({ ...app, decisionsSubmittedAt: app.competition.decisionsSubmittedAt })}</span>
+                      <span className="text-sm">{app.removedAt ? app.removalReason === "Withdrawn by team" ? "Withdrawn" : "Removed" : offerStatusLabel({ ...app, decisionsSubmittedAt: applicationDecisionAnnouncedAt(app) })}</span>
                       {canTeamWithdrawApplication(app, now) ? (
                         <WithdrawApplicationForm applicationId={app.id} competitionName={app.competition.name} />
                       ) : null}
@@ -445,6 +445,7 @@ export default async function DashboardPage() {
               <Link href="/comp/applicants" className="btn btn-ghost">
                 Applied Teams
               </Link>
+              {!competition.isPartner && !competition.isAffiliate ? <Link href="/comp/decisions" className="btn btn-ghost">Rolling Decisions</Link> : null}
               <Link href="/comp/access" className="btn btn-ghost">
                 Admins
               </Link>
@@ -453,10 +454,10 @@ export default async function DashboardPage() {
               </Link>
             </div>
           </div>
-          {competition.decisionsSubmittedAt ? <div className="grid gap-3 rounded-xl border border-line bg-card p-5 sm:grid-cols-3">
-            <div><p className="text-xs uppercase text-muted">Teams confirmed</p><p className="mt-1 font-heading text-2xl">{competition.applications.filter((app) => app.teamOfferResponse === "CONFIRMED").length}</p></div>
-            <div><p className="text-xs uppercase text-muted">Awaiting response</p><p className="mt-1 font-heading text-2xl">{competition.applications.filter((app) => app.status === "ACCEPTED" && app.teamOfferResponse === "NONE").length}</p></div>
-            <div><p className="text-xs uppercase text-muted">Waitlisted</p><p className="mt-1 font-heading text-2xl">{competition.applications.filter((app) => app.status === "WAITLISTED" && app.teamOfferResponse === "NONE").length}</p></div>
+          {competition.applications.some((app) => app.decisionPublishedAt || competition.decisionsSubmittedAt) ? <div className="grid gap-3 rounded-xl border border-line bg-card p-5 sm:grid-cols-3">
+            <div><p className="text-xs uppercase text-muted">Teams confirmed</p><p className="mt-1 font-heading text-2xl">{competition.applications.filter((app) => (app.decisionPublishedAt || competition.decisionsSubmittedAt) && app.teamOfferResponse === "CONFIRMED").length}</p></div>
+            <div><p className="text-xs uppercase text-muted">Awaiting response</p><p className="mt-1 font-heading text-2xl">{competition.applications.filter((app) => (app.decisionPublishedAt || competition.decisionsSubmittedAt) && app.status === "ACCEPTED" && app.teamOfferResponse === "NONE").length}</p></div>
+            <div><p className="text-xs uppercase text-muted">Waitlisted</p><p className="mt-1 font-heading text-2xl">{competition.applications.filter((app) => (app.decisionPublishedAt || competition.decisionsSubmittedAt) && app.status === "WAITLISTED" && app.teamOfferResponse === "NONE").length}</p></div>
           </div> : null}
           {compMemberships.length > 1 ? (
             <form action={setActiveCompAction} className="flex flex-wrap items-end gap-3">

@@ -9,7 +9,7 @@ import { submittedApplicationAvUrl } from "@/lib/application-av";
 import { LocalDateTime } from "@/components/LocalDateTime";
 import { DriveAvPlayer } from "@/components/DriveAvPlayer";
 import { TeamDetails } from "@/components/TeamDetails";
-import { offerStatusLabel } from "@/lib/application-offers";
+import { applicationDecisionAnnouncedAt, offerStatusLabel } from "@/lib/application-offers";
 
 export default async function TeamApplicationReviewPage({
   params,
@@ -33,7 +33,7 @@ export default async function TeamApplicationReviewPage({
 
   const status = application.removedAt
     ? application.removalReason === "Withdrawn by team" ? "Withdrawn" : "Removed"
-    : offerStatusLabel({ ...application, decisionsSubmittedAt: application.competition.decisionsSubmittedAt });
+    : offerStatusLabel({ ...application, decisionsSubmittedAt: applicationDecisionAnnouncedAt(application) });
 
   return (
     <div className="space-y-7">

@@ -219,6 +219,9 @@ export async function saveCompApplicantDecisions(
 
   const competition = await requireActiveCompetition(user.id);
   if (!competition) return { error: "Competition profile missing." };
+  if (!competition.isPartner && !competition.isAffiliate) {
+    return { error: "Use the Non-partner Decisions tab to publish individual outcomes." };
+  }
   if (!competition.resultsReleasedAt) {
     return { error: "Decisions unlock after results are released." };
   }
@@ -331,7 +334,7 @@ export async function updateFinalCompetitionOffer(
   const user = await requireUser();
   if (!user) return { error: "Unauthorized." };
   const competition = await requireActiveCompetition(user.id);
-  if (!competition?.decisionsSubmittedAt || !competition.resultsReleasedAt) {
+  if (!competition || ((competition.isPartner || competition.isAffiliate) && (!competition.decisionsSubmittedAt || !competition.resultsReleasedAt))) {
     return { error: "Final decisions must be announced first." };
   }
   const applicationId = String(formData.get("applicationId") ?? "");
@@ -341,6 +344,13 @@ export async function updateFinalCompetitionOffer(
   }
   const result = await prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${competition.id}))`;
+    const currentCompetition = await tx.competitionProfile.findUnique({
+      where: { id: competition.id },
+      select: { isPartner: true, isAffiliate: true, decisionsSubmittedAt: true, resultsReleasedAt: true },
+    });
+    if (!currentCompetition || ((currentCompetition.isPartner || currentCompetition.isAffiliate) && (!currentCompetition.decisionsSubmittedAt || !currentCompetition.resultsReleasedAt))) {
+      return { error: "Final decisions must be announced first." };
+    }
     const target = await tx.application.findFirst({
       where: { id: applicationId, competitionId: competition.id, ...visibleApplicationWhere },
       select: { id: true, teamId: true },
@@ -349,16 +359,17 @@ export async function updateFinalCompetitionOffer(
     await tx.$queryRaw`SELECT id FROM "TeamProfile" WHERE id = ${target.teamId} FOR UPDATE`;
     const application = await tx.application.findFirst({
       where: { id: applicationId, competitionId: competition.id, ...visibleApplicationWhere },
-      select: { id: true, teamId: true, status: true, teamOfferResponse: true },
+      select: { id: true, teamId: true, status: true, teamOfferResponse: true, decisionPublishedAt: true },
     });
     if (!application) return { error: "Application not found." };
+    if (!application.decisionPublishedAt && !currentCompetition.decisionsSubmittedAt) return { error: "Publish this team's decision first." };
     if (intent === "promote" && (application.status !== "WAITLISTED" || application.teamOfferResponse !== "NONE")) {
       return { error: "Only an available waitlisted team can be promoted." };
     }
     if (intent === "reoffer" && (!["ACCEPTED", "WAITLISTED"].includes(application.status) || !["DECLINED", "CAP_CLOSED"].includes(application.teamOfferResponse))) {
       return { error: "Only a previously declined offer can be sent again." };
     }
-    if (competition.isPartner && !competition.isAffiliate) {
+    if (currentCompetition.isPartner && !currentCompetition.isAffiliate) {
       const count = await tx.application.count({
         where: {
           teamId: application.teamId, removedAt: null, teamOfferResponse: "CONFIRMED",
@@ -379,6 +390,7 @@ export async function updateFinalCompetitionOffer(
   if (result.ok) {
     revalidatePath("/comp");
     revalidatePath("/comp/applicants");
+    revalidatePath("/comp/decisions");
     revalidatePath("/team", "layout");
     revalidatePath("/dashboard");
   }

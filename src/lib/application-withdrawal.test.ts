@@ -36,6 +36,7 @@ describe("team withdrawal eligibility", () => {
 
   it("does not allow a removed or hidden application to be withdrawn again", () => {
     expect(canTeamWithdrawApplication({ ...active, removedAt: now }, now)).toBe(false);
+    expect(canTeamWithdrawApplication({ ...active, decisionPublishedAt: now }, now)).toBe(false);
     expect(canTeamWithdrawApplication({ ...active, competition: { ...active.competition, venue: "" } }, now)).toBe(false);
   });
 });

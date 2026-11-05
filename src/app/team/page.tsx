@@ -15,7 +15,7 @@ import { InstantSelect } from "@/components/InstantSelect";
 import { TeamPhoto } from "@/components/TeamPhoto";
 import { WithdrawApplicationForm } from "@/components/WithdrawApplicationForm";
 import { canTeamWithdrawApplication } from "@/lib/application-withdrawal";
-import { offerStatusLabel, PARTNER_CONFIRMATION_LIMIT } from "@/lib/application-offers";
+import { applicationDecisionAnnouncedAt, offerStatusLabel, PARTNER_CONFIRMATION_LIMIT } from "@/lib/application-offers";
 
 export default async function TeamDashboardPage() {
   const session = await auth();
@@ -43,8 +43,8 @@ export default async function TeamDashboardPage() {
   const now = new Date();
   const currentApplications = team.applications.filter((app) => !app.removedAt);
   const partnerConfirmed = currentApplications.filter((app) => app.competition.isPartner && !app.competition.isAffiliate && app.competition.decisionsSubmittedAt && app.teamOfferResponse === "CONFIRMED").length;
-  const totalConfirmed = currentApplications.filter((app) => app.competition.decisionsSubmittedAt && app.teamOfferResponse === "CONFIRMED").length;
-  const awaitingResponse = currentApplications.filter((app) => app.competition.decisionsSubmittedAt && app.status === "ACCEPTED" && app.teamOfferResponse === "NONE").length;
+  const totalConfirmed = currentApplications.filter((app) => applicationDecisionAnnouncedAt(app) && app.teamOfferResponse === "CONFIRMED").length;
+  const awaitingResponse = currentApplications.filter((app) => applicationDecisionAnnouncedAt(app) && app.status === "ACCEPTED" && app.teamOfferResponse === "NONE").length;
 
   return (
     <div className="space-y-8">
@@ -182,7 +182,7 @@ export default async function TeamDashboardPage() {
                   ) : null}
                 </div>
                 <div className="flex flex-col items-start gap-2">
-                  <span className="text-sm">{app.removedAt ? app.removalReason === "Withdrawn by team" ? "Withdrawn" : "Removed" : offerStatusLabel({ ...app, decisionsSubmittedAt: app.competition.decisionsSubmittedAt })}</span>
+                  <span className="text-sm">{app.removedAt ? app.removalReason === "Withdrawn by team" ? "Withdrawn" : "Removed" : offerStatusLabel({ ...app, decisionsSubmittedAt: applicationDecisionAnnouncedAt(app) })}</span>
                   {canTeamWithdrawApplication(app, now) ? (
                     <WithdrawApplicationForm applicationId={app.id} competitionName={app.competition.name} />
                   ) : null}

@@ -439,7 +439,7 @@ export default async function OpsCompetitionsPage() {
                             {application.team.name}
                           </Link>
                           <span className="text-muted">
-                            {offerStatusLabel({ ...application, decisionsSubmittedAt: competition.decisionsSubmittedAt })} · applied{" "}
+                            {offerStatusLabel({ ...application, decisionsSubmittedAt: application.decisionPublishedAt ?? competition.decisionsSubmittedAt })} · applied{" "}
                             <LocalDateTime date={application.createdAt} /> · Host payment: <strong className={application.compPaymentReceivedAt ? "text-success" : "text-warning"}>{application.compPaymentReceivedAt ? "Paid for comp" : "Unpaid for comp"}</strong>{application.compPaymentReceivedAt ? <> (<LocalDateTime date={application.compPaymentReceivedAt} />)</> : null}
                           </span>
                         </li>

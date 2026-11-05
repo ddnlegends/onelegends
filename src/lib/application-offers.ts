@@ -2,6 +2,13 @@ import type { ApplicationStatus, TeamOfferResponse } from "@prisma/client";
 
 export const PARTNER_CONFIRMATION_LIMIT = 3;
 
+export function applicationDecisionAnnouncedAt(application: {
+  decisionPublishedAt?: Date | null;
+  competition: { decisionsSubmittedAt: Date | null };
+}): Date | null {
+  return application.decisionPublishedAt ?? application.competition.decisionsSubmittedAt;
+}
+
 export function offerStatusLabel(application: {
   status: ApplicationStatus;
   teamOfferResponse: TeamOfferResponse;

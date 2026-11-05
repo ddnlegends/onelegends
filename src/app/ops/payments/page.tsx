@@ -18,6 +18,7 @@ export default async function OpsPaymentsPage() {
       select: {
         id: true,
         status: true,
+        decisionPublishedAt: true,
         teamOfferResponse: true,
         compPaymentReceivedAt: true,
         team: { select: { name: true } },
@@ -72,7 +73,7 @@ export default async function OpsPaymentsPage() {
           <ul className="divide-y divide-line rounded-xl border border-line bg-card">
             {applications.map((application) => (
               <li key={application.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
-                <span>{application.team.name} · {application.competition.name} · {offerStatusLabel({ ...application, decisionsSubmittedAt: application.competition.decisionsSubmittedAt })}</span>
+                <span>{application.team.name} · {application.competition.name} · {offerStatusLabel({ ...application, decisionsSubmittedAt: application.decisionPublishedAt ?? application.competition.decisionsSubmittedAt })}</span>
                 <span className="text-muted">{application.compPaymentReceivedAt ? <>Received <LocalDateTime date={application.compPaymentReceivedAt} /></> : "Not marked paid"}</span>
               </li>
             ))}

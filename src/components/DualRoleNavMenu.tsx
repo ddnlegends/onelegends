@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { NavLink } from "@/components/NavLink";
 
-export function DualRoleNavMenu() {
+export function DualRoleNavMenu({ nonPartnerComp = false }: { nonPartnerComp?: boolean }) {
   const pathname = usePathname();
   const active = pathname.startsWith("/team/") || pathname.startsWith("/comp/") || pathname === "/claim";
 
@@ -17,6 +17,7 @@ export function DualRoleNavMenu() {
         <NavLink href="/team/decisions" match="prefix">Team Decisions</NavLink>
         <NavLink href="/comp/profile" match="prefix">Comp Details</NavLink>
         <NavLink href="/comp/competitions" match="prefix">All Competitions</NavLink>
+        {nonPartnerComp ? <NavLink href="/comp/decisions" match="prefix">Comp Decisions</NavLink> : null}
         <NavLink href="/claim">Code Claim</NavLink>
       </div>
     </details>

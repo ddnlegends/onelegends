@@ -161,4 +161,13 @@ test("competition director downloads ranked profiles, rosters, and scores only a
   }
   expect(contents).toContain("E2E Judge");
   expect(contents).not.toContain(E2E.teams.alpha.claimCode);
+
+  await db.competitionProfile.update({ where: { id }, data: { isPartner: false, isAffiliate: false } });
+  const nonPartnerResponse = await director.request.get(path);
+  expect(nonPartnerResponse.status()).toBe(200);
+  const nonPartnerWorkbook = new ExcelJS.Workbook();
+  await nonPartnerWorkbook.xlsx.load(new Uint8Array(await nonPartnerResponse.body()).buffer);
+  const nonPartnerContents = JSON.stringify(nonPartnerWorkbook.worksheets.map((sheet) => sheet.getSheetValues()));
+  expect(nonPartnerContents).toContain("AV link");
+  expect(nonPartnerContents).toContain("drive.google.com/file/d/");
 });

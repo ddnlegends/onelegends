@@ -233,7 +233,7 @@ export default async function OpsTeamsPage() {
                         >
                           <span>{application.competition.name}</span>
                           <span className="text-muted">
-                            {offerStatusLabel({ ...application, decisionsSubmittedAt: application.competition.decisionsSubmittedAt })} · applied{" "}
+                            {offerStatusLabel({ ...application, decisionsSubmittedAt: application.decisionPublishedAt ?? application.competition.decisionsSubmittedAt })} · applied{" "}
                             <LocalDateTime date={application.createdAt} />
                           </span>
                         </li>

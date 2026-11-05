@@ -7,6 +7,7 @@ import { moderatorResultsReady } from "@/lib/judge-panel-completion";
 import { rankTeams } from "@/lib/results";
 import { buildDirectorApplicantWorkbook } from "@/lib/comp-applicants-export";
 import { toXlsx } from "@/lib/ops-export";
+import { submittedApplicationAvUrl } from "@/lib/application-av";
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -22,6 +23,8 @@ export async function GET(request: Request) {
     where: { id: competitionId },
     select: {
       name: true,
+      isPartner: true,
+      isAffiliate: true,
       resultsReleasedAt: true,
       applications: {
         where: visibleApplicationWhere,
@@ -30,6 +33,7 @@ export async function GET(request: Request) {
           id: true,
           teamId: true,
           status: true,
+          submittedAvDriveUrl: true,
           appliedPhase: true,
           expectedFeeCents: true,
           createdAt: true,
@@ -42,6 +46,7 @@ export async function GET(request: Request) {
               photoUrl: true,
               blurb: true,
               wikiUrl: true,
+              avDriveUrl: true,
               idsDriveUrl: true,
               captains: true,
               captainContacts: true,
@@ -94,10 +99,15 @@ export async function GET(request: Request) {
   }
 
   const ranked = rankTeams(eligible, activeJudges);
+  const nonPartner = !competition.isPartner && !competition.isAffiliate;
   const tables = buildDirectorApplicantWorkbook(
-    competition.applications,
+    competition.applications.map((application) => ({
+      ...application,
+      avDriveUrl: nonPartner ? submittedApplicationAvUrl(application) : undefined,
+    })),
     ranked,
     new URL(request.url).origin,
+    nonPartner,
   );
   const slug = competition.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "competition";
   const filename = `onelegends-${slug}-final-applicants-${new Date().toISOString().slice(0, 10)}.xlsx`;
