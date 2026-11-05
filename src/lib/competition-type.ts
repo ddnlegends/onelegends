@@ -16,7 +16,7 @@ export function usesAssignedModerator(comp: { isPartner: boolean; isAffiliate: b
 /** Partner and Affiliate judging both wait for tech validation and release. */
 export const usesTechRelease = usesAssignedModerator;
 
-/** Non-partner hosts may review submitted AVs and live team profiles before judging. */
+/** Non-partner hosts may review live team profiles before judging, excluding AVs. */
 export function hostCanViewApplicantDetails(comp: {
   isPartner: boolean;
   isAffiliate: boolean;

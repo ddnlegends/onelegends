@@ -12,8 +12,9 @@ describe("director applicant workbook", () => {
       photoUrl: `/api/teams/${id}/photo`,
       blurb: "Team bio",
       wikiUrl: "https://example.com/wiki",
-      avDriveUrl: `https://drive.google.com/file/d/${id}/view`,
+      idsDriveUrl: `https://drive.google.com/drive/folders/${id}`,
       captains: "Captain Name",
+      memberships: [{ user: { email: "captain@example.com" } }],
       yearsEstablished: 2020,
       rosterSize: 1,
       registrationPaidAt: new Date("2027-01-01T00:00:00Z"),
@@ -21,7 +22,7 @@ describe("director applicant workbook", () => {
     });
     const applications: DirectorApplicant[] = [
       { id: "unranked", status: "PENDING", createdAt: new Date("2027-01-02T00:00:00Z"), viewingPosition: null, compPaymentReceivedAt: null, team: team("u", "Unranked Team") },
-      { id: "ranked", status: "ACCEPTED", submittedAvDriveUrl: "https://drive.google.com/file/d/submitted/view", appliedPhase: "EARLY", expectedFeeCents: 2500, createdAt: new Date("2027-01-01T00:00:00Z"), viewingPosition: 1, compPaymentReceivedAt: new Date("2027-01-03T00:00:00Z"), team: team("r", "Ranked / Team: *") },
+      { id: "ranked", status: "ACCEPTED", appliedPhase: "EARLY", expectedFeeCents: 2500, createdAt: new Date("2027-01-01T00:00:00Z"), viewingPosition: 1, compPaymentReceivedAt: new Date("2027-01-03T00:00:00Z"), team: team("r", "Ranked / Team: *") },
     ];
     const ranked: RankedTeam[] = [{
       applicationId: "ranked", teamId: "r", name: "Ranked / Team: *", status: "ACCEPTED", viewingPosition: 1,
@@ -35,7 +36,10 @@ describe("director applicant workbook", () => {
     ]);
     expect(sheets[0].rows[1].slice(0, 5)).toEqual([1, "Ranked / Team: *", "Accepted", 1.235, 42]);
     expect(sheets[0].rows[2].slice(0, 4)).toEqual(["Unranked", "Unranked Team", "Pending", ""]);
-    expect(sheets[1].rows).toContainEqual(["Profile", "AV link", "https://drive.google.com/file/d/submitted/view"]);
+    expect(sheets[0].rows[0]).not.toContain("AV link");
+    expect(sheets[1].rows).not.toContainEqual(expect.arrayContaining(["Profile", "AV link"]));
+    expect(sheets[1].rows).toContainEqual(["Profile", "Dancer IDs link", "https://drive.google.com/drive/folders/r"]);
+    expect(sheets[1].rows).toContainEqual(["Profile", "Contact email", "captain@example.com"]);
     expect(sheets[1].rows).toContainEqual(["Profile", "Applied phase", "Early"]);
     expect(sheets[1].rows).toContainEqual(["Profile", "Expected host fee (USD)", "$25.00"]);
     expect(sheets[1].rows).toContainEqual(["Profile", "Team logo", "https://onelegends.org/api/teams/r/photo"]);

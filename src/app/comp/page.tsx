@@ -156,8 +156,8 @@ export default async function CompDashboardPage() {
       <div className="rounded-xl border border-line bg-blush p-5">
         <p className="text-sm text-ink/80">
           Applied Teams shows applicant names, application dates, dancer counts,
-          application phases, and expected host fees so you can check payments manually. Viewing order, full team
-          details, and ranked results unlock after every active judge submits and an admin finalizes.
+          application phases, and expected host fees so you can check payments manually. Partner and Affiliate team
+          profiles and ranked results unlock after results release. AVs are available only during anonymous viewing.
           Manage judges and read ranked results from the Judges and Viewing
           Results pages.
         </p>

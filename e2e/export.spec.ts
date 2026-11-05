@@ -154,7 +154,11 @@ test("competition director downloads ranked profiles, rosters, and scores only a
   const contents = JSON.stringify(workbook.worksheets.map((sheet) => sheet.getSheetValues()));
   for (const name of SEALED_NAMES) expect(contents).toContain(name);
   expect(contents).toContain("Dancer One");
-  expect(contents).toContain("drive.google.com");
+  expect(contents).not.toContain("AV link");
+  const submittedAvs = await db.application.findMany({ where: { competitionId: id }, select: { submittedAvDriveUrl: true } });
+  for (const application of submittedAvs) {
+    if (application.submittedAvDriveUrl) expect(contents).not.toContain(application.submittedAvDriveUrl);
+  }
   expect(contents).toContain("E2E Judge");
   expect(contents).not.toContain(E2E.teams.alpha.claimCode);
 });

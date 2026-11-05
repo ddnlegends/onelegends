@@ -4,13 +4,11 @@ import type { ExportCell, ExportTable } from "@/lib/ops-export";
 import { statusLabel } from "@/lib/utils";
 import { applicationPhaseLabel } from "@/lib/application-schedule";
 import { formatApplicationFee } from "@/lib/competition-details";
-import { submittedApplicationAvUrl } from "@/lib/application-av";
 import { captainContactsFromJson } from "@/lib/captain-contacts";
 
 export type DirectorApplicant = {
   id: string;
   status: ApplicationStatus;
-  submittedAvDriveUrl?: string | null;
   appliedPhase?: ApplicationPhase | null;
   expectedFeeCents?: number | null;
   createdAt: Date;
@@ -22,9 +20,10 @@ export type DirectorApplicant = {
     photoUrl: string;
     blurb: string;
     wikiUrl: string;
-    avDriveUrl: string;
+    idsDriveUrl?: string;
     captains: string;
     captainContacts?: unknown;
+    memberships?: { user: { email: string } }[];
     yearsEstablished: number | null;
     rosterSize: number | null;
     registrationPaidAt: Date | null;
@@ -81,7 +80,7 @@ export function buildDirectorApplicantWorkbook(
 
   const overview: ExportCell[][] = [[
     "Rank", "Team", "Application status", "Average z-score", "Average total (/50)",
-    "Judges scored", "Captains", "Captain phone contacts", "Roster size", "AV link", "Applied (UTC)", "Applied phase", "Expected host fee (USD)",
+    "Judges scored", "Captains", "Captain phone contacts", "Roster size", "Applied (UTC)", "Applied phase", "Expected host fee (USD)",
   ]];
   const judgeScores: ExportCell[][] = [[
     "Rank", "Team", "Judge", "Choreography", "Formations", "Technique",
@@ -92,7 +91,6 @@ export function buildDirectorApplicantWorkbook(
 
   for (const application of ordered) {
     const { team } = application;
-    const avDriveUrl = submittedApplicationAvUrl(application);
     const result = ranking.get(application.id);
     const rank = result?.rank;
     const rankLabel = rank ?? "Unranked";
@@ -108,7 +106,6 @@ export function buildDirectorApplicantWorkbook(
       team.captains,
       captainContacts.map((contact) => `${contact.name}: ${contact.phone}`).join("; "),
       rosterSize,
-      avDriveUrl,
       date(application.createdAt),
       applicationPhaseLabel(application.appliedPhase ?? null),
       formatApplicationFee(application.expectedFeeCents ?? null),
@@ -138,11 +135,12 @@ export function buildDirectorApplicantWorkbook(
       ["Profile", "Host payment received", application.compPaymentReceivedAt ? "Yes" : "No"],
       ["Profile", "OneLegends registration paid", team.registrationPaidAt ? "Yes" : "No"],
       ["Profile", "Captains", team.captains],
+      ["Profile", "Contact email", team.memberships?.[0]?.user.email ?? ""],
       ...captainContacts.map((contact, index): ExportCell[] => ["Profile", `Captain ${index + 1} phone`, `${contact.name}: ${contact.phone}`]),
       ["Profile", "Years established", team.yearsEstablished ?? ""],
       ["Profile", "Roster size", rosterSize],
       ["Profile", "AV dancers", team.dancers.filter((dancer) => dancer.inAV).map((dancer) => dancer.name).join(", ")],
-      ["Profile", "AV link", avDriveUrl],
+      ["Profile", "Dancer IDs link", team.idsDriveUrl ?? ""],
       ["Profile", "Team wiki", team.wikiUrl],
       ["Profile", "Team logo", logoLink(team.photoUrl, origin)],
       ["Profile", "Team blurb", team.blurb],

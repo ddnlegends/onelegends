@@ -5,7 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { getActiveCompetitionId, isCompAdmin } from "@/lib/team-access";
 import { TeamDetails } from "@/components/TeamDetails";
 import { visibleApplicationWhere } from "@/lib/payment-eligibility";
-import { submittedApplicationAvUrl } from "@/lib/application-av";
 import { hostCanViewApplicantDetails } from "@/lib/competition-type";
 
 export default async function CompApplicantDetailsPage({ params }: { params: Promise<{ teamId: string }> }) {
@@ -21,9 +20,19 @@ export default async function CompApplicantDetailsPage({ params }: { params: Pro
   const { teamId } = await params;
   const application = await prisma.application.findFirst({
     where: { teamId, competitionId, ...visibleApplicationWhere },
-    include: {
+    select: {
       team: {
-        include: {
+        select: {
+          name: true,
+          claimedAt: true,
+          photoUrl: true,
+          blurb: true,
+          wikiUrl: true,
+          idsDriveUrl: true,
+          captains: true,
+          captainContacts: true,
+          yearsEstablished: true,
+          rosterSize: true,
           dancers: { orderBy: { name: "asc" } },
           memberships: {
             where: { status: "APPROVED", isAdmin: true },
@@ -48,7 +57,7 @@ export default async function CompApplicantDetailsPage({ params }: { params: Pro
           <p className="mt-2 text-sm text-muted">No approved team admin email is available.</p>
         )}
       </section>
-      <TeamDetails team={{ ...application.team, avDriveUrl: submittedApplicationAvUrl(application) }} showIdsLink />
+      <TeamDetails team={application.team} hideAv showIdsLink />
     </div>
   );
 }

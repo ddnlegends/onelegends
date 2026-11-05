@@ -8,7 +8,7 @@ export type DetailedTeam = {
   photoUrl: string;
   blurb: string;
   wikiUrl: string;
-  avDriveUrl: string;
+  avDriveUrl?: string;
   idsDriveUrl?: string;
   captains: string;
   captainContacts?: unknown;
@@ -70,7 +70,7 @@ export function TeamDetails({
       {hideAv ? null : (
         <section className="space-y-3">
           <h2 className="font-heading text-2xl">Audition video</h2>
-          <DriveAvPlayer url={team.avDriveUrl} label={`${team.name} audition video`} />
+          <DriveAvPlayer url={team.avDriveUrl ?? ""} label={`${team.name} audition video`} />
         </section>
       )}
 
