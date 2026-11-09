@@ -152,7 +152,7 @@ export default async function CompDashboardDetailPage({
         <p className="max-w-2xl text-sm text-muted">
           {panelReady
             ? "Judging is complete. Tech admins can review named results below."
-            : "Teams stay as Team 1, Team 2, … until results release. No videos play here; the moderator runs them."}
+            : "Tech admins can see team names alongside randomized viewing numbers. No videos play here; the moderator runs them."}
         </p>
       </div>
 
@@ -166,6 +166,11 @@ export default async function CompDashboardDetailPage({
               <p className="font-heading text-5xl text-accent">
                 {livePosition != null ? `Team ${livePosition}` : "—"}
               </p>
+              {livePosition != null ? (
+                <p className="mt-2 text-xl font-semibold text-ink">
+                  {ordered.find((app) => app.viewingPosition === livePosition)?.team.name}
+                </p>
+              ) : null}
               {competition.liveUpdatedAt && live ? (
                 <p className="mt-1 text-xs text-muted">
                   Switched <LocalDateTime date={competition.liveUpdatedAt} />
@@ -421,11 +426,9 @@ export default async function CompDashboardDetailPage({
                         }`}
                       >
                         Team {app.viewingPosition}
-                        {panelReady ? (
-                          <span className="block text-xs font-normal text-muted">
-                            {app.team.name}
-                          </span>
-                        ) : null}
+                        <span className="block text-xs font-normal text-muted">
+                          {app.team.name}
+                        </span>
                         {isLive ? (
                           <span className="ml-2 rounded-full bg-brand-ember px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide text-white">
                             Live
@@ -519,6 +522,9 @@ export default async function CompDashboardDetailPage({
                             >
                               <th className="px-4 py-2 text-left font-semibold">
                                 Team {app.viewingPosition}
+                                <span className="block text-xs font-normal text-muted">
+                                  {app.team.name}
+                                </span>
                               </th>
                               {RUBRIC_CATEGORIES.map((category) => (
                                 <td key={category.key} className="px-3 py-2 tabular-nums">
