@@ -89,6 +89,7 @@ export type CompStatus =
   | "APPS_CLOSED"
   | "READY"
   | "LIVE"
+  | "AWAITING_RELEASE"
   | "COMPLETE";
 
 export const COMP_STATUS_LABEL: Record<CompStatus, string> = {
@@ -97,6 +98,7 @@ export const COMP_STATUS_LABEL: Record<CompStatus, string> = {
   APPS_CLOSED: "Applications closed",
   READY: "Ready to view",
   LIVE: "Live viewing",
+  AWAITING_RELEASE: "Awaiting results release",
   COMPLETE: "Judging complete",
 };
 
@@ -104,6 +106,7 @@ export function competitionStatus(
   comp: CompetitionGate & {
     livePosition: number | null;
     resultsReleasedAt: Date | null;
+    judgeAssignments?: { status?: string; submittedAt: Date | null }[];
   },
   now = new Date(),
 ): CompStatus {
@@ -112,6 +115,12 @@ export function competitionStatus(
   if (isCompetitionOpen(comp, now)) return "APPS_OPEN";
   if (isJudgingOpen(comp, now)) {
     return comp.livePosition != null ? "LIVE" : "READY";
+  }
+  const activeJudges = comp.judgeAssignments?.filter(
+    (judge) => judge.status == null || judge.status === "APPROVED",
+  ) ?? [];
+  if (activeJudges.length > 0 && activeJudges.every((judge) => judge.submittedAt)) {
+    return "AWAITING_RELEASE";
   }
   return "APPS_CLOSED";
 }

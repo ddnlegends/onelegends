@@ -20,6 +20,7 @@ import { usesAssignedModerator } from "@/lib/competition-type";
 const STATUS_ORDER: CompStatus[] = [
   "LIVE",
   "READY",
+  "AWAITING_RELEASE",
   "APPS_CLOSED",
   "APPS_OPEN",
   "COMPLETE",
@@ -93,7 +94,7 @@ export default async function CompDashboardPage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
         {counts.map(({ status, count }) => (
           <div
             key={status}
@@ -183,6 +184,10 @@ export default async function CompDashboardPage() {
                         total={teams}
                         size="sm"
                       />
+                    ) : comp.status === "AWAITING_RELEASE" ? (
+                      <p className="text-sm text-ready">
+                        Viewing complete. All judge packets submitted; awaiting results release.
+                      </p>
                     ) : comp.status === "COMPLETE" && comp.resultsReleasedAt ? (
                       <p className="text-sm text-success">
                         Results released <LocalDateTime date={comp.resultsReleasedAt} />

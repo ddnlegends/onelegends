@@ -95,6 +95,16 @@ describe("judgingLockMessage", () => {
 });
 
 describe("competitionStatus", () => {
+  it("distinguishes completed viewing from viewing that has not started", () => {
+    const submitted = { status: "APPROVED", submittedAt: PAST };
+    expect(competitionStatus({ ...claimedClosed, judgeAssignments: [] }, NOW)).toBe("APPS_CLOSED");
+    expect(competitionStatus({ ...claimedClosed, judgeAssignments: [submitted, { status: "APPROVED", submittedAt: null }] }, NOW)).toBe("APPS_CLOSED");
+    const completed = { ...claimedClosed, judgeAssignments: [submitted, { status: "PENDING", submittedAt: null }] };
+    expect(competitionStatus(completed, NOW)).toBe("AWAITING_RELEASE");
+    expect(competitionStatus({ ...completed, judgingOpen: true, livePosition: 2 }, NOW)).toBe("LIVE");
+    expect(competitionStatus({ ...completed, resultsReleasedAt: PAST }, NOW)).toBe("COMPLETE");
+  });
+
   it("walks through the lifecycle", () => {
     expect(competitionStatus({ ...claimedClosed, claimedAt: null, userId: null }, NOW)).toBe(
       "UNCLAIMED",

@@ -6,6 +6,7 @@ const STYLES: Record<CompStatus, string> = {
   APPS_CLOSED: "border-warning-line bg-warning-soft text-warning",
   READY: "border-ready-line bg-ready-soft text-ready",
   LIVE: "border-accent-ember/40 bg-accent-ember/10 text-accent-ember",
+  AWAITING_RELEASE: "border-ready-line bg-ready-soft text-ready",
   COMPLETE: "border-success-line bg-success-soft text-success",
 };
 
