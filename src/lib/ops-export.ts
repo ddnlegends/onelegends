@@ -677,7 +677,7 @@ export async function buildExportTables(
 }
 
 /** Each table becomes one worksheet; Excel caps tab names at 31 characters. */
-export async function toXlsx<T extends Pick<ExportTable, "title" | "rows">>(tables: T[]): Promise<ArrayBuffer> {
+export async function toXlsx<T extends Pick<ExportTable, "title" | "rows"> & { wrapText?: boolean }>(tables: T[]): Promise<ArrayBuffer> {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "OneLegends";
   workbook.created = new Date();
@@ -687,6 +687,7 @@ export async function toXlsx<T extends Pick<ExportTable, "title" | "rows">>(tabl
       views: [{ state: "frozen", ySplit: 1 }],
     });
     sheet.addRows(table.rows);
+    if (table.wrapText) sheet.eachRow(row => { row.alignment = { vertical: "top", wrapText: true }; });
     const header = sheet.getRow(1);
     header.font = { bold: true, color: { argb: "FFFFFFFF" } };
     header.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF8E1C42" } };

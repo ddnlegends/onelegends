@@ -42,12 +42,15 @@ export default async function OpsTeamsPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="font-heading text-4xl">Teams</h1>
-        <p className="mt-2 max-w-2xl text-muted">
-          Every team listing. Open a team with its arrow to see and manage its
-          claim code, admins, full profile, roster, video, and applications.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-heading text-4xl">Teams</h1>
+          <p className="mt-2 max-w-2xl text-muted">
+            Every team listing. Open a team with its arrow to see and manage its
+            claim code, admins, full profile, roster, video, and applications.
+          </p>
+        </div>
+        <a href="/api/ops/teams/rosters" className="btn btn-primary">Download all team rosters (.xlsx)</a>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">

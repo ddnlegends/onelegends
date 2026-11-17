@@ -1,19 +1,49 @@
 import { test } from "./helpers";
 import { expect } from "@playwright/test";
 import ExcelJS from "exceljs";
+import { readFile } from "node:fs/promises";
 import { competitionId, db, E2E, login, pageAs, SEALED_NAMES } from "./helpers";
 
 const CSV = "/api/ops/export?dataset=teams&format=csv";
 const XLSX = "/api/ops/export?dataset=teams&dataset=competitions&format=xlsx";
+const ROSTERS = "/api/ops/teams/rosters";
 
 test("exports require a signed-in tech admin", async ({ page, request }) => {
   expect((await request.get(CSV)).status()).toBe(401);
+  expect((await request.get(ROSTERS)).status()).toBe(401);
 
   for (const role of ["team", "comp", "moderator", "judge"] as const) {
     await login(page, role);
     expect((await page.request.get(CSV)).status()).toBe(403);
+    expect((await page.request.get(ROSTERS)).status()).toBe(403);
     await page.context().clearCookies();
   }
+});
+
+test("admin downloads every full team roster in its own worksheet", async ({ page }) => {
+  const team = await db.teamProfile.findUniqueOrThrow({ where: { slug: E2E.teams.mine.slug } });
+  await db.dancer.updateMany({ where: { teamId: team.id, name: "Dancer One" }, data: { tshirtSize: "XXL", dietaryRestrictions: "Peanut allergy; vegetarian", pointOfContact: true, inAV: false } });
+  await db.teamProfile.create({ data: { name: "Empty roster team", slug: "empty-roster-team", claimCode: "TEAM-EMPTY-ROSTER" } });
+  await login(page, "tech");
+  await page.goto("/ops/teams");
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("link", { name: "Download all team rosters (.xlsx)", exact: true }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/^onelegends-team-rosters-\d{4}-\d{2}-\d{2}\.xlsx$/);
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(new Uint8Array(await readFile((await download.path())!)).buffer);
+  const teams = await db.teamProfile.findMany();
+  expect(workbook.worksheets).toHaveLength(teams.length);
+  const roster = workbook.getWorksheet(E2E.teams.mine.name)!;
+  expect(roster.getRow(2).values).toEqual([undefined, team.name, "Dancer One", "XXL", "Peanut allergy; vegetarian", "No", "Yes"]);
+  expect(workbook.getWorksheet("Empty roster team")!.getCell("B2").value).toBe("No dancers added yet.");
+  const contents = JSON.stringify(workbook.worksheets.map(sheet => sheet.getSheetValues()));
+  expect(contents).not.toContain(team.claimCode);
+  expect(contents).not.toContain("Sober Monitor");
+  const response = await page.request.get(ROSTERS);
+  expect(response.headers()["cache-control"]).toBe("private, no-store");
+  await page.goto("/ops/export");
+  await expect(page.getByRole("link", { name: "Download all team rosters (.xlsx)", exact: true })).toHaveAttribute("href", ROSTERS);
 });
 
 test("a tech admin downloads CSV and xlsx", async ({ page }) => {
