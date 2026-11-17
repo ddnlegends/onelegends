@@ -14,6 +14,8 @@ export async function GET() {
     orderBy: [{ name: "asc" }, { id: "asc" }],
     select: {
       name: true,
+      captains: true,
+      captainContacts: true,
       dancers: { select: { name: true, tshirtSize: true, dietaryRestrictions: true, inAV: true, pointOfContact: true } },
     },
   });

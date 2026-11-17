@@ -22,6 +22,7 @@ test("exports require a signed-in tech admin", async ({ page, request }) => {
 
 test("admin downloads every full team roster in its own worksheet", async ({ page }) => {
   const team = await db.teamProfile.findUniqueOrThrow({ where: { slug: E2E.teams.mine.slug } });
+  await db.teamProfile.update({ where: { id: team.id }, data: { captains: "Dancer One" } });
   await db.dancer.updateMany({ where: { teamId: team.id, name: "Dancer One" }, data: { tshirtSize: "XXL", dietaryRestrictions: "Peanut allergy; vegetarian", pointOfContact: true, inAV: false } });
   await db.teamProfile.create({ data: { name: "Empty roster team", slug: "empty-roster-team", claimCode: "TEAM-EMPTY-ROSTER" } });
   await login(page, "tech");
@@ -35,7 +36,7 @@ test("admin downloads every full team roster in its own worksheet", async ({ pag
   const teams = await db.teamProfile.findMany();
   expect(workbook.worksheets).toHaveLength(teams.length);
   const roster = workbook.getWorksheet(E2E.teams.mine.name)!;
-  expect(roster.getRow(2).values).toEqual([undefined, team.name, "Dancer One", "XXL", "Peanut allergy; vegetarian", "No", "Yes"]);
+  expect(roster.getRow(2).values).toEqual([undefined, team.name, "Dancer One", "XXL", "Peanut allergy; vegetarian", "No", "Yes", "Captain"]);
   expect(workbook.getWorksheet("Empty roster team")!.getCell("B2").value).toBe("No dancers added yet.");
   const contents = JSON.stringify(workbook.worksheets.map(sheet => sheet.getSheetValues()));
   expect(contents).not.toContain(team.claimCode);

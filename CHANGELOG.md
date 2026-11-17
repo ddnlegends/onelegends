@@ -4,6 +4,8 @@ Notable changes to OneLegends, newest first. Add a line under **Unreleased** wit
 
 ## Unreleased
 
+- Add a Role column to the all-team roster workbook, matching dancers to saved captain names and captain contacts. Keep point-of-contact status separate and label missing captain information as Not specified.
+
 - Add an admin-only all-team roster workbook download to Teams and Export data, with one worksheet per team containing every saved dancer's name, shirt size, dietary/allergy notes, AV participation, and point-of-contact status. Handle empty rosters and safe, unique Excel tab names. No schema migration required.
 
 - Let incomplete teams browse competition deadlines, fees, and packets without an AV while keeping applications locked; add a team-only application review page for the saved AV, phase, fee, and live profile/roster, clarify AV changes through withdrawal and reapplication, and move lighting guidance to the Production notes placeholder.

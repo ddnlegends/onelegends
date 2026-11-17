@@ -36,7 +36,7 @@ export default async function OpsExportPage({
       </div>
 
       <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-line bg-card p-6">
-        <div><h2 className="font-heading text-2xl">All team rosters</h2><p className="mt-2 max-w-2xl text-sm text-muted">Every team in one workbook, with a separate tab for each team. Includes all dancers, shirt sizes, dietary restrictions and allergies, AV participation, and point-of-contact status.</p></div>
+        <div><h2 className="font-heading text-2xl">All team rosters</h2><p className="mt-2 max-w-2xl text-sm text-muted">Every team in one workbook, with a separate tab for each team. Includes all dancers, shirt sizes, dietary restrictions and allergies, AV participation, point-of-contact status, and Captain/Member roles matched to saved captain names.</p></div>
         <a href="/api/ops/teams/rosters" className="btn btn-primary">Download all team rosters (.xlsx)</a>
       </section>
 
